@@ -18,6 +18,7 @@ import androidx.compose.material.icons.outlined.Mosque
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -54,11 +55,10 @@ val BottomNavItems = listOf(
 )
 
 /**
- * Icon-only floating navigation bar.
- *
- * Labels removed per Sprint D.3 — icon + glass pill active indicator only.
- * Takes [selectedIndex] from [HorizontalPager] page position.
- * [onTabSelected] scrolls the pager to the tapped page.
+ * Stitch V2 bottom bar: full-width "dark lens" glass bar — background at
+ * ~70–90% opacity, 1dp hairline top border, icon over label, active item
+ * tinted (emerald in dark, navy in light) with a small dot indicator.
+ * Keeps the 3-tab pager contract (navigation structure unchanged).
  */
 @Composable
 fun FloatingBottomNavigationBar(
@@ -66,81 +66,63 @@ fun FloatingBottomNavigationBar(
     onTabSelected: (Int) -> Unit,
 ) {
     val isLightMode = MaterialTheme.colorScheme.background.luminance() > 0.5f
-    val isAmoled = MaterialTheme.colorScheme.background == Color.Black
+    val activeTint = if (isLightMode) Color(0xFF1E2D4C) else Color(0xFF61DCAC)
+    val inactiveTint = MaterialTheme.colorScheme.onSurfaceVariant
+    val barColor = MaterialTheme.colorScheme.background.copy(alpha = if (isLightMode) 0.92f else 0.85f)
 
-    val glassColor = when {
-        isLightMode -> Color.White.copy(alpha = 0.88f)
-        isAmoled -> Color(0xFF050505).copy(alpha = 0.88f)
-        else -> Color(0xFF1C2426).copy(alpha = 0.72f)
-    }
-    val glassBorder = when {
-        isLightMode -> Color.Black.copy(alpha = 0.06f)
-        isAmoled -> EmeraldPrimary.copy(alpha = 0.18f)
-        else -> Color.White.copy(alpha = 0.08f)
-    }
-    val shadowColor = if (isLightMode) Color.Black.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.55f)
-    val ambientShadow = if (isLightMode) Color.Transparent else EmeraldPrimary.copy(alpha = 0.25f)
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 24.dp),
-        contentAlignment = Alignment.Center,
-    ) {
+    Column(Modifier.fillMaxWidth()) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.6f))
+        )
         Row(
             modifier = Modifier
-                .fillMaxWidth(0.82f)
-                .height(64.dp)
-                .shadow(
-                    elevation = 20.dp,
-                    shape = RoundedCornerShape(32.dp),
-                    spotColor = shadowColor,
-                    ambientColor = ambientShadow,
-                )
-                .background(glassColor, RoundedCornerShape(32.dp))
-                .border(1.dp, glassBorder, RoundedCornerShape(32.dp))
-                .padding(horizontal = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .fillMaxWidth()
+                .background(barColor)
+                .padding(top = 8.dp, bottom = 20.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BottomNavItems.forEachIndexed { index, screen ->
                 val isSelected = selectedIndex == index
-
-                val weight by animateFloatAsState(
-                    targetValue = if (isSelected) 1.45f else 1f,
-                    animationSpec = MotionTokens.noBounceSpring(),
-                    label = "navWeight_$index",
-                )
-                val chipColor by animateColorAsState(
-                    targetValue = if (isSelected) EmeraldPrimary else Color.Transparent,
+                val tint by animateColorAsState(
+                    targetValue = if (isSelected) activeTint else inactiveTint,
                     animationSpec = MotionTokens.normalTween(),
-                    label = "navChip_$index",
+                    label = "navTint_$index",
                 )
-                val iconTint = when {
-                    isSelected -> Color.White
-                    isLightMode -> MaterialTheme.colorScheme.onSurfaceVariant
-                    else -> Color.White.copy(alpha = 0.55f)
-                }
-
-                Box(
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .weight(weight)
-                        .height(48.dp)
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(chipColor)
+                        .weight(1f)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                             onClick = { onTabSelected(index) },
-                        ),
-                    contentAlignment = Alignment.Center,
+                        )
+                        .padding(vertical = 4.dp),
                 ) {
-                    // Icon only — no labels per Sprint D.3
                     Icon(
                         imageVector = screen.icon,
                         contentDescription = screen.title,
-                        tint = iconTint,
-                        modifier = Modifier.size(22.dp),
+                        tint = tint,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = screen.title,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = tint,
+                    )
+                    Spacer(Modifier.height(3.dp))
+                    Box(
+                        Modifier
+                            .size(4.dp)
+                            .background(
+                                if (isSelected) tint else Color.Transparent,
+                                RoundedCornerShape(50),
+                            )
                     )
                 }
             }

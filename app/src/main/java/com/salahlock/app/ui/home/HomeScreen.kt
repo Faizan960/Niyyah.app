@@ -531,127 +531,139 @@ fun HomeHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
     ) {
-        // Editorial greeting block
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        // Stitch V2 greeting: single serif display line, sans date line below
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
             Text(
-                text = "Assalamu Alaikum,",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MutedSage,
-            )
-            Text(
-                text = firstName,
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
+                text = "Assalamu Alaikum, $firstName.",
+                fontFamily = NiyyahSerif,
+                fontWeight = FontWeight.Medium,
+                fontSize = 28.sp,
+                lineHeight = 36.sp,
+                letterSpacing = (-0.25).sp,
                 color = MaterialTheme.colorScheme.onBackground,
-                letterSpacing = (-0.5).sp,
             )
-            Spacer(Modifier.height(2.dp))
             Text(
                 text = buildString {
+                    if (hijriDate.isNotEmpty()) { append(hijriDate); append(" • ") }
                     append(dayOfWeek)
-                    if (hijriDate.isNotEmpty()) { append(" • "); append(hijriDate) }
                     if (locationName.isNotEmpty()) { append(" — "); append(locationName) }
                     if (locationLabel != null) { append(" · "); append(locationLabel) }
                 },
-                style = MaterialTheme.typography.labelLarge,
-                color = MutedSage,
-                letterSpacing = 0.2.sp,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                letterSpacing = 0.5.sp,
             )
         }
+        Spacer(Modifier.width(12.dp))
 
         // Account avatar — Google photo → initials → person icon (reused app-wide)
         com.salahlock.app.ui.navigation.ProfileAvatar(onClick = onAvatarClick)
     }
 }
 
+/**
+ * Stitch V2 hero — mode-asymmetric:
+ *  light/home: filled navy card, "NEXT PRAYER" pill, big serif prayer name.
+ *  dark/home:  bordered surface card, "UPCOMING PRAYER" emerald label,
+ *              emerald countdown + "REMAINING".
+ */
 @Composable
 fun CurrentPrayerHeroCard(prayerName: String, timeString: String, timeRemaining: String) {
     val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
-    val cardColor = if (isLight) MaterialTheme.colorScheme.surface else ElevatedSurface
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = cardColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = if (isLight) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)) else null,
-    ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            // Subtle emerald radial glow — accent only, not a fill
-            Box(
-                modifier = Modifier
-                    .size(220.dp)
-                    .align(Alignment.TopEnd)
-                    .offset(x = 60.dp, y = (-40).dp)
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(
-                                EmeraldPrimary.copy(alpha = 0.10f),
-                                Color.Transparent,
-                            )
-                        )
-                    )
-            )
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(28.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-            ) {
-                // Active indicator row
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(EmeraldPrimary, CircleShape)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "NOW",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = EmeraldPrimary,
-                        letterSpacing = 3.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-
-                // Prayer name + time — capped at 32sp per Sprint D.3 typography spec
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = prayerName,
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.5).sp,
-                    )
-                    Text(
-                        text = timeString,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Normal,
-                    )
-                }
-
-                // Gold accent divider
-                HorizontalDivider(
-                    color = GoldAccent.copy(alpha = 0.25f),
-                    thickness = 0.5.dp,
-                )
+    if (isLight) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Navy),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        ) {
+            Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Box(
+                        Modifier
+                            .background(Color.White.copy(alpha = 0.10f), RoundedCornerShape(50))
+                            .padding(horizontal = 12.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            "NEXT PRAYER",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White.copy(alpha = 0.9f),
+                            letterSpacing = 1.5.sp,
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            timeString,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = Color.White,
+                        )
+                        Text(
+                            "in $timeRemaining",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White.copy(alpha = 0.6f),
+                        )
+                    }
+                }
+                Text(
+                    text = prayerName,
+                    fontFamily = NiyyahSerif,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 44.sp,
+                    lineHeight = 48.sp,
+                    letterSpacing = (-0.5).sp,
+                    color = Color.White,
+                )
+            }
+        }
+    } else {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        ) {
+            Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "UPCOMING PRAYER",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = EmeraldSecondary,
+                    letterSpacing = 2.sp,
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text = "Window closes in",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MutedSage,
+                        text = prayerName,
+                        fontFamily = NiyyahSerif,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 32.sp,
+                        lineHeight = 40.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
+                        text = timeString,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
+                Column {
+                    Text(
                         text = timeRemaining,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = GoldAccent,
-                        fontWeight = FontWeight.Bold,
+                        fontFamily = NiyyahSerif,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 30.sp,
+                        lineHeight = 36.sp,
+                        color = StitchDarkPrimaryBright,
+                    )
+                    Text(
+                        text = "REMAINING",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        letterSpacing = 2.sp,
                     )
                 }
             }

@@ -11,83 +11,86 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 
+// Stitch V2 "Premium Spiritual Editorial": navy primary, emerald secondary,
+// gold tertiary, warm paper surfaces, #E7E2DA hairlines.
 private val LightThemeColors = lightColorScheme(
-    primary = EmeraldPrimary,
+    primary = Navy,
     onPrimary = LightSurface,
-    primaryContainer = EmeraldSurface,
-    onPrimaryContainer = EmeraldDim,
-    
-    secondary = EmeraldSecondary,
+    primaryContainer = DeepNavy,
+    onPrimaryContainer = LightSurface,
+
+    secondary = EmeraldPrimary,
     onSecondary = LightSurface,
     secondaryContainer = EmeraldPrimary.copy(alpha = 0.12f),
-    onSecondaryContainer = EmeraldDim,
-    
+    onSecondaryContainer = EmeraldPrimary,
+
     tertiary = GoldAccent,
     onTertiary = LightSurface,
     tertiaryContainer = GoldLight,
     onTertiaryContainer = GoldDim,
-    
+
     background = LightBackground,
     onBackground = LightTextPrimary,
     surface = LightSurface,
     onSurface = LightTextPrimary,
     surfaceVariant = LightSurfaceVariant,
-    onSurfaceVariant = LightTextSecondary,
-    
+    onSurfaceVariant = StitchLightTextSecondary,
+
     error = RustDanger,
     onError = LightSurface,
     errorContainer = RustLight,
     onErrorContainer = RustDanger,
-    
+
     outline = LightDivider,
     outlineVariant = LightDivider
 )
 
+// Stitch V2 "Niyyah Dark": emerald primary on charcoal-teal luminance layers.
 private val DarkThemeColors = darkColorScheme(
-    primary = EmeraldPrimary,
+    primary = EmeraldSecondary,          // #18A67A
     onPrimary = DarkTextPrimary,
-    primaryContainer = EmeraldDim,
-    onPrimaryContainer = EmeraldSurface,
-    
-    secondary = EmeraldSecondary,
+    primaryContainer = EmeraldSecondary,
+    onPrimaryContainer = StitchDarkOnPrimary,
+
+    secondary = StitchNavyChip,          // navy structural grounding
     onSecondary = DarkTextPrimary,
-    secondaryContainer = EmeraldDim,
-    onSecondaryContainer = EmeraldPrimary.copy(alpha = 0.15f),
-    
-    tertiary = GoldAccent,
-    onTertiary = DarkTextPrimary,
+    secondaryContainer = DeepNavy,
+    onSecondaryContainer = StitchDarkPrimaryBright,
+
+    tertiary = StitchGold,
+    onTertiary = DarkBackground,
     tertiaryContainer = GoldDim,
     onTertiaryContainer = GoldLight,
-    
+
     background = DarkBackground,
     onBackground = DarkTextPrimary,
     surface = DarkSurface,
     onSurface = DarkTextPrimary,
-    surfaceVariant = DarkSurfaceVariant,
+    surfaceVariant = ElevatedSurface,    // level 2 #232E31
     onSurfaceVariant = DarkTextSecondary,
-    
+
     error = RustLight,
     onError = DarkBackground,
     errorContainer = RustDanger,
     onErrorContainer = RustLight,
-    
+
     outline = DarkDivider,
     outlineVariant = DarkDivider
 )
 
 private val AmoledThemeColors = darkColorScheme(
-    primary = EmeraldPrimary,
+    primary = EmeraldSecondary,
     onPrimary = DarkTextPrimary,
-    primaryContainer = EmeraldDim,
-    onPrimaryContainer = EmeraldSurface,
-    
-    secondary = EmeraldSecondary,
+    primaryContainer = EmeraldSecondary,
+    onPrimaryContainer = StitchDarkOnPrimary,
+
+    secondary = StitchNavyChip,
     onSecondary = DarkTextPrimary,
-    secondaryContainer = EmeraldDim,
-    onSecondaryContainer = EmeraldPrimary.copy(alpha = 0.15f),
-    
-    tertiary = GoldAccent,
-    onTertiary = DarkTextPrimary,
+    secondaryContainer = DeepNavy,
+    onSecondaryContainer = StitchDarkPrimaryBright,
+
+    tertiary = StitchGold,
+    onTertiary = AmoledBackground,
     tertiaryContainer = GoldDim,
     onTertiaryContainer = GoldLight,
     

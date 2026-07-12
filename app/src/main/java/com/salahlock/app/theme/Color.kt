@@ -57,6 +57,17 @@ val ReadingLight = LightSurface
 val ReadingDark = DarkSurface
 val ReadingAmoled = AmoledSurface
 
+// ── Stitch V2 tokens (design/stitch-v2) ─────────────────────────────────────
+// Light ("Premium Spiritual Editorial"): navy primary, emerald secondary
+val StitchLightSurface = Color(0xFFFCF9F8)     // cards sit on #F7F6F3 canvas
+val StitchLightTextSecondary = Color(0xFF45474E)
+val StitchLightOutline = Color(0xFF75777E)
+// Dark ("Niyyah Dark"): emerald primary, luminance layering
+val StitchDarkPrimaryBright = Color(0xFF61DCAC) // accents/countdowns on dark
+val StitchDarkOnPrimary = Color(0xFF003827)
+val StitchNavyChip = Color(0xFF31466F)          // active chip container (dark)
+val StitchGold = Color(0xFFEEC064)              // tertiary in both modes
+
 // Theme helper aliases — used in MaterialTheme color scheme assignments only
 val EmeraldDim = EmeraldPrimary.copy(alpha = 0.2f)
 val EmeraldSurface = EmeraldPrimary.copy(alpha = 0.1f)
