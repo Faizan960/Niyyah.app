@@ -1359,11 +1359,11 @@ private fun PermissionStatusRow(label: String, granted: Boolean, onClick: () -> 
 
 @Composable
 fun SectionTitle(title: String) {
+    // Stitch V2 section header: small uppercase sans label, wide tracking
     Text(
         text = title.uppercase(),
-        style = MaterialTheme.typography.labelSmall,
-        color = MutedSage,
-        fontWeight = FontWeight.Bold,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         letterSpacing = 1.5.sp,
         modifier = Modifier.padding(bottom = 10.dp),
     )
@@ -1371,14 +1371,13 @@ fun SectionTitle(title: String) {
 
 @Composable
 fun CardGroup(content: @Composable ColumnScope.() -> Unit) {
-    val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    // Stitch V2 card: surface + 1dp hairline, 16dp radius, no shadow
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isLight) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f) else ElevatedSurface,
-        ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
         Column { content() }
     }
@@ -1399,12 +1398,12 @@ fun SettingsRowItem(
             .padding(20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(imageVector = icon, contentDescription = null, tint = EmeraldPrimary)
+        Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Text(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
             if (subtitle != null) {
-                Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = WarmStone)
+                Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         if (trailing != null) {

@@ -37,16 +37,17 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-// ── Style E palette (Lock/Focus screens) — always AMOLED, theme-independent ──
-private val Bg = Color(0xFF000000)
-private val Surface1 = Color(0xFF12181A)
-private val Surface2 = Color(0xFF1C2426)
-private val Gold = Color(0xFFD4A84F)
+// ── Stitch V2 "Niyyah Dark" tokens (design/stitch-v2/dark/monthly-reflection) ─
+// This screen is always dark by design — a private, focused report.
+private val Bg = Color(0xFF0B0F10)
+private val Surface1 = Color(0xFF151B1C)
+private val Surface2 = Color(0xFF232E31)
+private val Gold = Color(0xFFEEC064)
 private val Emerald = Color(0xFF18A67A)
 private val TextPrimary = Color(0xFFF5F5F5)
 private val TextSecondary = Color(0xFFA7A7A7)
 private val Divider = Color(0xFF2A3335)
-private val Danger = Color(0xFFCF6679)
+private val Danger = Color(0xFFFFB4AB)
 
 private val monthFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)
 private val monthShort = DateTimeFormatter.ofPattern("MMM", Locale.ENGLISH)
@@ -83,7 +84,14 @@ fun MonthlyReflectionScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Monthly Reflection", color = TextPrimary) },
+                title = {
+                    Text(
+                        "Monthly Reflection",
+                        color = TextPrimary,
+                        fontFamily = com.salahlock.app.theme.NiyyahSerif,
+                        fontWeight = FontWeight.Medium,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back", tint = TextPrimary)
