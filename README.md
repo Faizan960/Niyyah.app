@@ -161,4 +161,4 @@ The UI follows a five-style visual library (documented in `CLAUDE.md`):
 
 ## 📄 License
 
-All rights reserved © Faizan Patel. Contact the author for licensing inquiries.
+[MIT](LICENSE) © 2026 Faizan Patel
