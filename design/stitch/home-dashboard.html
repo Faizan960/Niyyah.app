@@ -1,0 +1,354 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Niyyah - Home</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#b7c6ed",
+                        "on-tertiary-container": "#b88e38",
+                        "surface-bright": "#faf9f6",
+                        "surface-dim": "#dbdad7",
+                        "tertiary-fixed-dim": "#eec064",
+                        "tertiary": "#231700",
+                        "surface-tint": "#4f5e80",
+                        "on-primary-fixed": "#0a1b39",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#e3e2df",
+                        "on-tertiary-fixed": "#261900",
+                        "outline-variant": "#c5c6ce",
+                        "secondary-container": "#8bf7cb",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#5d4200",
+                        "on-surface-variant": "#45474e",
+                        "surface-container-high": "#e9e8e5",
+                        "inverse-surface": "#2f312f",
+                        "surface-container": "#efeeeb",
+                        "surface-container-highest": "#e3e2df",
+                        "on-primary-fixed-variant": "#384667",
+                        "on-secondary-fixed": "#002115",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary": "#006c4f",
+                        "surface": "#faf9f6",
+                        "tertiary-container": "#3d2a00",
+                        "tertiary-fixed": "#ffdea4",
+                        "on-surface": "#1b1c1a",
+                        "on-error-container": "#93000a",
+                        "background": "#faf9f6",
+                        "inverse-primary": "#b7c6ed",
+                        "primary": "#071836",
+                        "on-background": "#1b1c1a",
+                        "inverse-on-surface": "#f2f1ee",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#6fdab0",
+                        "on-secondary-fixed-variant": "#00513a",
+                        "outline": "#75777e",
+                        "primary-container": "#1e2d4c",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#007354",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f4f3f0",
+                        "on-primary-container": "#8695b9",
+                        "secondary-fixed": "#8bf7cb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "xl": "32px",
+                        "2xl": "48px",
+                        "3xl": "64px",
+                        "md": "16px",
+                        "safe-margin": "24px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Playfair Display"],
+                        "display-md": ["Playfair Display"],
+                        "title-lg": ["Inter"],
+                        "headline-lg": ["Playfair Display"],
+                        "display-lg": ["Playfair Display"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "30px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-md": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #F7F6F3;
+        }
+        
+        .premium-card-border {
+            border: 1px solid #E7E2DA;
+        }
+        
+        .sunlit-shadow {
+            box-shadow: 0px 4px 20px rgba(30, 45, 76, 0.04);
+        }
+        
+        /* Hide scrollbar for horizontal scroll but allow scrolling */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  <style>
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .shimmer-card {
+    background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.3) 50%, transparent 75%);
+    background-size: 200% 100%;
+    animation: shimmer 4s infinite linear;
+    animation-delay: 2s;
+  }
+  .content-entrance {
+    animation: fadeInUp 400ms ease-out forwards;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .shimmer-card, .content-entrance, .fade-slide-up {
+      animation: none !important;
+      transform: none !important;
+      opacity: 1 !important;
+    }
+    .transition-all, .transition-colors, .transition-transform {
+      transition: none !important;
+    }
+  }
+</style></head>
+<body class="font-body-md text-on-surface antialiased min-h-screen pb-[100px]">
+<!-- TopAppBar (Home mapped to Nav Intent) -->
+<header class="flex justify-between items-center w-full px-safe-margin py-md bg-surface dark:bg-surface sticky top-0 z-40 transition-opacity">
+<button aria-label="Menu" class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<h1 class="font-display-md text-display-md text-primary dark:text-primary-fixed-dim m-0">Niyyah</h1>
+<button aria-label="Notifications" class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+</header>
+<main class="px-safe-margin pt-xl max-w-4xl mx-auto flex flex-col gap-2xl md:gap-3xl content-entrance">
+<!-- Greeting Section -->
+<section class="space-y-sm fade-slide-up">
+<p class="font-label-md text-label-md text-outline">Sat, 14 Oct • 29 Rabi' al-Awwal</p>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">As-salamu alaykum, Omar.</h2>
+</section>
+<!-- Next Prayer Hero -->
+<section class="fade-slide-up" style="animation-delay: 50ms;">
+<div class="bg-surface-container-lowest rounded-xl p-xl premium-card-border sunlit-shadow flex flex-col relative overflow-hidden shimmer-card">
+<!-- Decorative background element -->
+<div class="absolute -right-12 -top-12 w-64 h-64 rounded-full border border-on-tertiary-container opacity-20 pointer-events-none"></div>
+<div class="absolute -right-8 -top-8 w-48 h-48 rounded-full border border-on-tertiary-container opacity-10 pointer-events-none"></div>
+<div class="flex justify-between items-start z-10">
+<div>
+<p class="font-label-md text-label-md text-outline mb-sm uppercase tracking-wider">Next Prayer</p>
+<h3 class="font-display-md text-display-md text-primary mb-xs">Dhuhr</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">12:45 PM</p>
+</div>
+<div class="bg-primary/5 px-4 py-2 rounded-full border border-primary/10 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">schedule</span>
+<span class="font-label-md text-label-md text-primary">in 45 mins</span>
+</div>
+</div>
+<!-- Progress Line -->
+<div class="w-full bg-surface-variant h-1 rounded-full mt-xl mb-md">
+<div class="bg-on-tertiary-container h-1 rounded-full w-[70%]"></div>
+</div>
+</div>
+</section>
+<!-- Today's Intention -->
+<section class="fade-slide-up" style="animation-delay: 100ms;">
+<div class="bg-surface-container-lowest rounded-xl p-xl premium-card-border flex gap-md items-start shimmer-card">
+<span class="material-symbols-outlined text-on-tertiary-container text-3xl opacity-50" style="font-variation-settings: 'FILL' 1;">format_quote</span>
+<div class="flex-1">
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-wider mb-sm">Today's Reflection</p>
+<blockquote class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary italic leading-snug">
+                        "Verily, actions are by intentions."
+                    </blockquote>
+</div>
+</div>
+</section>
+<!-- Prayer Timeline (Horizontal Scroll) -->
+<section class="fade-slide-up" style="animation-delay: 150ms;">
+<div class="flex justify-between items-end mb-md">
+<h3 class="font-title-lg text-title-lg text-primary">Daily Prayers</h3>
+<button class="font-label-sm text-label-sm text-primary uppercase tracking-wider hover:opacity-80 transition-opacity">View All</button>
+</div>
+<div class="flex overflow-x-auto gap-md no-scrollbar pb-md -mx-safe-margin px-safe-margin">
+<!-- Fajr (Past) -->
+<div class="flex-shrink-0 w-[140px] bg-surface-container-lowest rounded-xl p-md premium-card-border opacity-70 flex flex-col items-center text-center shimmer-card">
+<span class="material-symbols-outlined text-outline mb-sm" style="font-variation-settings: 'FILL' 0;">wb_twilight</span>
+<h4 class="font-label-md text-label-md text-on-surface mb-xs">Fajr</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">5:20 AM</p>
+</div>
+<!-- Dhuhr (Next/Active) -->
+<div class="flex-shrink-0 w-[140px] bg-primary text-on-primary rounded-xl p-md flex flex-col items-center text-center relative overflow-hidden shimmer-card">
+<div class="absolute inset-0 bg-on-tertiary-container opacity-10 mix-blend-overlay"></div>
+<span class="material-symbols-outlined text-on-tertiary-container mb-sm" style="font-variation-settings: 'FILL' 1;">light_mode</span>
+<h4 class="font-label-md text-label-md text-on-primary mb-xs">Dhuhr</h4>
+<p class="font-body-md text-body-md text-primary-fixed-dim">12:45 PM</p>
+</div>
+<!-- Asr -->
+<div class="flex-shrink-0 w-[140px] bg-surface-container-lowest rounded-xl p-md premium-card-border flex flex-col items-center text-center shimmer-card">
+<span class="material-symbols-outlined text-primary mb-sm" style="font-variation-settings: 'FILL' 0;">partly_cloudy_day</span>
+<h4 class="font-label-md text-label-md text-on-surface mb-xs">Asr</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">3:15 PM</p>
+</div>
+<!-- Maghrib -->
+<div class="flex-shrink-0 w-[140px] bg-surface-container-lowest rounded-xl p-md premium-card-border flex flex-col items-center text-center shimmer-card">
+<span class="material-symbols-outlined text-primary mb-sm" style="font-variation-settings: 'FILL' 0;">wb_twilight</span>
+<h4 class="font-label-md text-label-md text-on-surface mb-xs">Maghrib</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">5:45 PM</p>
+</div>
+<!-- Isha -->
+<div class="flex-shrink-0 w-[140px] bg-surface-container-lowest rounded-xl p-md premium-card-border flex flex-col items-center text-center shimmer-card">
+<span class="material-symbols-outlined text-primary mb-sm" style="font-variation-settings: 'FILL' 0;">dark_mode</span>
+<h4 class="font-label-md text-label-md text-on-surface mb-xs">Isha</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">7:10 PM</p>
+</div>
+</div>
+</section>
+<!-- Daily Quran Editorial -->
+<section class="fade-slide-up" style="animation-delay: 200ms;">
+<div class="bg-surface-container-lowest rounded-xl premium-card-border overflow-hidden shimmer-card">
+<div class="p-xl text-center border-b border-surface-variant relative">
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-wider mb-lg">Verse of the Day</p>
+<p class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-md leading-relaxed">
+                        "And He is with you wherever you are."
+                    </p>
+<p class="font-label-md text-label-md text-on-tertiary-container">— Al-Hadid 57:4</p>
+</div>
+<div class="flex divide-x divide-surface-variant">
+<button class="flex-1 py-md flex items-center justify-center gap-sm text-primary hover:bg-surface-bright transition-colors font-label-md text-label-md">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu_book</span>
+                        Read Surah
+                    </button>
+<button class="flex-1 py-md flex items-center justify-center gap-sm text-primary hover:bg-surface-bright transition-colors font-label-md text-label-md">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">share</span>
+                        Share
+                    </button>
+</div>
+</div>
+</section>
+<!-- Quick Actions (Bento style grid) -->
+<section class="fade-slide-up mb-xl" style="animation-delay: 250ms;">
+<div class="grid grid-cols-3 gap-md">
+<button class="bg-surface-container-lowest rounded-xl p-md premium-card-border flex flex-col items-center justify-center gap-sm hover:border-primary transition-colors hover:shadow-sm active:scale-95 duration-200">
+<div class="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">explore</span>
+</div>
+<span class="font-label-md text-label-md text-primary">Qibla</span>
+</button>
+<button class="bg-surface-container-lowest rounded-xl p-md premium-card-border flex flex-col items-center justify-center gap-sm hover:border-primary transition-colors hover:shadow-sm active:scale-95 duration-200">
+<div class="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">spa</span>
+</div>
+<span class="font-label-md text-label-md text-primary">Azkar</span>
+</button>
+<button class="bg-surface-container-lowest rounded-xl p-md premium-card-border flex flex-col items-center justify-center gap-sm hover:border-primary transition-colors hover:shadow-sm active:scale-95 duration-200">
+<div class="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">psychology</span>
+</div>
+<span class="font-label-md text-label-md text-primary">Focus</span>
+</button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-lg py-md bg-surface-container-lowest dark:bg-surface-container-lowest rounded-t-xl shadow-sm md:hidden">
+<!-- Active Tab: Home -->
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim relative after:content-[''] after:w-1 after:h-1 after:bg-on-tertiary-container after:rounded-full after:mt-1 hover:text-primary dark:hover:text-primary-fixed-dim scale-95 transition-transform duration-200 transition-all active:scale-95">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</button>
+<!-- Inactive Tabs -->
+<button class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors transition-all duration-200 active:scale-95">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">book_2</span>
+<span class="font-label-sm text-label-sm">Quran</span>
+</button>
+<button class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors transition-all duration-200 active:scale-95">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">menu_book</span>
+<span class="font-label-sm text-label-sm">Knowledge</span>
+</button>
+<button class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors transition-all duration-200 active:scale-95">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">explore</span>
+<span class="font-label-sm text-label-sm">Qibla</span>
+</button>
+<button class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors transition-all duration-200 active:scale-95">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+<!-- Desktop Navigation (Hidden on Mobile) - Placeholder for structural completeness -->
+<div class="hidden md:flex fixed top-0 right-0 h-full p-xl z-50 pointer-events-none">
+<!-- Desktop nav items would go here in a real implementation -->
+</div>
+<style>
+        .fade-slide-up {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeSlideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+
+
+</body></html>

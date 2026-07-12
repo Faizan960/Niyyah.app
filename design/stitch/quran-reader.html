@@ -1,0 +1,346 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Niyyah - Quran Reader</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@600;700&amp;family=Amiri+Quran&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#b7c6ed",
+                        "on-tertiary-container": "#b88e38",
+                        "surface-bright": "#faf9f6",
+                        "surface-dim": "#dbdad7",
+                        "tertiary-fixed-dim": "#eec064",
+                        "tertiary": "#231700",
+                        "surface-tint": "#4f5e80",
+                        "on-primary-fixed": "#0a1b39",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#e3e2df",
+                        "on-tertiary-fixed": "#261900",
+                        "outline-variant": "#c5c6ce",
+                        "secondary-container": "#8bf7cb",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#5d4200",
+                        "on-surface-variant": "#45474e",
+                        "surface-container-high": "#e9e8e5",
+                        "inverse-surface": "#2f312f",
+                        "surface-container": "#efeeeb",
+                        "surface-container-highest": "#e3e2df",
+                        "on-primary-fixed-variant": "#384667",
+                        "on-secondary-fixed": "#002115",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary": "#006c4f",
+                        "surface": "#F7F6F3",
+                        "tertiary-container": "#3d2a00",
+                        "tertiary-fixed": "#ffdea4",
+                        "on-surface": "#1b1c1a",
+                        "on-error-container": "#93000a",
+                        "background": "#F7F6F3",
+                        "inverse-primary": "#b7c6ed",
+                        "primary": "#071836",
+                        "on-background": "#1b1c1a",
+                        "inverse-on-surface": "#f2f1ee",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#6fdab0",
+                        "on-secondary-fixed-variant": "#00513a",
+                        "outline": "#75777e",
+                        "primary-container": "#1e2d4c",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#007354",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f4f3f0",
+                        "on-primary-container": "#8695b9",
+                        "secondary-fixed": "#8bf7cb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "xl": "32px",
+                        "2xl": "48px",
+                        "3xl": "64px",
+                        "safe-margin": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Playfair Display"],
+                        "display-md": ["Playfair Display"],
+                        "title-lg": ["Inter"],
+                        "headline-lg": ["Playfair Display"],
+                        "display-lg": ["Playfair Display"],
+                        "arabic": ["Amiri Quran", "serif"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "30px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-md": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "arabic-lg": ["36px", { "lineHeight": "64px", "fontWeight": "400" }],
+                        "arabic-xl": ["48px", { "lineHeight": "80px", "fontWeight": "400" }]
+                    },
+                    "boxShadow": {
+                        "sunlit": "0px 4px 20px rgba(30, 45, 76, 0.04)"
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .reader-mode-transition {
+            transition: opacity 250ms ease-out, transform 250ms ease-out;
+        }
+        .reader-controls-hidden {
+            opacity: 0;
+            transform: translateY(20px) translateX(-50%);
+            pointer-events: none;
+        }
+        .reader-controls-visible {
+            opacity: 1;
+            transform: translateY(0) translateX(-50%);
+            pointer-events: auto;
+        }
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col font-body-md" id="reader-body">
+<!-- Top Breadcrumb (Minimal) -->
+<header class="sticky top-0 z-40 bg-background/90 backdrop-blur-md px-safe-margin py-md flex justify-between items-center reader-mode-transition transition-transform transition-opacity duration-250 ease-out" id="reader-header">
+<button class="text-primary hover:opacity-80 transition-opacity flex items-center justify-center w-10 h-10 -ml-2 rounded-full duration-250">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex flex-col items-center">
+<span class="font-label-sm text-label-sm text-outline tracking-widest uppercase">Surah</span>
+<h1 class="font-title-lg text-title-lg text-primary">Al-Kahf</h1>
+</div>
+<button class="text-primary hover:opacity-80 transition-opacity flex items-center justify-center w-10 h-10 -mr-2 rounded-full duration-250">
+<span class="material-symbols-outlined">bookmark_border</span>
+</button>
+</header>
+<!-- Main Content: Immersive Reader -->
+<main class="flex-grow px-safe-margin pb-3xl pt-xl max-w-3xl mx-auto w-full cursor-pointer transition-opacity duration-250 ease-out" id="reader-content" onclick="toggleReaderMode()">
+<!-- Bismillah -->
+<div class="text-center mb-2xl pb-xl border-b border-surface-variant">
+<p class="font-arabic text-arabic-xl text-primary mb-md" dir="rtl">
+                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+            </p>
+<p class="font-body-md text-body-md text-outline italic">
+                In the name of Allah, the Entirely Merciful, the Especially Merciful.
+            </p>
+</div>
+<!-- Verses Container -->
+<div class="space-y-3xl">
+<!-- Verse 1 -->
+<article class="flex flex-col gap-lg animate-pulse">
+<div class="flex justify-between items-start w-full">
+<span class="text-outline font-label-md text-label-md flex items-center justify-center w-8 h-8 rounded-full border border-surface-variant">1</span>
+<p class="font-arabic text-arabic-lg text-primary text-right leading-loose flex-1 pl-xl" dir="rtl">
+                        الْحَمْدُ لِلَّهِ الَّذِي أَنزَلَ عَلَىٰ عَبْدِهِ الْكِتَابَ وَلَمْ يَجْعَل لَّهُ عِوَجًا ۜ
+                    </p>
+</div>
+<div class="pl-12">
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+                        [All] praise is [due] to Allah, who has sent down upon His Servant the Book and has not made therein any deviance.
+                    </p>
+</div>
+</article>
+<!-- Verse 2 -->
+<article class="flex flex-col gap-lg">
+<div class="flex justify-between items-start w-full">
+<span class="text-outline font-label-md text-label-md flex items-center justify-center w-8 h-8 rounded-full border border-surface-variant">2</span>
+<p class="font-arabic text-arabic-lg text-primary text-right leading-loose flex-1 pl-xl" dir="rtl">
+                        قَيِّمًا لِّيُنذِرَ بَأْسًا شَدِيدًا مِّن لَّدُنْهُ وَيُبَشِّرَ الْمُؤْمِنِينَ الَّذِينَ يَعْمَلُونَ الصَّالِحَاتِ أَنَّ لَهُمْ أَجْرًا حَسَنًا
+                    </p>
+</div>
+<div class="pl-12">
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+                        [He has made it] straight, to warn of severe punishment from Him and to give good tidings to the believers who do righteous deeds that they will have a good reward
+                    </p>
+</div>
+</article>
+<!-- Verse 3 -->
+<article class="flex flex-col gap-lg">
+<div class="flex justify-between items-start w-full">
+<span class="text-outline font-label-md text-label-md flex items-center justify-center w-8 h-8 rounded-full border border-surface-variant">3</span>
+<p class="font-arabic text-arabic-lg text-primary text-right leading-loose flex-1 pl-xl" dir="rtl">
+                        مَّاكِثِينَ فِيهِ أَبَدًا
+                    </p>
+</div>
+<div class="pl-12">
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+                        In which they will remain forever
+                    </p>
+</div>
+</article>
+<!-- Verse 4 -->
+<article class="flex flex-col gap-lg">
+<div class="flex justify-between items-start w-full">
+<span class="text-outline font-label-md text-label-md flex items-center justify-center w-8 h-8 rounded-full border border-surface-variant">4</span>
+<p class="font-arabic text-arabic-lg text-primary text-right leading-loose flex-1 pl-xl" dir="rtl">
+                        وَيُنذِرَ الَّذِينَ قَالُوا اتَّخَذَ اللَّهُ وَلَدًا
+                    </p>
+</div>
+<div class="pl-12">
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+                        And to warn those who say, "Allah has taken a son."
+                    </p>
+</div>
+</article>
+<!-- Loading Indicator (Subtle) -->
+<div class="flex justify-center items-center py-xl">
+<div class="w-1.5 h-1.5 bg-outline rounded-full mx-1 animate-pulse"></div>
+<div class="w-1.5 h-1.5 bg-outline rounded-full mx-1 animate-pulse" style="animation-delay: 0.2s"></div>
+<div class="w-1.5 h-1.5 bg-outline rounded-full mx-1 animate-pulse" style="animation-delay: 0.4s"></div>
+</div>
+</div>
+</main>
+<!-- Floating Reader Controls (Hidden by default, shown on tap) -->
+<div class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-surface-container-lowest shadow-sunlit rounded-2xl border border-surface-variant p-md flex items-center gap-lg reader-controls-hidden reader-mode-transition" id="reader-controls">
+<!-- Audio Play -->
+<button class="bg-primary text-on-primary w-12 h-12 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity flex-shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<div class="w-px h-8 bg-surface-variant"></div>
+<!-- Font Size Adjust -->
+<div class="flex items-center gap-md text-outline">
+<button class="hover:text-primary transition-colors flex items-center justify-center p-2">
+<span class="material-symbols-outlined text-sm">format_size</span>
+</button>
+<div class="w-24 h-1 bg-surface-container rounded-full relative">
+<div class="absolute left-0 top-0 h-full w-1/2 bg-primary rounded-full"></div>
+<div class="absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-primary rounded-full shadow-sm"></div>
+</div>
+<button class="hover:text-primary transition-colors flex items-center justify-center p-2">
+<span class="material-symbols-outlined text-lg">format_size</span>
+</button>
+</div>
+<div class="w-px h-8 bg-surface-variant"></div>
+<!-- Theme Toggle -->
+<button class="text-primary hover:opacity-80 transition-opacity flex items-center justify-center p-2">
+<span class="material-symbols-outlined">palette</span>
+</button>
+</div>
+<!-- Bottom Navigation Shell (Only visible when not in pure reading mode) -->
+<div class="md:hidden reader-mode-transition" id="reader-nav">
+<nav class="fixed bottom-0 w-full z-40 flex justify-around items-center px-lg py-md bg-surface-container-lowest dark:bg-surface-container-lowest rounded-t-xl shadow-sunlit">
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-90 transition-transform duration-250 ease-out">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim relative after:content-[''] after:w-1 after:h-1 after:bg-on-tertiary-container after:rounded-full after:mt-1 group" href="#">
+<span class="material-symbols-outlined group-active:scale-90 transition-transform duration-250 ease-out" style="font-variation-settings: 'FILL' 1;">book_2</span>
+<span class="font-label-sm text-label-sm mt-1">Quran</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-90 transition-transform duration-250 ease-out">menu_book</span>
+<span class="font-label-sm text-label-sm mt-1">Knowledge</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-90 transition-transform duration-250 ease-out">explore</span>
+<span class="font-label-sm text-label-sm mt-1">Qibla</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-90 transition-transform duration-250 ease-out">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</a>
+</nav>
+</div>
+<!-- Desktop Navigation (Hidden on mobile) -->
+<header class="hidden md:flex fixed top-0 w-full z-50 justify-between items-center px-safe-margin py-md bg-surface border-b border-surface-variant reader-mode-transition" id="desktop-nav">
+<div class="flex items-center gap-xl">
+<span class="font-display-md text-display-md text-primary tracking-tight">Niyyah</span>
+</div>
+<nav class="flex gap-lg">
+<a class="text-on-surface-variant hover:opacity-80 transition-opacity font-label-md text-label-md" href="#">Home</a>
+<a class="text-primary font-bold font-label-md text-label-md border-b-2 border-primary pb-1" href="#">Quran</a>
+<a class="text-on-surface-variant hover:opacity-80 transition-opacity font-label-md text-label-md" href="#">Knowledge</a>
+<a class="text-on-surface-variant hover:opacity-80 transition-opacity font-label-md text-label-md" href="#">Qibla</a>
+</nav>
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity flex items-center">
+<span class="material-symbols-outlined">person</span>
+</button>
+</header>
+<script>
+        let isReadingMode = false;
+        
+        function toggleReaderMode() {
+            isReadingMode = !isReadingMode;
+            
+            const header = document.getElementById('reader-header');
+            const controls = document.getElementById('reader-controls');
+            const mobileNav = document.getElementById('reader-nav');
+            const desktopNav = document.getElementById('desktop-nav');
+            
+            if (isReadingMode) {
+                // Enter pure reading mode
+                header.style.opacity = '0';
+                header.style.transform = 'translateY(-100%)';
+                
+                controls.classList.remove('reader-controls-hidden');
+                controls.classList.add('reader-controls-visible');
+                
+                if(mobileNav) {
+                    mobileNav.style.opacity = '0';
+                    mobileNav.style.transform = 'translateY(100%)';
+                }
+                if(desktopNav) {
+                    desktopNav.style.opacity = '0';
+                    desktopNav.style.transform = 'translateY(-100%)';
+                }
+                
+            } else {
+                // Exit pure reading mode
+                header.style.opacity = '1';
+                header.style.transform = 'translateY(0)';
+                
+                controls.classList.add('reader-controls-hidden');
+                controls.classList.remove('reader-controls-visible');
+                
+                 if(mobileNav) {
+                    mobileNav.style.opacity = '1';
+                    mobileNav.style.transform = 'translateY(0)';
+                }
+                if(desktopNav) {
+                    desktopNav.style.opacity = '1';
+                    desktopNav.style.transform = 'translateY(0)';
+                }
+            }
+        }
+    </script>
+
+
+</body></html>

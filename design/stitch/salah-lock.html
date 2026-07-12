@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Salah Lock - Niyyah</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#b7c6ed",
+                        "on-tertiary-container": "#b88e38",
+                        "surface-bright": "#faf9f6",
+                        "surface-dim": "#dbdad7",
+                        "tertiary-fixed-dim": "#eec064",
+                        "tertiary": "#231700",
+                        "surface-tint": "#4f5e80",
+                        "on-primary-fixed": "#0a1b39",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#e3e2df",
+                        "on-tertiary-fixed": "#261900",
+                        "outline-variant": "#c5c6ce",
+                        "secondary-container": "#8bf7cb",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#5d4200",
+                        "on-surface-variant": "#45474e",
+                        "surface-container-high": "#e9e8e5",
+                        "inverse-surface": "#2f312f",
+                        "surface-container": "#efeeeb",
+                        "surface-container-highest": "#e3e2df",
+                        "on-primary-fixed-variant": "#384667",
+                        "on-secondary-fixed": "#002115",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary": "#006c4f",
+                        "surface": "#faf9f6",
+                        "tertiary-container": "#3d2a00",
+                        "tertiary-fixed": "#ffdea4",
+                        "on-surface": "#1b1c1a",
+                        "on-error-container": "#93000a",
+                        "background": "#faf9f6",
+                        "inverse-primary": "#b7c6ed",
+                        "primary": "#071836",
+                        "on-background": "#1b1c1a",
+                        "inverse-on-surface": "#f2f1ee",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#6fdab0",
+                        "on-secondary-fixed-variant": "#00513a",
+                        "outline": "#75777e",
+                        "primary-container": "#1e2d4c",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#007354",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f4f3f0",
+                        "on-primary-container": "#8695b9",
+                        "secondary-fixed": "#8bf7cb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "xl": "32px",
+                        "2xl": "48px",
+                        "3xl": "64px",
+                        "md": "16px",
+                        "safe-margin": "24px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Playfair Display"],
+                        "display-md": ["Playfair Display"],
+                        "title-lg": ["Inter"],
+                        "headline-lg": ["Playfair Display"],
+                        "display-lg": ["Playfair Display"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "30px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-md": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                },
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        @keyframes subtle-pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+        
+        .timer-pulse {
+            animation: subtle-pulse 4s ease-in-out infinite;
+        }
+
+        /* Custom dark background specifically requested */
+        body {
+            background-color: #0B0F10;
+            color: #ffffff;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col items-center justify-between p-safe-margin font-body-md antialiased overflow-hidden">
+<!-- Ambient Background Effect -->
+<div class="absolute inset-0 z-0 opacity-20 pointer-events-none flex items-center justify-center">
+<div class="w-[80vw] h-[80vw] md:w-[40vw] md:h-[40vw] rounded-full bg-gradient-to-tr from-on-tertiary-container/30 to-transparent blur-3xl filter timer-pulse"></div>
+</div>
+<!-- Top spacer to push content to center -->
+<div class="flex-1"></div>
+<!-- Main Content -->
+<main class="z-10 flex flex-col items-center text-center space-y-xl max-w-md w-full">
+<!-- Icon -->
+<span class="material-symbols-outlined text-[48px] text-on-tertiary-container timer-pulse" style="font-variation-settings: 'wght' 200;">mosque</span>
+<!-- Countdown -->
+<div class="font-display-lg text-[80px] md:text-[120px] leading-none tracking-tighter text-surface-container-lowest">
+            12:45
+        </div>
+<!-- Messages -->
+<div class="space-y-sm">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-surface-container-lowest">
+                In the presence of your Lord.
+            </h1>
+<p class="font-body-md text-body-md text-surface-variant/70">
+                Phone is silenced until Dhuhr prayer concludes.
+            </p>
+</div>
+</main>
+<!-- Bottom spacer -->
+<div class="flex-1 flex flex-col justify-end w-full max-w-md z-10 pb-xl">
+<!-- Exit Button -->
+<button class="w-full py-md font-label-md text-label-md text-surface-variant/50 hover:text-surface-container-lowest transition-colors duration-300 rounded-full border border-surface-variant/20 hover:border-surface-variant/50 flex items-center justify-center gap-2 group">
+<span>Exit Focus</span>
+</button>
+</div>
+<script>
+        // Simple timer logic for demonstration
+        function startTimer(duration, display) {
+            let timer = duration, minutes, seconds;
+            setInterval(function () {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    timer = 0; // Stop at 0
+                }
+            }, 1000);
+        }
+
+        window.onload = function () {
+            let twelveMinutes = 12 * 60 + 45; // 12:45 in seconds
+            let display = document.querySelector('.font-display-lg');
+            startTimer(twelveMinutes, display);
+        };
+    </script>
+</body></html>

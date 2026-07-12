@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Niyyah - Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed-dim": "#b7c6ed",
+                    "on-tertiary-container": "#b88e38",
+                    "surface-bright": "#faf9f6",
+                    "surface-dim": "#dbdad7",
+                    "tertiary-fixed-dim": "#eec064",
+                    "tertiary": "#231700",
+                    "surface-tint": "#4f5e80",
+                    "on-primary-fixed": "#0a1b39",
+                    "on-tertiary": "#ffffff",
+                    "surface-variant": "#e3e2df",
+                    "on-tertiary-fixed": "#261900",
+                    "outline-variant": "#c5c6ce",
+                    "secondary-container": "#8bf7cb",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#5d4200",
+                    "on-surface-variant": "#45474e",
+                    "surface-container-high": "#e9e8e5",
+                    "inverse-surface": "#2f312f",
+                    "surface-container": "#efeeeb",
+                    "surface-container-highest": "#e3e2df",
+                    "on-primary-fixed-variant": "#384667",
+                    "on-secondary-fixed": "#002115",
+                    "on-primary": "#ffffff",
+                    "primary-fixed": "#d8e2ff",
+                    "secondary": "#006c4f",
+                    "surface": "#faf9f6",
+                    "tertiary-container": "#3d2a00",
+                    "tertiary-fixed": "#ffdea4",
+                    "on-surface": "#1b1c1a",
+                    "on-error-container": "#93000a",
+                    "background": "#faf9f6",
+                    "inverse-primary": "#b7c6ed",
+                    "primary": "#071836",
+                    "on-background": "#1b1c1a",
+                    "inverse-on-surface": "#f2f1ee",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#6fdab0",
+                    "on-secondary-fixed-variant": "#00513a",
+                    "outline": "#75777e",
+                    "primary-container": "#1e2d4c",
+                    "on-error": "#ffffff",
+                    "on-secondary-container": "#007354",
+                    "error-container": "#ffdad6",
+                    "surface-container-low": "#f4f3f0",
+                    "on-primary-container": "#8695b9",
+                    "secondary-fixed": "#8bf7cb"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "xl": "32px",
+                    "2xl": "48px",
+                    "3xl": "64px",
+                    "md": "16px",
+                    "safe-margin": "24px",
+                    "lg": "24px",
+                    "sm": "8px",
+                    "gutter": "16px"
+            },
+            "fontFamily": {
+                    "label-md": [
+                            "Inter"
+                    ],
+                    "label-sm": [
+                            "Inter"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "headline-lg-mobile": [
+                            "Playfair Display"
+                    ],
+                    "display-md": [
+                            "Playfair Display"
+                    ],
+                    "title-lg": [
+                            "Inter"
+                    ],
+                    "headline-lg": [
+                            "Playfair Display"
+                    ],
+                    "display-lg": [
+                            "Playfair Display"
+                    ]
+            },
+            "fontSize": {
+                    "label-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "letterSpacing": "0.02em",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "label-sm": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "30px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-md": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "title-lg": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg": [
+                            "28px",
+                            {
+                                    "lineHeight": "36px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-lg": [
+                            "40px",
+                            {
+                                    "lineHeight": "48px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background antialiased pb-24 md:pb-0 font-body-md selection:bg-primary-fixed selection:text-on-primary-fixed min-h-screen">
+<!-- Top Navigation (Web) / Top App Bar (Mobile) -->
+<header class="bg-surface dark:bg-surface flex justify-between items-center w-full px-safe-margin py-md sticky top-0 z-40">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<div class="font-display-md text-display-md text-primary dark:text-primary-fixed-dim font-bold">Niyyah</div>
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="max-w-4xl mx-auto px-safe-margin py-xl md:py-3xl space-y-3xl">
+<!-- Profile Header -->
+<section class="flex flex-col md:flex-row items-center gap-xl md:gap-3xl">
+<div class="w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-2 border-surface-variant flex-shrink-0">
+<img alt="Profile Picture" class="w-full h-full object-cover" data-alt="A serene, minimalist avatar placeholder image featuring subtle organic textures in warm cream and stone colors, conveying a sense of tranquility and spiritual calm. The aesthetic is clean and premium." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeqyitFpQEsq590ihcgMH3JJpMV3rJCn6cnbIhn3di3xiP3ZhHAOBXE3qkJGioo6rAnAZs2gyJHSgJUxVFrd6Al7-1fugCVtzirMnnQjwuKHjRUhBv8jKWraQyKa-T9VJF-E5HPQ-D02PBEnCFJjPzngzCChaS0se6J4CDIG43ArpH9pQ4MncV01D1n_3dvA_SyeFNw2r2kiz_N5NGNpThQOijX-1u2U1wKVjifwjrpcT8KNdfyNlarLrHQTWs2uWvod6UV6CYQrXe"/>
+</div>
+<div class="text-center md:text-left space-y-md">
+<h1 class="font-display-lg text-display-lg text-primary md:font-display-lg md:text-display-lg font-headline-lg-mobile text-headline-lg-mobile">Hassan Ali</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg">Seeking peace through intention. A digital sanctuary for daily reflection.</p>
+<div class="flex flex-wrap justify-center md:justify-start gap-sm pt-sm">
+<span class="bg-surface-container py-xs px-md rounded-full font-label-sm text-label-sm text-on-surface-variant border border-surface-variant">Member since 2023</span>
+<button class="bg-surface-container py-xs px-md rounded-full font-label-sm text-label-sm text-primary border border-primary hover:bg-primary hover:text-on-primary transition-colors duration-250 ease-out">Edit Profile</button>
+</div>
+</div>
+</section>
+<!-- Stats Grid (Bento style) -->
+<section>
+<h2 class="font-title-lg text-title-lg text-primary mb-xl">Your Journey</h2>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-md">
+<div class="bg-surface-container-lowest rounded-2xl p-lg border border-surface-variant shadow-sm flex flex-col justify-between aspect-square">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-3xl" data-icon="local_fire_department">local_fire_department</span>
+<div>
+<div class="font-display-md text-display-md text-primary">42</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Day Streak</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl p-lg border border-surface-variant shadow-sm flex flex-col justify-between aspect-square">
+<span class="material-symbols-outlined text-secondary text-3xl" data-icon="menu_book">menu_book</span>
+<div>
+<div class="font-display-md text-display-md text-primary">128</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Verses Read</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl p-lg border border-surface-variant shadow-sm flex flex-col justify-between aspect-square md:col-span-2">
+<span class="material-symbols-outlined text-primary-fixed-dim text-3xl mb-auto" data-icon="schedule">schedule</span>
+<div>
+<div class="font-display-md text-display-md text-primary">15<span class="text-xl font-normal">h</span> 30<span class="text-xl font-normal">m</span></div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Knowledge Hours</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 mt-sm">
+<div class="bg-secondary-fixed h-1.5 rounded-full" style="width: 65%"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Collections & Bookmarks -->
+<section>
+<div class="flex justify-between items-end mb-xl">
+<h2 class="font-title-lg text-title-lg text-primary">Collections</h2>
+<a class="font-label-sm text-label-sm text-primary-container hover:opacity-80" href="#">View All</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+<div class="bg-surface-container-lowest rounded-xl p-md border border-surface-variant flex items-center gap-md hover:bg-surface-bright transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary-container group-hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined" data-icon="bookmark">bookmark</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-primary">Saved Verses</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">24 items</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-md border border-surface-variant flex items-center gap-md hover:bg-surface-bright transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-secondary group-hover:bg-secondary-fixed-dim group-hover:text-on-secondary-fixed transition-colors">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-primary">Dua Library</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">12 items</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-md border border-surface-variant flex items-center gap-md hover:bg-surface-bright transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-tertiary group-hover:bg-tertiary-fixed transition-colors">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-primary">Notes</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">8 entries</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Monthly Reflection (Journal Aesthetic) -->
+<section>
+<div class="flex justify-between items-end mb-xl border-b border-surface-variant pb-sm">
+<h2 class="font-headline-lg text-headline-lg font-display-md text-primary">Reflections</h2>
+<button class="font-label-sm text-label-sm text-primary flex items-center gap-xs hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="edit">edit</span> New Entry
+                </button>
+</div>
+<div class="space-y-xl relative before:absolute before:inset-y-0 before:left-[11px] before:w-px before:bg-surface-variant">
+<!-- Entry 1 -->
+<article class="relative pl-xl">
+<div class="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-surface border-2 border-surface-variant flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-primary-fixed-dim"></div>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl p-xl border border-surface-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-sm">October 12, 2023 · Safar 26, 1445</div>
+<h3 class="font-title-lg text-title-lg text-primary mb-md">Finding Stillness in the Storm</h3>
+<p class="font-body-md text-body-md text-on-surface mb-lg line-clamp-3">Today was chaotic. The endless notifications, the demands of work, the noise of the city—it all felt overwhelming. Yet, when I finally paused for Asr, I realized that the noise is external. The stillness I seek is an internal state, a conscious turning away from creation and toward the Creator...</p>
+<div class="flex gap-sm">
+<span class="bg-surface-container py-xs px-sm rounded font-label-sm text-label-sm text-on-surface-variant">Patience</span>
+<span class="bg-surface-container py-xs px-sm rounded font-label-sm text-label-sm text-on-surface-variant">Gratitude</span>
+</div>
+</div>
+</article>
+<!-- Entry 2 -->
+<article class="relative pl-xl">
+<div class="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-surface border-2 border-surface-variant flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-surface-variant"></div>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl p-xl border border-surface-variant shadow-sm hover:shadow-md transition-shadow opacity-80 hover:opacity-100 transition-opacity">
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-sm">September 28, 2023 · Safar 12, 1445</div>
+<h3 class="font-title-lg text-title-lg text-primary mb-md">The Weight of Intentions</h3>
+<p class="font-body-md text-body-md text-on-surface mb-lg line-clamp-3">A simple action can carry profound weight depending on the Niyyah behind it. I've been reflecting on how often I do things simply out of habit, losing the spiritual essence of the act. Renewing my intention feels like polishing a dusty mirror...</p>
+</div>
+</article>
+</div>
+</section>
+<!-- Settings List -->
+<section class="border-t border-surface-variant pt-2xl">
+<h2 class="font-title-lg text-title-lg text-primary mb-xl">Settings &amp; Preferences</h2>
+<div class="bg-surface-container-lowest rounded-xl border border-surface-variant divide-y divide-surface-variant overflow-hidden">
+<a class="flex items-center justify-between p-md hover:bg-surface-bright transition-colors group" href="#">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="account_circle">account_circle</span>
+<span class="font-body-md text-body-md text-primary">Account Details</span>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-md hover:bg-surface-bright transition-colors group" href="#">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="tune">tune</span>
+<span class="font-body-md text-body-md text-primary">App Preferences</span>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-md hover:bg-surface-bright transition-colors group" href="#">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="security">security</span>
+<span class="font-body-md text-body-md text-primary">Privacy &amp; Security</span>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-md hover:bg-surface-bright transition-colors group" href="#">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="help">help</span>
+<span class="font-body-md text-body-md text-primary">Help &amp; Support</span>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</a>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar (Mobile) -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-lg py-md bg-surface-container-lowest dark:bg-surface-container-lowest shadow-sm rounded-t-xl border-t-0 md:hidden">
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim group" href="#">
+<span class="material-symbols-outlined group-active:scale-90 transition-transform duration-250 ease-out" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm mt-xs">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim group" href="#">
+<span class="material-symbols-outlined group-active:scale-90 transition-transform duration-250 ease-out" data-icon="book_2">book_2</span>
+<span class="font-label-sm text-label-sm mt-xs">Quran</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim group" href="#">
+<span class="material-symbols-outlined group-active:scale-90 transition-transform duration-250 ease-out" data-icon="menu_book">menu_book</span>
+<span class="font-label-sm text-label-sm mt-xs">Knowledge</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim group" href="#">
+<span class="material-symbols-outlined group-active:scale-90 transition-transform duration-250 ease-out" data-icon="explore">explore</span>
+<span class="font-label-sm text-label-sm mt-xs">Qibla</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim relative after:content-[''] after:w-1 after:h-1 after:bg-on-tertiary-container after:rounded-full after:mt-1 group" href="#">
+<span class="material-symbols-outlined icon-filled group-active:scale-90 transition-transform duration-250 ease-out" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm mt-xs">Profile</span>
+</a>
+</nav>
+</body></html>
