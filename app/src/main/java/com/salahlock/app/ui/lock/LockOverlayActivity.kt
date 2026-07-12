@@ -48,7 +48,7 @@ class LockOverlayActivity : ComponentActivity() {
                 finish()
             }
         } else {
-            Toast.makeText(this, "Verification failed or cancelled.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Verification didn't complete. You can try again anytime.", Toast.LENGTH_SHORT).show()
         }
     }
 

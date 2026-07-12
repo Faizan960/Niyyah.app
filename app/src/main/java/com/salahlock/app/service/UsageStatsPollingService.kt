@@ -288,7 +288,7 @@ class UsageStatsPollingService : Service() {
         NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_salahlock_notification)
             .setContentTitle("${prayer.arabicName}  ·  ${prayer.displayName}")
-            .setContentText("SalahLock is active — prayer window open.")
+            .setContentText("Niyyah is with you — prayer window open.")
             .setOngoing(true)
             .setContentIntent(tapIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -302,7 +302,7 @@ class UsageStatsPollingService : Service() {
             "Prayer Lock Active",
             NotificationManager.IMPORTANCE_HIGH,
         ).apply {
-            description = "Shown when SalahLock is actively blocking distracting apps"
+            description = "Shown while Niyyah is protecting your prayer time"
             setShowBadge(false)
             enableVibration(false)
         }

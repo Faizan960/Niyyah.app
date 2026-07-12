@@ -164,6 +164,7 @@ fun SalahLockTheme(
     MaterialTheme(
         colorScheme = animatedColorScheme,
         typography = SalahLockTypography,
+        shapes = NiyyahShapes,
         content = content,
     )
 }

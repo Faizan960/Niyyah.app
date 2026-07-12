@@ -688,7 +688,7 @@ fun BackupSection(state: ProfileUiState, viewModel: ProfileViewModel) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     PreviewRow("Backup date",     preview.backupDate)
-                    PreviewRow("App version",     "SalahLock ${preview.appVersion}")
+                    PreviewRow("App version",     "Niyyah ${preview.appVersion}")
                     PreviewRow("Prayer records",  "${preview.prayerRecords}")
                     PreviewRow("Current streak",  "${preview.currentStreak} ${if (preview.currentStreak == 1) "Day" else "Days"}")
                     PreviewRow("Blocked apps",    "${preview.blockedApps}")
@@ -723,7 +723,7 @@ fun BackupSection(state: ProfileUiState, viewModel: ProfileViewModel) {
             subtitle = lastBackupText,
             onClick = {
                 if (!busy) {
-                    val filename = "SalahLock_Backup_${
+                    val filename = "Niyyah_Backup_${
                         SimpleDateFormat("yyyy_MM_dd", Locale.US).format(Date())
                     }.zip"
                     createBackupLauncher.launch(filename)
@@ -751,7 +751,7 @@ fun BackupSection(state: ProfileUiState, viewModel: ProfileViewModel) {
                         val intent = Intent(Intent.ACTION_SEND).apply {
                             type = "application/zip"
                             putExtra(Intent.EXTRA_STREAM, shareUri)
-                            putExtra(Intent.EXTRA_SUBJECT, "SalahLock Backup")
+                            putExtra(Intent.EXTRA_SUBJECT, "Niyyah Backup")
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
                         context.startActivity(Intent.createChooser(intent, "Share Backup"))
@@ -817,7 +817,7 @@ private fun PreviewRow(label: String, value: String) {
 
 @Composable
 fun SalahLockSection(state: ProfileUiState, viewModel: ProfileViewModel, onNavigateToBlacklist: () -> Unit) {
-    SectionTitle("SalahLock Rules")
+    SectionTitle("Prayer Lock Rules")
     CardGroup {
         SettingsRowItem(icon = Icons.Outlined.Apps, title = "Manage Locked Apps", subtitle = "${state.blockedAppCount} apps locked", onClick = onNavigateToBlacklist)
         HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
@@ -1122,7 +1122,7 @@ fun SupportSection(onFeedback: () -> Unit = {}, onHelp: () -> Unit = {}) {
         HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
         SettingsRowItem(icon = Icons.Outlined.HelpOutline, title = "Help Center", subtitle = "FAQ and common questions", onClick = onHelp)
         HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
-        SettingsRowItem(icon = Icons.Outlined.Info, title = "About SalahLock", subtitle = "Version ${com.salahlock.app.BuildConfig.VERSION_NAME}", onClick = {})
+        SettingsRowItem(icon = Icons.Outlined.Info, title = "About Niyyah", subtitle = "Version ${com.salahlock.app.BuildConfig.VERSION_NAME}", onClick = {})
     }
 }
 
@@ -1131,7 +1131,7 @@ fun SupportSection(onFeedback: () -> Unit = {}, onHelp: () -> Unit = {}) {
  * when no email app is installed. No network code, no new dependencies.
  */
 fun sendFeedback(context: android.content.Context) {
-    val subject = "SalahLock Feedback (v${com.salahlock.app.BuildConfig.VERSION_NAME})"
+    val subject = "Niyyah Feedback (v${com.salahlock.app.BuildConfig.VERSION_NAME})"
     val email = android.content.Intent(android.content.Intent.ACTION_SENDTO).apply {
         data = android.net.Uri.parse("mailto:")
         putExtra(android.content.Intent.EXTRA_EMAIL, arrayOf("salahlock.app@gmail.com"))
@@ -1143,7 +1143,7 @@ fun sendFeedback(context: android.content.Context) {
         val share = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(android.content.Intent.EXTRA_SUBJECT, subject)
-            putExtra(android.content.Intent.EXTRA_TEXT, "My feedback about SalahLock:\n\n")
+            putExtra(android.content.Intent.EXTRA_TEXT, "My feedback about Niyyah:\n\n")
         }
         runCatching { context.startActivity(android.content.Intent.createChooser(share, "Send Feedback")) }
     }
@@ -1262,13 +1262,13 @@ fun PermissionStatusScreen(onBack: () -> Unit) {
 @Composable
 fun HelpCenterScreen(onBack: () -> Unit) {
     val faqs = listOf(
-        "How does SalahLock work?" to "When a prayer time begins, the apps you selected are locked until you confirm your prayer. Confirm from the lock screen or the Home tab.",
+        "How does Niyyah work?" to "When a prayer time begins, the apps you selected are locked until you confirm your prayer. Confirm from the lock screen or the Home tab.",
         "Which apps get locked?" to "Only the apps you choose in the Lock Apps tab. Calls, SMS, and essential system apps are never blocked.",
         "How do I verify a prayer?" to "Tap \"I Prayed\" on Home, or complete the short reflection + typed/voice affirmation on the lock screen.",
-        "What is Pause SalahLock?" to "A temporary break (15m–1h or until the next prayer). While paused, no locking or adhan notifications occur. Prayer tracking continues.",
+        "What is Pause Niyyah?" to "A temporary break (15m–1h or until the next prayer). While paused, no locking or adhan notifications occur. Prayer tracking continues.",
         "What are emergency overrides?" to "Three per month. Use one to bypass a lock in a genuine emergency — it still counts toward your day's record.",
         "How do local masjid timings work?" to "Enter your masjid's jamaat times in Home → Your Masjid. They replace the calculated times everywhere, including locking.",
-        "Why does SalahLock need Usage Access and Display Over Apps?" to "Usage Access detects which app is open during a prayer window; Display Over Apps shows the prayer reminder over it. Both are used only during prayer windows.",
+        "Why does Niyyah need Usage Access and Display Over Apps?" to "Usage Access detects which app is open during a prayer window; Display Over Apps shows the prayer reminder over it. Both are used only during prayer windows.",
         "Is my data private?" to "Yes. Prayer history, location, and settings stay on your device. Backups are local files you control. Nothing is uploaded.",
     )
     Scaffold(

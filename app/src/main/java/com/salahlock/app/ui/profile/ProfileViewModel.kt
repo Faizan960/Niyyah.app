@@ -166,7 +166,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 val preview = app.backupRepository.extractPreview(app.contentResolver, uri)
                 _backupUiState.update { it.copy(isLoadingPreview = false, preview = preview, pendingRestoreUri = uri) }
             } catch (e: Exception) {
-                _backupUiState.update { it.copy(isLoadingPreview = false, errorMessage = "Invalid SalahLock backup: ${e.message}") }
+                _backupUiState.update { it.copy(isLoadingPreview = false, errorMessage = "Invalid Niyyah backup: ${e.message}") }
             }
         }
     }

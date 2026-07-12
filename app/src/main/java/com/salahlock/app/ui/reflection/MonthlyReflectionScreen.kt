@@ -423,7 +423,7 @@ private fun ExportRow(
     launchPng: (String) -> Unit,
     launchPdf: (String) -> Unit,
 ) {
-    val base = "SalahLock_Reflection_${report.stats.month}"
+    val base = "Niyyah_Reflection_${report.stats.month}"
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedButton(
             onClick = { launchPng("$base.png") },

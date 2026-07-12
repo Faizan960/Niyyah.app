@@ -274,7 +274,7 @@ fun OnboardingScreen(onComplete: () -> Unit) {
                     2 -> PermissionStep(
                         title = "App Usage Access",
                         arabicText = "المراقبة",
-                        description = "SalahLock needs to see which app is open so it can show the prayer reminder when you open a distracting app during prayer time.\n\nThis is used ONLY during active prayer windows — not 24/7.",
+                        description = "Niyyah needs to see which app is open so it can show the prayer reminder when you open a distracting app during prayer time.\n\nThis is used ONLY during active prayer windows — not 24/7.",
                         buttonText = "Open Settings",
                         onGrant = {
                             Log.d(TAG, "Opening Usage Access settings.")
@@ -289,7 +289,7 @@ fun OnboardingScreen(onComplete: () -> Unit) {
                     3 -> PermissionStep(
                         title = "Display Over Apps",
                         arabicText = "العرض",
-                        description = "SalahLock needs to display the prayer reminder over other apps.\n\nThis is the screen you see when you open Instagram during prayer time.",
+                        description = "Niyyah needs to display the prayer reminder over other apps.\n\nThis is the screen you see when you open Instagram during prayer time.",
                         buttonText = "Open Settings",
                         onGrant = {
                             Log.d(TAG, "Opening overlay permission settings.")
@@ -365,7 +365,7 @@ fun WelcomeStep(onNext: () -> Unit) {
         )
         Spacer(Modifier.height(36.dp))
         Text(
-            text = "SalahLock",
+            text = "Niyyah",
             style = MaterialTheme.typography.displayMedium,
             color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold,
@@ -373,7 +373,7 @@ fun WelcomeStep(onNext: () -> Unit) {
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Stop delaying. Start praying.",
+            text = "Live with intention.",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontStyle = FontStyle.Italic,
@@ -386,7 +386,7 @@ fun WelcomeStep(onNext: () -> Unit) {
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant),
         ) {
             Text(
-                text = "SalahLock creates a gentle but firm barrier between the adhan and distraction.\n\nWhen prayer time arrives, distracting apps are locked until you confirm your prayer.",
+                text = "Niyyah creates a gentle space between the adhan and distraction.\n\nWhen prayer time arrives, the apps you choose rest quietly until you confirm your prayer.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
@@ -435,7 +435,7 @@ fun LocationStep(
         )
         Spacer(Modifier.height(20.dp))
         Text(
-            "SalahLock needs your location to calculate accurate prayer times for your city.\n\nYour location is stored locally on your device only — never uploaded.",
+            "Niyyah needs your location to calculate accurate prayer times for your city.\n\nYour location is stored locally on your device only — never uploaded.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
@@ -597,7 +597,7 @@ fun PermissionStep(
                 }
             } else {
                 Text(
-                    "This permission is required for SalahLock to work.",
+                    "This permission is required for Niyyah to work.",
                     style = MaterialTheme.typography.labelSmall,
                     color = RustLight,
                     textAlign = TextAlign.Center,
@@ -624,7 +624,7 @@ fun BatteryStep(onGrant: () -> Unit, isGranted: Boolean, onContinue: () -> Unit)
         )
         Spacer(Modifier.height(20.dp))
         Text(
-            "Disable battery optimization for SalahLock so prayer alarms fire reliably — especially on Xiaomi, Samsung, and Realme devices which aggressively kill background apps.",
+            "Disable battery optimization for Niyyah so prayer alarms fire reliably — especially on Xiaomi, Samsung, and Realme devices which aggressively kill background apps.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
@@ -882,7 +882,7 @@ private fun VerificationMethodStep(onComplete: () -> Unit) {
         )
         Spacer(Modifier.height(12.dp))
         Text(
-            "Choose how SalahLock confirms you have prayed. You can change this anytime in Settings.",
+            "Choose how Niyyah confirms you have prayed. You can change this anytime in Settings.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

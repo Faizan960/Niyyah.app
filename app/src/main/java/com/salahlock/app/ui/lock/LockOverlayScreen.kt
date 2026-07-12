@@ -211,7 +211,7 @@ fun LockOverlayScreen(
             AlertDialog(
                 onDismissRequest = { showOverrideConfirm = false },
                 title = { Text("Emergency Override") },
-                text = { Text("Are you sure? Prayer protection will be temporarily disabled.") },
+                text = { Text("Prayer protection will pause temporarily. Use this only when truly needed.") },
                 confirmButton = {
                     Button(
                         onClick = {

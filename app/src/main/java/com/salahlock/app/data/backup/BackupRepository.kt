@@ -215,7 +215,7 @@ class BackupRepository(
 
         if (manifestJson == null || metadataJson == null || backupJson == null) {
             throw IllegalArgumentException(
-                "Invalid SalahLock backup. Missing: ${
+                "Invalid Niyyah backup. Missing: ${
                     listOfNotNull(
                         "manifest.json".takeIf { manifestJson == null },
                         "metadata.json".takeIf { metadataJson == null },
@@ -229,10 +229,12 @@ class BackupRepository(
         val metadata = json.decodeFromString<BackupMetadata>(metadataJson!!)
         val entry    = json.decodeFromString<BackupJsonEntry>(backupJson!!)
 
-        if (manifest.app != "SalahLock") throw IllegalArgumentException("Not a SalahLock backup.")
+        // "SalahLock" is the on-disk format identifier — kept for compatibility with
+        // backups created before the Niyyah rebrand. Only the message is user-facing.
+        if (manifest.app != "SalahLock") throw IllegalArgumentException("Not a Niyyah backup.")
         if (manifest.backupVersion > BackupManifest.BACKUP_VERSION) {
             throw IllegalArgumentException(
-                "Backup version ${manifest.backupVersion} is newer than this app supports (max ${BackupManifest.BACKUP_VERSION}). Please update SalahLock."
+                "Backup version ${manifest.backupVersion} is newer than this app supports (max ${BackupManifest.BACKUP_VERSION}). Please update Niyyah."
             )
         }
 
@@ -279,7 +281,7 @@ class BackupRepository(
         val pkg = collectPackage()
         val zipBytes = buildZipBytes(pkg)
         val dateStr = SimpleDateFormat("yyyy_MM_dd", Locale.US).format(Date())
-        val file = File(context.cacheDir, "SalahLock_Backup_$dateStr.zip")
+        val file = File(context.cacheDir, "Niyyah_Backup_$dateStr.zip")
         file.writeBytes(zipBytes)
         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
     }

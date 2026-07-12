@@ -61,10 +61,10 @@ object NotificationHelper {
         nm.createNotificationChannel(
             NotificationChannel(
                 MISSED_PRAYER_CHANNEL_ID,
-                "Missed Prayer Alerts",
+                "Prayer Follow-ups",
                 NotificationManager.IMPORTANCE_DEFAULT,
             ).apply {
-                description = "Alert if a prayer window passes without verification"
+                description = "A gentle follow-up if a prayer window passes"
                 enableVibration(false)
             }
         )
@@ -75,7 +75,7 @@ object NotificationHelper {
                 "Prayer Lock Active",
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
-                description = "Shown when SalahLock is actively blocking distracting apps"
+                description = "Shown while Niyyah is protecting your prayer time"
                 setShowBadge(false)
                 enableVibration(false)
             }
@@ -95,10 +95,10 @@ object NotificationHelper {
         val notification = NotificationCompat.Builder(context, ADHAN_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_salahlock_notification)
             .setContentTitle("${prayer.arabicName}  ·  ${prayer.displayName}")
-            .setContentText("Time to pray. SalahLock is now active.")
+            .setContentText("It is time for ${prayer.displayName}.")
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText("Your ${prayer.displayName} prayer window has begun. Verify your prayer to unlock your apps.")
+                    .bigText("The ${prayer.displayName} prayer window has begun. When you have prayed, confirm it to continue.")
             )
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
@@ -125,8 +125,8 @@ object NotificationHelper {
 
         val notification = NotificationCompat.Builder(context, MISSED_PRAYER_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_salahlock_notification)
-            .setContentTitle("Did you pray ${prayer.displayName}?")
-            .setContentText("Your ${prayer.displayName} prayer window has passed. Tap to mark it.")
+            .setContentTitle("${prayer.displayName} has passed")
+            .setContentText("May Allah make the next prayer easy for you. Tap to mark it if you prayed.")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setContentIntent(tapIntent)

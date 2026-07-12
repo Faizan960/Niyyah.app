@@ -103,7 +103,7 @@ object ReflectionExporter {
         canvas.drawText(report.motivation.reference, cx, y, paint(GOLD, 38f))
 
         // Footer
-        canvas.drawText("SalahLock · private reflection", cx, HEIGHT - 90f, paint(MUTED, 30f))
+        canvas.drawText("Niyyah · private reflection", cx, HEIGHT - 90f, paint(MUTED, 30f))
     }
 
     private fun drawWrapped(

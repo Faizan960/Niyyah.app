@@ -303,7 +303,7 @@ private fun PauseSalahLockCard(
                 Text("⏸", fontSize = 18.sp)
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "Pause SalahLock",
+                    "Pause Niyyah",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -1068,7 +1068,7 @@ fun BatteryOptimizationWarning(onFix: () -> Unit) {
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
                 Text(
-                    text = "Tap to exempt SalahLock (required for MIUI, Samsung, Realme).",
+                    text = "Tap to exempt Niyyah (required for MIUI, Samsung, Realme).",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f),
                 )
@@ -1088,7 +1088,7 @@ fun LockActiveWarning() {
             Icon(Icons.Default.CheckCircle, contentDescription = null, tint = EmeraldPrimary)
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = "SalahLock is actively protecting your prayer time.",
+                text = "Niyyah is protecting your prayer time.",
                 color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodyMedium
             )
