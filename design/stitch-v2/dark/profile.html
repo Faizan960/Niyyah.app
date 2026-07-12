@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Profile - NIYYAH</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-on-surface": "#2b322e",
+                      "on-primary-container": "#003222",
+                      "surface-container-high": "#252b28",
+                      "on-tertiary": "#412d00",
+                      "surface-container-highest": "#303632",
+                      "on-secondary": "#193057",
+                      "tertiary-fixed": "#ffdea4",
+                      "surface-dim": "#0f1512",
+                      "surface-tint": "#61dcac",
+                      "outline": "#86948c",
+                      "on-primary": "#003827",
+                      "tertiary-container": "#b58c36",
+                      "on-surface": "#dee4de",
+                      "surface-bright": "#343b37",
+                      "on-secondary-fixed": "#001a41",
+                      "inverse-primary": "#006c4d",
+                      "surface": "#0f1512",
+                      "secondary": "#b1c7f7",
+                      "background": "#0f1512",
+                      "primary": "#61dcac",
+                      "surface-container-low": "#171d1a",
+                      "on-secondary-container": "#a0b5e4",
+                      "outline-variant": "#3d4a43",
+                      "on-tertiary-container": "#3a2800",
+                      "surface-container": "#1b211e",
+                      "primary-container": "#18a67a",
+                      "error": "#ffb4ab",
+                      "on-tertiary-fixed": "#261900",
+                      "error-container": "#93000a",
+                      "on-secondary-fixed-variant": "#31466f",
+                      "inverse-surface": "#dee4de",
+                      "on-error": "#690005",
+                      "surface-container-lowest": "#090f0c",
+                      "secondary-container": "#31466f",
+                      "on-error-container": "#ffdad6",
+                      "secondary-fixed-dim": "#b1c7f7",
+                      "tertiary-fixed-dim": "#eec064",
+                      "primary-fixed": "#7ff9c7",
+                      "on-primary-fixed-variant": "#005139",
+                      "on-primary-fixed": "#002115",
+                      "on-surface-variant": "#bccac1",
+                      "secondary-fixed": "#d8e2ff",
+                      "on-background": "#dee4de",
+                      "primary-fixed-dim": "#61dcac",
+                      "surface-variant": "#303632",
+                      "on-tertiary-fixed-variant": "#5d4200",
+                      "tertiary": "#eec064"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "md": "16px",
+                      "lg": "24px",
+                      "xl": "32px",
+                      "base": "20px",
+                      "sm": "12px",
+                      "xs": "8px",
+                      "xxl": "40px",
+                      "huge": "48px"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "EB Garamond"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "EB Garamond"
+                      ],
+                      "headline-lg": [
+                              "EB Garamond"
+                      ],
+                      "display-lg-mobile": [
+                              "EB Garamond"
+                      ],
+                      "body-lg": [
+                              "EB Garamond"
+                      ],
+                      "headline-xl": [
+                              "EB Garamond"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.03em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "36px",
+                              {
+                                      "lineHeight": "42px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "20px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-xl": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #0B0F10;
+        }
+        
+        /* Shimmer loading effect */
+        .shimmer {
+            background: linear-gradient(90deg, #151B1C 0%, #232E31 50%, #151B1C 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Screen Entry Transition */
+        .screen-entry {
+            animation: slideUpFade 300ms cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        @keyframes slideUpFade {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .progress-bar-fill {
+            transition: width 400ms cubic-bezier(0.0, 0.0, 0.2, 1);
+        }
+
+        .interactive-scale:active {
+            transform: scale(0.98);
+            transition: transform 120ms ease-out;
+        }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant flat no shadows flex items-center justify-between px-md h-16">
+<button class="hover:bg-surface-container-high dark:hover:bg-surface-container-high rounded-full p-2 interactive-scale">
+<span class="material-symbols-outlined text-primary dark:text-primary">menu</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary dark:text-primary font-bold tracking-tight">NIYYAH</h1>
+<button class="hover:bg-surface-container-high dark:hover:bg-surface-container-high rounded-full p-2 interactive-scale">
+<span class="material-symbols-outlined text-on-surface-variant dark:text-on-surface-variant">notifications</span>
+</button>
+</header>
+<!-- Main Canvas -->
+<main class="pt-24 px-md md:px-lg max-w-4xl mx-auto screen-entry">
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-md md:gap-lg">
+<!-- Profile Hero Card (Span Full on mobile, 4 cols on desktop) -->
+<div class="md:col-span-4 bg-[#151B1C] border border-[#2A3335] rounded-xl p-lg flex flex-col items-center justify-center text-center">
+<div class="w-32 h-32 rounded-full overflow-hidden mb-sm border-2 border-primary-container relative interactive-scale cursor-pointer">
+<img class="w-full h-full object-cover absolute inset-0 z-10" data-alt="A cinematic, high-fashion portrait photography of a serene individual looking contemplatively into the distance. The lighting is soft and moody, utilizing a deep charcoal and emerald teal color palette. The aesthetic is editorial minimalism, evoking a sense of quietude and spiritual focus in a low-light environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfROX0sqAPc5lnD0GXwrPgvsKX0q4D6LBKL37Cv7kSTokFekzCj12gkjOVYW-Q9LFJFy0mdZROxlZ0z1U3o4ftYdxdNH3hRPmYdxrofpoNPE2tOZ4cYwwzCTnvQmrMpI8W812StxJmlpWe1X-6twon5BuFStGvNv5T4OK5ZwH3bsVU5nzXi6sztS9iAdXtT5uCnDIiqH8atgP0nZmqoIPA9cS1FdnkeTQwvOK0O98b-cwqG5WmQATh0MHmtjoOEzSZpwdw6hj17w"/>
+<div class="absolute inset-0 shimmer z-0"></div>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Ahmad Abdullah</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Seeker of Knowledge</p>
+<button class="mt-md bg-primary-container text-[#F5F5F5] rounded px-4 py-2 font-label-md text-label-md interactive-scale hover:bg-emerald-500 transition-colors duration-150 w-full">Edit Profile</button>
+</div>
+<!-- Stats & Progress (Span Full on mobile, 8 cols on desktop) -->
+<div class="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-md">
+<!-- Consistency Stat -->
+<div class="bg-[#151B1C] border border-[#2A3335] rounded-xl p-lg flex flex-col justify-between">
+<div class="flex justify-between items-start mb-sm">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Consistency</span>
+<span class="material-symbols-outlined text-primary-container">trending_up</span>
+</div>
+<div>
+<div class="flex items-baseline gap-2 mb-2">
+<span class="font-display-lg-mobile text-display-lg-mobile text-on-surface">92%</span>
+</div>
+<div class="w-full bg-[#0B0F10] rounded-full h-2 mb-2 overflow-hidden border border-[#2A3335]">
+<div class="bg-primary-container h-2 rounded-full progress-bar-fill" data-target="92%" style="width: 0%;"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Last 30 Days</p>
+</div>
+</div>
+<!-- Reading Progress -->
+<div class="bg-[#151B1C] border border-[#2A3335] rounded-xl p-lg flex flex-col justify-between">
+<div class="flex justify-between items-start mb-sm">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Reading Progress</span>
+<span class="material-symbols-outlined text-tertiary">menu_book</span>
+</div>
+<div>
+<div class="flex items-baseline gap-2 mb-2">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Juz 14</span>
+</div>
+<div class="w-full bg-[#0B0F10] rounded-full h-2 mb-2 overflow-hidden border border-[#2A3335]">
+<div class="bg-tertiary h-2 rounded-full progress-bar-fill" data-target="46%" style="width: 0%;"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Al-Hijr (The Rocky Tract)</p>
+</div>
+</div>
+<!-- Milestones -->
+<div class="sm:col-span-2 bg-[#151B1C] border border-[#2A3335] rounded-xl p-lg">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-md">Milestones</h3>
+<div class="flex flex-wrap gap-md">
+<div class="flex items-center gap-sm bg-[#232E31] px-4 py-2 rounded-full border border-[#2A3335] interactive-scale cursor-pointer transition-opacity duration-300 opacity-0 milestone-fade">
+<span class="material-symbols-outlined text-[#F5F5F5]" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+<span class="font-label-sm text-label-sm text-[#A7A7A7]">30 Day Streak</span>
+</div>
+<div class="flex items-center gap-sm bg-[#253B63] px-4 py-2 rounded-full border border-primary/20 interactive-scale cursor-pointer transition-opacity duration-300 opacity-0 milestone-fade" style="transition-delay: 150ms;">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<span class="font-label-sm text-label-sm text-primary">Khatam</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Journal Entry Card (Full Width) -->
+<div class="md:col-span-12 bg-[#151B1C] border border-[#2A3335] rounded-xl p-lg relative overflow-hidden group">
+<!-- Subtle background texture/gradient -->
+<div class="absolute inset-0 bg-gradient-to-br from-[#151B1C] to-[#0B0F10] opacity-50 z-0"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">edit_note</span>
+                            Daily Journal
+                        </h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Today</span>
+</div>
+<div class="bg-[#12181A] border border-[#2A3335] rounded p-md transition-colors duration-200 focus-within:border-primary-container">
+<p class="font-body-md text-body-md text-on-surface mb-4 leading-relaxed">
+                            "And He found you lost and guided [you]." (93:7) Reflecting on this ayah today brought immense peace. The path isn't always clear, but the intention to seek it is what matters. Feeling grateful for quiet moments of clarity.
+                        </p>
+<div class="flex justify-end gap-2">
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-sm">share</span>
+</button>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-sm">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden bg-surface/70 dark:bg-surface/70 backdrop-blur-xl fixed bottom-base left-base right-base rounded-full z-50 border border-outline-variant/30 dark:border-outline-variant/30 shadow-xl flex justify-around items-center h-16 w-[calc(100%-40px)] mx-auto px-xs">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-xs py-1 hover:opacity-80 interactive-scale" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-xs py-1 hover:opacity-80 interactive-scale" href="#">
+<span class="material-symbols-outlined">settings_accessibility</span>
+<span class="font-label-sm text-label-sm mt-1">Prayer</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-xs py-1 hover:opacity-80 interactive-scale" href="#">
+<span class="material-symbols-outlined">auto_stories</span>
+<span class="font-label-sm text-label-sm mt-1">Quran</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-xs py-1 hover:opacity-80 interactive-scale" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-label-sm text-label-sm mt-1">Knowledge</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container/50 dark:bg-secondary-container/50 text-primary dark:text-primary rounded-full px-xs py-1 transition-all duration-220 interactive-scale" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</a>
+</nav>
+<!-- Side Nav / Web Header Links (Hidden on mobile) -->
+<nav class="hidden md:flex fixed top-0 right-md h-16 items-center gap-md z-50 text-on-surface-variant">
+<a class="hover:text-primary transition-colors font-label-md text-label-md px-sm py-xs" href="#">Home</a>
+<a class="hover:text-primary transition-colors font-label-md text-label-md px-sm py-xs" href="#">Prayer</a>
+<a class="hover:text-primary transition-colors font-label-md text-label-md px-sm py-xs" href="#">Quran</a>
+<a class="hover:text-primary transition-colors font-label-md text-label-md px-sm py-xs" href="#">Knowledge</a>
+<a class="text-primary font-label-md text-label-md px-sm py-xs border-b-2 border-primary" href="#">Profile</a>
+</nav>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Trigger progress bar animations
+            setTimeout(() => {
+                const progressBars = document.querySelectorAll('.progress-bar-fill');
+                progressBars.forEach(bar => {
+                    const targetWidth = bar.getAttribute('data-target');
+                    if (targetWidth) {
+                        bar.style.width = targetWidth;
+                    }
+                });
+
+                // Trigger milestone fades
+                const milestones = document.querySelectorAll('.milestone-fade');
+                milestones.forEach((el, index) => {
+                    setTimeout(() => {
+                        el.style.opacity = '1';
+                    }, 100 + (index * 150));
+                });
+            }, 300); // slight delay after screen entry
+        });
+    </script>
+</body></html>

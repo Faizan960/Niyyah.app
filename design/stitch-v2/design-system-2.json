@@ -1,0 +1,141 @@
+{
+  "displayName": "Premium Spiritual Editorial",
+  "styleGuidelines": "## Brand & Style\n\nThis design system is built upon the concept of \"Digital Sanctuary.\" It prioritizes spiritual calm and mental clarity by merging the disciplined structure of Swiss Editorial design with the organic warmth of luxury journals. The aesthetic is inspired by the tactile quality of high-end paper and the minimalist functionalism of Muji.\n\nThe emotional response should be one of immediate tranquility—as if the user is opening a beautifully bound book. The interface uses generous whitespace not as empty space, but as \"breathing room\" for reflection. The style is **Minimalist-Premium**, avoiding heavy shadows or unnecessary decoration in favor of exquisite typography and a sophisticated, earth-toned palette.\n\n## Layout & Spacing\n\nThe layout follows a **Fixed-Fluid hybrid** model. On mobile, a standard 4-column grid with 24px side margins is used. For larger screens, content is constrained to a central \"reading lane\" to maintain line-length legibility, typical of editorial journals.\n\nThe spacing rhythm is governed by a strict **8pt grid**. Vertical rhythm is the priority; spacing between sections should be generous (40px+) to distinguish different \"thoughts\" or \"modules.\" Horizontal alignment should follow the \"Swiss\" method—aligning text and elements to a strong vertical axis to create an invisible sense of order.\n\n## Elevation & Depth\n\nIn alignment with the \"Paper\" metaphor, this design system avoids heavy drop shadows. Depth is communicated through **Tonal Layering** and **Subtle Outlines**.\n\n- **Level 0 (Background):** #F7F6F3. The canvas.\n- **Level 1 (Cards):** White (#FFFFFF) with a 1px solid border (#E7E2DA). No shadow.\n- **Level 2 (Active/Elevated):** #FCFBF9 with a very soft, diffused 10% opacity navy shadow (Blur: 20px, Y: 4px).\n- **Navigation:** The bottom navigation uses a **Glassmorphism Capsule**. It features a 20px backdrop blur, a semi-transparent white fill (80% opacity), and a thin white inner-border to create a \"floating\" effect over the content.\n\n## Components\n\n### Buttons\n- **Primary:** Deep Navy (#1E2D4C) background with White text. 16px radius. No shadow.\n- **Secondary:** Warm Stone (#CEC0BB) or Sage (#ACBDAA) at 15% opacity with primary navy text.\n- **Tertiary/Ghost:** Text only in Navy, with a 1px bottom border appearing only on hover/active states.\n\n### Chips\n- Used for categories or tags. 12px radius. Secondary background (#F2F0EC) with Text Secondary (#666666).\n\n### Input Fields\n- Subtle #FFFFFF background with an #E7E2DA border. On focus, the border transitions to Primary Navy. Labels are always Label-MD (Uppercase) positioned above the field.\n\n### Cards\n- **Editorial Card:** Large serif title, generous internal padding (24px), white surface, 1px border.\n- **Action Card:** Smaller, used for daily tasks (Prayers, Dhikr). Uses a checkbox on the right.\n\n### Navigation\n- A floating capsule at the bottom. Icons are **Material Symbols (Rounded)**. When a tab is active, the icon fills and a small Gold (#D4A84F) dot appears underneath.\n\n### Bottom Sheets\n- 28px top-corner radius. Uses a 4px thick \"handle\" at the top in #E7E2DA. Background is Elevated (#FCFBF9).",
+  "theme": {
+    "bodyFont": "HANKEN_GROTESK",
+    "bodyFontFamily": "Hanken Grotesk",
+    "colorMode": "LIGHT",
+    "colorVariant": "FIDELITY",
+    "customColor": "#1e2d4c",
+    "designMd": "---\nname: Premium Spiritual Editorial\ncolors:\n  surface: '#fcf9f8'\n  surface-dim: '#dcd9d9'\n  surface-bright: '#fcf9f8'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f6f3f2'\n  surface-container: '#f0edec'\n  surface-container-high: '#ebe7e7'\n  surface-container-highest: '#e5e2e1'\n  on-surface: '#1c1b1b'\n  on-surface-variant: '#45474e'\n  inverse-surface: '#313030'\n  inverse-on-surface: '#f3f0ef'\n  outline: '#75777e'\n  outline-variant: '#c5c6ce'\n  surface-tint: '#4f5e80'\n  primary: '#071836'\n  on-primary: '#ffffff'\n  primary-container: '#1e2d4c'\n  on-primary-container: '#8695b9'\n  inverse-primary: '#b7c6ed'\n  secondary: '#006c4f'\n  on-secondary: '#ffffff'\n  secondary-container: '#8bf7cb'\n  on-secondary-container: '#007354'\n  tertiary: '#231700'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#3d2a00'\n  on-tertiary-container: '#b88e38'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#d8e2ff'\n  primary-fixed-dim: '#b7c6ed'\n  on-primary-fixed: '#0a1b39'\n  on-primary-fixed-variant: '#384667'\n  secondary-fixed: '#8bf7cb'\n  secondary-fixed-dim: '#6fdab0'\n  on-secondary-fixed: '#002115'\n  on-secondary-fixed-variant: '#00513a'\n  tertiary-fixed: '#ffdea4'\n  tertiary-fixed-dim: '#eec064'\n  on-tertiary-fixed: '#261900'\n  on-tertiary-fixed-variant: '#5d4200'\n  background: '#fcf9f8'\n  on-background: '#1c1b1b'\n  surface-variant: '#e5e2e1'\ntypography:\n  display-lg:\n    fontFamily: EB Garamond\n    fontSize: 48px\n    fontWeight: '500'\n    lineHeight: 56px\n    letterSpacing: -0.02em\n  display-md:\n    fontFamily: EB Garamond\n    fontSize: 36px\n    fontWeight: '500'\n    lineHeight: 44px\n    letterSpacing: -0.01em\n  headline-lg:\n    fontFamily: EB Garamond\n    fontSize: 32px\n    fontWeight: '500'\n    lineHeight: 40px\n  headline-lg-mobile:\n    fontFamily: EB Garamond\n    fontSize: 28px\n    fontWeight: '500'\n    lineHeight: 36px\n  headline-md:\n    fontFamily: EB Garamond\n    fontSize: 24px\n    fontWeight: '500'\n    lineHeight: 32px\n  body-lg:\n    fontFamily: Hanken Grotesk\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: 28px\n  body-md:\n    fontFamily: Hanken Grotesk\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  label-md:\n    fontFamily: Hanken Grotesk\n    fontSize: 14px\n    fontWeight: '600'\n    lineHeight: 20px\n    letterSpacing: 0.05em\n  label-sm:\n    fontFamily: Hanken Grotesk\n    fontSize: 12px\n    fontWeight: '500'\n    lineHeight: 16px\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  unit: 8px\n  container-padding-mobile: 24px\n  container-padding-desktop: 48px\n  gutter: 16px\n  section-gap: 40px\n  stack-sm: 8px\n  stack-md: 16px\n  stack-lg: 24px\n---\n\n## Brand & Style\n\nThis design system is built upon the concept of \"Digital Sanctuary.\" It prioritizes spiritual calm and mental clarity by merging the disciplined structure of Swiss Editorial design with the organic warmth of luxury journals. The aesthetic is inspired by the tactile quality of high-end paper and the minimalist functionalism of Muji.\n\nThe emotional response should be one of immediate tranquility—as if the user is opening a beautifully bound book. The interface uses generous whitespace not as empty space, but as \"breathing room\" for reflection. The style is **Minimalist-Premium**, avoiding heavy shadows or unnecessary decoration in favor of exquisite typography and a sophisticated, earth-toned palette.\n\n## Colors\n\nThe color strategy uses a \"Paper and Ink\" philosophy. The primary background (#F7F6F3) is a warm, desaturated off-white that reduces eye strain compared to pure white, mimicking high-quality cream paper. \n\n- **Primary Navy:** Used for brand authority and core navigation.\n- **Emerald:** Reserved strictly for success states and worship-related progress (Zakat, Salah, Quran completion).\n- **Gold:** A delicate accent for \"Divine\" moments, premium features, or highlighting sacred text.\n- **Sage & Stone:** Used for secondary categorizations and subtle UI elements to maintain a grounded, natural feel.\n- **Dark Mode:** When active, the palette shifts to a deep obsidian and charcoal base, maintaining the same contrast ratios to ensure the editorial feel remains intact without the glare.\n\n## Typography\n\nThis system employs a classic serif/sans-serif pairing to achieve an editorial rhythm. \n\n- **EB Garamond** is the voice of the app. It is used for large display titles, quotes, and chapter headings. It should be set with tighter tracking for large sizes and generous leading to allow the \"literary\" feel to emerge.\n- **Hanken Grotesk** provides a functional, modern counterpoint. It is used for all body copy, UI controls, and metadata. Its geometric but soft nature ensures clarity even at small sizes.\n- **Hierarchical Contrast:** Use large size differentials between titles and body text to create a clear entry point for the eye, mimicking the layout of a premium magazine.\n\n## Layout & Spacing\n\nThe layout follows a **Fixed-Fluid hybrid** model. On mobile, a standard 4-column grid with 24px side margins is used. For larger screens, content is constrained to a central \"reading lane\" to maintain line-length legibility, typical of editorial journals.\n\nThe spacing rhythm is governed by a strict **8pt grid**. Vertical rhythm is the priority; spacing between sections should be generous (40px+) to distinguish different \"thoughts\" or \"modules.\" Horizontal alignment should follow the \"Swiss\" method—aligning text and elements to a strong vertical axis to create an invisible sense of order.\n\n## Elevation & Depth\n\nIn alignment with the \"Paper\" metaphor, this design system avoids heavy drop shadows. Depth is communicated through **Tonal Layering** and **Subtle Outlines**.\n\n- **Level 0 (Background):** #F7F6F3. The canvas.\n- **Level 1 (Cards):** White (#FFFFFF) with a 1px solid border (#E7E2DA). No shadow.\n- **Level 2 (Active/Elevated):** #FCFBF9 with a very soft, diffused 10% opacity navy shadow (Blur: 20px, Y: 4px).\n- **Navigation:** The bottom navigation uses a **Glassmorphism Capsule**. It features a 20px backdrop blur, a semi-transparent white fill (80% opacity), and a thin white inner-border to create a \"floating\" effect over the content.\n\n## Shapes\n\nThe shape language is purposefully soft and welcoming, contrasting with the rigid grid. \n\n- **Cards:** Use a 24px radius to feel substantial and modern.\n- **Hero Elements:** Use a 32px radius to create a focal point that feels \"held.\"\n- **Interactive Elements:** Buttons use a 16px radius, providing enough roundness to feel approachable but distinct from the \"pill\" shapes of chips (12px).\n- **Images:** Should always follow the container's corner radius. Use a subtle inner-stroke of 1px (10% Black) to define the edges of photography.\n\n## Components\n\n### Buttons\n- **Primary:** Deep Navy (#1E2D4C) background with White text. 16px radius. No shadow.\n- **Secondary:** Warm Stone (#CEC0BB) or Sage (#ACBDAA) at 15% opacity with primary navy text.\n- **Tertiary/Ghost:** Text only in Navy, with a 1px bottom border appearing only on hover/active states.\n\n### Chips\n- Used for categories or tags. 12px radius. Secondary background (#F2F0EC) with Text Secondary (#666666).\n\n### Input Fields\n- Subtle #FFFFFF background with an #E7E2DA border. On focus, the border transitions to Primary Navy. Labels are always Label-MD (Uppercase) positioned above the field.\n\n### Cards\n- **Editorial Card:** Large serif title, generous internal padding (24px), white surface, 1px border.\n- **Action Card:** Smaller, used for daily tasks (Prayers, Dhikr). Uses a checkbox on the right.\n\n### Navigation\n- A floating capsule at the bottom. Icons are **Material Symbols (Rounded)**. When a tab is active, the icon fills and a small Gold (#D4A84F) dot appears underneath.\n\n### Bottom Sheets\n- 28px top-corner radius. Uses a 4px thick \"handle\" at the top in #E7E2DA. Background is Elevated (#FCFBF9).",
+    "font": "EB_GARAMOND",
+    "headlineFont": "EB_GARAMOND",
+    "headlineFontFamily": "Eb Garamond",
+    "labelFont": "HANKEN_GROTESK",
+    "labelFontFamily": "Hanken Grotesk",
+    "namedColors": {
+      "background": "#fcf9f8",
+      "error": "#ba1a1a",
+      "error_container": "#ffdad6",
+      "inverse_on_surface": "#f3f0ef",
+      "inverse_primary": "#b7c6ed",
+      "inverse_surface": "#313030",
+      "on_background": "#1c1b1b",
+      "on_error": "#ffffff",
+      "on_error_container": "#93000a",
+      "on_primary": "#ffffff",
+      "on_primary_container": "#8695b9",
+      "on_primary_fixed": "#0a1b39",
+      "on_primary_fixed_variant": "#384667",
+      "on_secondary": "#ffffff",
+      "on_secondary_container": "#007354",
+      "on_secondary_fixed": "#002115",
+      "on_secondary_fixed_variant": "#00513a",
+      "on_surface": "#1c1b1b",
+      "on_surface_variant": "#45474e",
+      "on_tertiary": "#ffffff",
+      "on_tertiary_container": "#b88e38",
+      "on_tertiary_fixed": "#261900",
+      "on_tertiary_fixed_variant": "#5d4200",
+      "outline": "#75777e",
+      "outline_variant": "#c5c6ce",
+      "primary": "#071836",
+      "primary_container": "#1e2d4c",
+      "primary_fixed": "#d8e2ff",
+      "primary_fixed_dim": "#b7c6ed",
+      "secondary": "#006c4f",
+      "secondary_container": "#8bf7cb",
+      "secondary_fixed": "#8bf7cb",
+      "secondary_fixed_dim": "#6fdab0",
+      "surface": "#fcf9f8",
+      "surface_bright": "#fcf9f8",
+      "surface_container": "#f0edec",
+      "surface_container_high": "#ebe7e7",
+      "surface_container_highest": "#e5e2e1",
+      "surface_container_low": "#f6f3f2",
+      "surface_container_lowest": "#ffffff",
+      "surface_dim": "#dcd9d9",
+      "surface_tint": "#4f5e80",
+      "surface_variant": "#e5e2e1",
+      "tertiary": "#231700",
+      "tertiary_container": "#3d2a00",
+      "tertiary_fixed": "#ffdea4",
+      "tertiary_fixed_dim": "#eec064"
+    },
+    "overrideNeutralColor": "#111111",
+    "overridePrimaryColor": "#1e2d4c",
+    "overrideSecondaryColor": "#0f8f6a",
+    "overrideTertiaryColor": "#d4a84f",
+    "roundness": "ROUND_EIGHT",
+    "spacing": {
+      "container-padding-desktop": "48px",
+      "container-padding-mobile": "24px",
+      "gutter": "16px",
+      "section-gap": "40px",
+      "stack-lg": "24px",
+      "stack-md": "16px",
+      "stack-sm": "8px",
+      "unit": "8px"
+    },
+    "spacingScale": 2,
+    "typography": {
+      "body-lg": {
+        "fontFamily": "Hanken Grotesk",
+        "fontSize": "18px",
+        "fontWeight": "400",
+        "lineHeight": "28px"
+      },
+      "body-md": {
+        "fontFamily": "Hanken Grotesk",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "24px"
+      },
+      "display-lg": {
+        "fontFamily": "EB Garamond",
+        "fontSize": "48px",
+        "fontWeight": "500",
+        "letterSpacing": "-0.02em",
+        "lineHeight": "56px"
+      },
+      "display-md": {
+        "fontFamily": "EB Garamond",
+        "fontSize": "36px",
+        "fontWeight": "500",
+        "letterSpacing": "-0.01em",
+        "lineHeight": "44px"
+      },
+      "headline-lg": {
+        "fontFamily": "EB Garamond",
+        "fontSize": "32px",
+        "fontWeight": "500",
+        "lineHeight": "40px"
+      },
+      "headline-lg-mobile": {
+        "fontFamily": "EB Garamond",
+        "fontSize": "28px",
+        "fontWeight": "500",
+        "lineHeight": "36px"
+      },
+      "headline-md": {
+        "fontFamily": "EB Garamond",
+        "fontSize": "24px",
+        "fontWeight": "500",
+        "lineHeight": "32px"
+      },
+      "label-md": {
+        "fontFamily": "Hanken Grotesk",
+        "fontSize": "14px",
+        "fontWeight": "600",
+        "letterSpacing": "0.05em",
+        "lineHeight": "20px"
+      },
+      "label-sm": {
+        "fontFamily": "Hanken Grotesk",
+        "fontSize": "12px",
+        "fontWeight": "500",
+        "lineHeight": "16px"
+      }
+    }
+  }
+}

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Prayer Times - Niyyah</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-on-surface": "#2b322e",
+                        "on-primary-container": "#003222",
+                        "surface-container-high": "#252b28",
+                        "on-tertiary": "#412d00",
+                        "surface-container-highest": "#303632",
+                        "on-secondary": "#193057",
+                        "tertiary-fixed": "#ffdea4",
+                        "surface-dim": "#0f1512",
+                        "surface-tint": "#61dcac",
+                        "outline": "#86948c",
+                        "on-primary": "#003827",
+                        "tertiary-container": "#b58c36",
+                        "on-surface": "#dee4de",
+                        "surface-bright": "#343b37",
+                        "on-secondary-fixed": "#001a41",
+                        "inverse-primary": "#006c4d",
+                        "surface": "#0f1512",
+                        "secondary": "#b1c7f7",
+                        "background": "#0B0F10",
+                        "primary": "#61dcac",
+                        "surface-container-low": "#171d1a",
+                        "on-secondary-container": "#a0b5e4",
+                        "outline-variant": "#3d4a43",
+                        "on-tertiary-container": "#3a2800",
+                        "surface-container": "#1b211e",
+                        "primary-container": "#18a67a",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed": "#261900",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#31466f",
+                        "inverse-surface": "#dee4de",
+                        "on-error": "#690005",
+                        "surface-container-lowest": "#090f0c",
+                        "secondary-container": "#31466f",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#b1c7f7",
+                        "tertiary-fixed-dim": "#eec064",
+                        "primary-fixed": "#7ff9c7",
+                        "on-primary-fixed-variant": "#005139",
+                        "on-primary-fixed": "#002115",
+                        "on-surface-variant": "#bccac1",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-background": "#dee4de",
+                        "primary-fixed-dim": "#61dcac",
+                        "surface-variant": "#303632",
+                        "on-tertiary-fixed-variant": "#5d4200",
+                        "tertiary": "#eec064"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "lg": "24px",
+                        "xl": "32px",
+                        "base": "20px",
+                        "sm": "12px",
+                        "xs": "8px",
+                        "xxl": "40px",
+                        "huge": "48px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["EB Garamond", "serif"],
+                        "label-sm": ["Inter", "sans-serif"],
+                        "display-lg": ["EB Garamond", "serif"],
+                        "headline-lg": ["EB Garamond", "serif"],
+                        "display-lg-mobile": ["EB Garamond", "serif"],
+                        "body-lg": ["EB Garamond", "serif"],
+                        "headline-xl": ["EB Garamond", "serif"],
+                        "label-md": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.03em", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "500" }],
+                        "display-lg-mobile": ["36px", { "lineHeight": "42px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "body-lg": ["20px", { "lineHeight": "32px", "fontWeight": "400" }],
+                        "headline-xl": ["32px", { "lineHeight": "40px", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0B0F10; /* Fixed Background as per spec */
+        }
+        .prayer-item {
+            opacity: 0;
+            transform: translateY(12px);
+            animation: slideUpFade 300ms cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+        }
+        @keyframes slideUpFade {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .card-surface {
+            background-color: #151B1C;
+            border: 1px solid #2A3335;
+        }
+        .elevated-surface {
+            background-color: #232E31;
+        }
+        .glass-nav {
+            background-color: rgba(11, 15, 16, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 0.5px solid #2A3335;
+            border-left: 0.5px solid #2A3335;
+            border-right: 0.5px solid #2A3335;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface antialiased min-h-screen flex flex-col md:hidden pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant transition-transform duration-120 ease-out flex items-center justify-between px-md h-16">
+<button class="text-on-surface-variant hover:bg-surface-container-high rounded-full p-2 transition-colors">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary dark:text-primary tracking-tight font-bold">NIYYAH</h1>
+<button class="text-on-surface-variant hover:bg-surface-container-high rounded-full p-2 transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="flex-1 mt-16 px-base pt-lg">
+<!-- Location Header -->
+<div class="flex items-center justify-center space-x-2 mb-lg">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">LONDON, UK</span>
+</div>
+<!-- Next Prayer Hero Card -->
+<section class="card-surface rounded-xl p-lg mb-xl text-center relative overflow-hidden group hover:scale-[0.98] transition-transform duration-120 ease-out cursor-pointer">
+<!-- Subtle gradient overlay -->
+<div class="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-sm">Next Prayer</p>
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-on-surface mb-2">Dhuhr</h2>
+<div class="flex items-end justify-center space-x-1 mb-md">
+<span class="font-headline-xl text-headline-xl text-primary">12:45</span>
+<span class="font-label-md text-label-md text-primary pb-1">PM</span>
+</div>
+<div class="elevated-surface rounded-lg px-4 py-2 inline-block">
+<p class="font-label-sm text-label-sm text-on-surface-variant flex items-center">
+<span class="material-symbols-outlined text-xs mr-1">schedule</span>
+                    Time remaining: <span class="text-on-surface ml-1 font-mono" id="countdown">01:15:30</span>
+</p>
+</div>
+</section>
+<!-- Timeline / Daily Progress -->
+<div class="mb-lg px-2">
+<div class="flex justify-between items-center mb-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Daily Progress</span>
+<span class="font-label-sm text-label-sm text-primary">2/5 Completed</span>
+</div>
+<div class="h-1 bg-surface-container w-full rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full w-2/5 transition-all duration-500 ease-out"></div>
+</div>
+</div>
+<!-- Prayer List -->
+<div class="space-y-sm" id="prayer-list">
+<!-- Fajr (Completed) -->
+<div class="prayer-item card-surface rounded-xl p-md flex items-center justify-between" style="animation-delay: 20ms;">
+<div class="flex items-center space-x-md">
+<button class="w-8 h-8 rounded-full border border-primary bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">check</span>
+</button>
+<div>
+<h3 class="font-body-lg text-body-lg text-on-surface-variant">Fajr</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant/70">Jamaat: 06:00 AM</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-body-md text-body-md text-on-surface-variant">05:30</span>
+</div>
+</div>
+<!-- Sunrise -->
+<div class="prayer-item rounded-xl p-md flex items-center justify-between opacity-50" style="animation-delay: 40ms;">
+<div class="flex items-center space-x-md pl-10">
+<div>
+<h3 class="font-body-md text-body-md text-on-surface-variant">Sunrise</h3>
+</div>
+</div>
+<div class="text-right">
+<span class="font-body-md text-body-md text-on-surface-variant">07:15</span>
+</div>
+</div>
+<!-- Dhuhr (Next) -->
+<div class="prayer-item elevated-surface border border-primary/30 rounded-xl p-md flex items-center justify-between relative overflow-hidden" style="animation-delay: 60ms;">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="flex items-center space-x-md">
+<button class="w-8 h-8 rounded-full border border-outline-variant hover:border-primary transition-colors flex items-center justify-center group">
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary text-sm opacity-0 group-hover:opacity-100 transition-opacity">check</span>
+</button>
+<div>
+<h3 class="font-body-lg text-body-lg text-on-surface">Dhuhr</h3>
+<p class="font-label-sm text-label-sm text-primary">Jamaat: 01:00 PM</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-body-md text-body-md text-on-surface">12:45 PM</span>
+</div>
+</div>
+<!-- Asr -->
+<div class="prayer-item card-surface rounded-xl p-md flex items-center justify-between" style="animation-delay: 80ms;">
+<div class="flex items-center space-x-md">
+<button class="w-8 h-8 rounded-full border border-outline-variant hover:border-primary transition-colors flex items-center justify-center group">
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary text-sm opacity-0 group-hover:opacity-100 transition-opacity">check</span>
+</button>
+<div>
+<h3 class="font-body-lg text-body-lg text-on-surface">Asr</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant/70">Jamaat: 04:30 PM</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-body-md text-body-md text-on-surface">04:00 PM</span>
+</div>
+</div>
+<!-- Maghrib -->
+<div class="prayer-item card-surface rounded-xl p-md flex items-center justify-between" style="animation-delay: 100ms;">
+<div class="flex items-center space-x-md">
+<button class="w-8 h-8 rounded-full border border-outline-variant hover:border-primary transition-colors flex items-center justify-center group">
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary text-sm opacity-0 group-hover:opacity-100 transition-opacity">check</span>
+</button>
+<div>
+<h3 class="font-body-lg text-body-lg text-on-surface">Maghrib</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant/70">Jamaat: 06:45 PM</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-body-md text-body-md text-on-surface">06:30 PM</span>
+</div>
+</div>
+<!-- Isha -->
+<div class="prayer-item card-surface rounded-xl p-md flex items-center justify-between mb-xl" style="animation-delay: 120ms;">
+<div class="flex items-center space-x-md">
+<button class="w-8 h-8 rounded-full border border-outline-variant hover:border-primary transition-colors flex items-center justify-center group">
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary text-sm opacity-0 group-hover:opacity-100 transition-opacity">check</span>
+</button>
+<div>
+<h3 class="font-body-lg text-body-lg text-on-surface">Isha</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant/70">Jamaat: 08:30 PM</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-body-md text-body-md text-on-surface">08:00 PM</span>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-base left-base right-base rounded-full z-50 shadow-xl glass-nav flex justify-around items-center h-16 w-[calc(100%-40px)] mx-auto px-xs">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-xs py-1 hover:opacity-80 transition-all duration-220 hover:scale-[0.98] active:scale-95 ease-out" href="#">
+<span class="material-symbols-outlined mb-1 text-[20px]" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm text-[10px]">Home</span>
+</a>
+<!-- Active state for Prayer -->
+<a class="flex flex-col items-center justify-center bg-secondary-container/50 dark:bg-secondary-container/50 text-primary dark:text-primary rounded-full px-sm py-1 transition-all duration-220 scale-[0.98] ease-out shadow-sm" href="#">
+<span class="material-symbols-outlined mb-1 text-[20px]" data-icon="settings_accessibility" style="font-variation-settings: 'FILL' 1;">settings_accessibility</span>
+<span class="font-label-sm text-label-sm text-[10px] font-semibold">Prayer</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-xs py-1 hover:opacity-80 transition-all duration-220 hover:scale-[0.98] active:scale-95 ease-out" href="#">
+<span class="material-symbols-outlined mb-1 text-[20px]" data-icon="auto_stories">auto_stories</span>
+<span class="font-label-sm text-label-sm text-[10px]">Quran</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-xs py-1 hover:opacity-80 transition-all duration-220 hover:scale-[0.98] active:scale-95 ease-out" href="#">
+<span class="material-symbols-outlined mb-1 text-[20px]" data-icon="menu_book">menu_book</span>
+<span class="font-label-sm text-label-sm text-[10px]">Knowledge</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-xs py-1 hover:opacity-80 transition-all duration-220 hover:scale-[0.98] active:scale-95 ease-out" href="#">
+<span class="material-symbols-outlined mb-1 text-[20px]" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm text-[10px]">Profile</span>
+</a>
+</nav>
+<script>
+        // Simple countdown logic for visual effect
+        document.addEventListener('DOMContentLoaded', () => {
+            const countdownEl = document.getElementById('countdown');
+            let time = 1 * 3600 + 15 * 60 + 30; // 1:15:30 in seconds
+
+            setInterval(() => {
+                if (time > 0) {
+                    time--;
+                    const h = Math.floor(time / 3600).toString().padStart(2, '0');
+                    const m = Math.floor((time % 3600) / 60).toString().padStart(2, '0');
+                    const s = (time % 60).toString().padStart(2, '0');
+                    countdownEl.textContent = `${h}:${m}:${s}`;
+                }
+            }, 1000);
+        });
+    </script>
+</body></html>

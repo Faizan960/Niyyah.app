@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Knowledge</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-on-surface": "#2b322e",
+                      "on-primary-container": "#003222",
+                      "surface-container-high": "#252b28",
+                      "on-tertiary": "#412d00",
+                      "surface-container-highest": "#303632",
+                      "on-secondary": "#193057",
+                      "tertiary-fixed": "#ffdea4",
+                      "surface-dim": "#0f1512",
+                      "surface-tint": "#61dcac",
+                      "outline": "#86948c",
+                      "on-primary": "#003827",
+                      "tertiary-container": "#b58c36",
+                      "on-surface": "#dee4de",
+                      "surface-bright": "#343b37",
+                      "on-secondary-fixed": "#001a41",
+                      "inverse-primary": "#006c4d",
+                      "surface": "#0f1512",
+                      "secondary": "#b1c7f7",
+                      "background": "#0f1512",
+                      "primary": "#61dcac",
+                      "surface-container-low": "#171d1a",
+                      "on-secondary-container": "#a0b5e4",
+                      "outline-variant": "#3d4a43",
+                      "on-tertiary-container": "#3a2800",
+                      "surface-container": "#1b211e",
+                      "primary-container": "#18a67a",
+                      "error": "#ffb4ab",
+                      "on-tertiary-fixed": "#261900",
+                      "error-container": "#93000a",
+                      "on-secondary-fixed-variant": "#31466f",
+                      "inverse-surface": "#dee4de",
+                      "on-error": "#690005",
+                      "surface-container-lowest": "#090f0c",
+                      "secondary-container": "#31466f",
+                      "on-error-container": "#ffdad6",
+                      "secondary-fixed-dim": "#b1c7f7",
+                      "tertiary-fixed-dim": "#eec064",
+                      "primary-fixed": "#7ff9c7",
+                      "on-primary-fixed-variant": "#005139",
+                      "on-primary-fixed": "#002115",
+                      "on-surface-variant": "#bccac1",
+                      "secondary-fixed": "#d8e2ff",
+                      "on-background": "#dee4de",
+                      "primary-fixed-dim": "#61dcac",
+                      "surface-variant": "#303632",
+                      "on-tertiary-fixed-variant": "#5d4200",
+                      "tertiary": "#eec064"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "md": "16px",
+                      "lg": "24px",
+                      "xl": "32px",
+                      "base": "20px",
+                      "sm": "12px",
+                      "xs": "8px",
+                      "xxl": "40px",
+                      "huge": "48px"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "EB Garamond"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "EB Garamond"
+                      ],
+                      "headline-lg": [
+                              "EB Garamond"
+                      ],
+                      "display-lg-mobile": [
+                              "EB Garamond"
+                      ],
+                      "body-lg": [
+                              "EB Garamond"
+                      ],
+                      "headline-xl": [
+                              "EB Garamond"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.03em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "36px",
+                              {
+                                      "lineHeight": "42px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "20px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-xl": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0B0F10; /* Fixed Base */
+            color: #dee4de;
+        }
+        .bg-surface-card {
+            background-color: #151B1C; /* Level 1 */
+        }
+        .bg-surface-modal {
+            background-color: #232E31; /* Level 2 */
+        }
+        .glass-nav {
+            background-color: rgba(11, 15, 16, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 0.5px solid #2A3335; /* or outline-variant/30 */
+        }
+        .border-subtle {
+            border-color: #2A3335;
+        }
+        
+        /* Shimmer Loading */
+        .shimmer {
+            background: linear-gradient(90deg, #151B1C 0%, #232E31 50%, #151B1C 100%);
+            background-size: 200% 100%;
+            animation: shimmer-anim 1.5s infinite linear;
+        }
+        @keyframes shimmer-anim {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Screen Entry Motion */
+        .screen-entry {
+            animation: slideUpFade 300ms cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        @keyframes slideUpFade {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Interaction Scale */
+        .interactive:active {
+            transform: scale(0.98);
+            transition: transform 120ms ease-out;
+        }
+        .interactive {
+            transition: transform 120ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out;
+        }
+
+        /* Input Focus */
+        .input-custom:focus {
+            border-color: #18A67A !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased font-body-md text-body-md">
+<!-- Top App Bar (Hidden on Mobile per layout rules if BottomNav is present, but requested to render shell logic based on JSON. Since it's a destination screen, render both for responsive pivot) -->
+<header class="hidden md:flex fixed top-0 w-full z-50 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant items-center justify-between px-md h-16">
+<button class="interactive text-primary dark:text-primary p-2">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-headline-lg text-headline-lg font-bold text-primary dark:text-primary tracking-tight">NIYYAH</h1>
+<button class="interactive text-primary dark:text-primary p-2">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<!-- Mobile Header Fallback (Since TopAppBar responsive pivot says hidden md:flex for full nav, but TopAppBar JSON exists. Let's just render the simple text for mobile) -->
+<header class="md:hidden flex items-center justify-between px-md h-16 fixed top-0 w-full z-50 glass-nav border-b-0">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary tracking-tight">NIYYAH</h1>
+</header>
+<!-- Main Canvas -->
+<main class="screen-entry pt-[80px] pb-[100px] md:pt-[100px] md:pb-[120px] px-base md:px-[80px] max-w-7xl mx-auto space-y-xl md:space-y-xxl">
+<!-- Header & Search -->
+<section class="space-y-md">
+<div>
+<h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface">Knowledge</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Explore the depths of Islamic heritage</p>
+</div>
+<div class="relative w-full md:w-2/3 lg:w-1/2">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-[#12181A] border border-subtle rounded-lg py-sm pl-[44px] pr-md text-on-surface placeholder:text-[#808080] input-custom interactive font-label-md text-label-md h-12" placeholder="Search books, authors, topics..." type="text"/>
+</div>
+</section>
+<!-- Featured Collection (Golden Age) - Bento Layout -->
+<section class="space-y-md">
+<div class="flex justify-between items-end">
+<h3 class="font-headline-xl text-headline-xl text-on-surface">Golden Age Collection</h3>
+<button class="interactive text-tertiary font-label-md text-label-md flex items-center gap-xs">
+                    View all <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md md:gap-lg">
+<!-- Main Feature Card -->
+<div class="md:col-span-2 relative h-[300px] md:h-[400px] rounded-xl overflow-hidden interactive group cursor-pointer border border-subtle">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="An atmospheric, cinematic shot of ancient Arabic manuscripts illuminated by soft, golden light filtering through a dusty window in a grand historical library. Deep charcoal shadows contrast with the warm, glowing #D4A84F accents of the aged paper and gold leaf details. The scene feels profound, serene, and historically significant, perfectly fitting a dark-mode, premium Islamic knowledge app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuACNqpcM253OB9ut-Bbda5Wvvz1MceMlYrdcPk8OXFaj-NoqOxBpGu88uPqHfkYpbpEImakx40wPfuiBJ3RiTR9Klto2ahKGwFRIaHjZbZ4xeBHXI0h4QGBQTw9j0lvGUW8lO0RkG4GjjCipBx8oNzhk5j0tSBnx6Uf4WF4cxn0tYhCPVrIdVeJfyCMLIPUSBtMS8mfMfOYW1NWYzk3Rp0uNfFW4CVTPtPAKZjcBosZVCI0Q3CMD9qu77e-dlTSxC7QBsoBbRWbxA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#0B0F10] via-[#0B0F10]/50 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-lg w-full">
+<span class="inline-block px-sm py-1 bg-surface-modal rounded text-tertiary font-label-sm text-label-sm mb-sm border border-subtle">Featured</span>
+<h4 class="font-headline-xl text-headline-xl text-on-surface mb-xs">The Canon of Medicine</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md max-w-md line-clamp-2">Ibn Sina's monumental encyclopedia of medicine, setting standards for centuries.</p>
+<button class="interactive bg-primary-container text-[#F5F5F5] font-label-md text-label-md px-lg py-sm rounded flex items-center gap-xs w-fit">
+<span class="material-symbols-outlined text-[18px]">menu_book</span> Start Reading
+                        </button>
+</div>
+</div>
+<!-- Secondary Features Stack -->
+<div class="flex flex-col gap-md md:gap-lg h-[300px] md:h-[400px]">
+<div class="flex-1 relative rounded-xl overflow-hidden interactive group cursor-pointer border border-subtle bg-surface-card p-md flex flex-col justify-end">
+<div class="absolute inset-0 opacity-20 bg-[url('placeholder')]" data-alt="Subtle, abstract geometric Islamic patterns overlaying a dark charcoal background. The patterns catch dim, warm #D4A84F light, creating a sense of depth and luxury without distracting from foreground content. The mood is minimalist, serene, and premium." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBIqDPNSYhZe_g65e1HG7ntBdg9h2uzqALZdZzWjF_rX2Da4W7IjSCMvOLgnK8GiN6QTCN7bO5DSKBxzSPKwvKg-T_PB0m8L2221NMPCKezOUSNuJVG8LActQ8p589v34_amblciUxbJR3yJSy_qA9dDkrhkmG-INPe9S1NfChhYfLlNnQ05CBDXlKcTe0nQXxTgOw03HMEEPkR2oOS_eHovBgYtB-QCVce17BSHeoevU8Pcz5-MbkmwBIqTPTp37KREms3RzEMIg')"></div>
+<div class="relative z-10">
+<h4 class="font-headline-lg text-headline-lg text-on-surface mb-xs leading-tight">Al-Muqaddimah</h4>
+<p class="font-body-md text-body-md text-tertiary">Ibn Khaldun</p>
+</div>
+</div>
+<div class="flex-1 relative rounded-xl overflow-hidden interactive group cursor-pointer border border-subtle bg-surface-card p-md flex flex-col justify-end">
+<div class="absolute inset-0 opacity-20 bg-[url('placeholder')]" data-alt="Close-up of a beautifully crafted astrolabe resting on dark wood. Soft, moody lighting highlights the intricate brass and gold (#D4A84F) details against the deep, dark #0B0F10 background. The image evokes a sense of intellectual discovery and classical science in a premium, minimalist style." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBRWoxCalCRWY6IiTlmj6Ip8-yE-IuQu-il7-2wVefaAYYNaFUcJ3iNmm_X2exwidyOwv5vu9_CoJpova7LLOmKfsB_qZ18ydq_g-aMilaHOgJElDTIfjKM_pjQU0n8VDcB9OQhD3V7HmFl2WjEllOXAi7i3uTg6GSc4bHE99VGFo4n70xWyT0xC9J_BpwhmntN9R7LrHHuEBS5-040g6iz-gtJyH909ETftR87aFwMZjzyz89Ce6Q57R6wyI66dBFmL5dGCYCimA')"></div>
+<div class="relative z-10">
+<h4 class="font-headline-lg text-headline-lg text-on-surface mb-xs leading-tight">Book of Optics</h4>
+<p class="font-body-md text-body-md text-tertiary">Ibn al-Haytham</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Continue Reading (Horizontal Scroll) -->
+<section class="space-y-md">
+<h3 class="font-headline-xl text-headline-xl text-on-surface">Continue Reading</h3>
+<div class="flex overflow-x-auto gap-md pb-sm snap-x -mx-base px-base md:mx-0 md:px-0 scrollbar-hide">
+<!-- Book Card 1 -->
+<div class="snap-start flex-none w-[160px] md:w-[200px] interactive cursor-pointer group">
+<div class="w-full aspect-[2/3] bg-surface-card rounded-lg border border-subtle overflow-hidden mb-sm relative">
+<img class="w-full h-full object-cover" data-alt="Minimalist book cover design for an Islamic text. Deep, dark charcoal #151B1C background with an elegant, thin-lined geometric focal point in soft emerald and muted gold #D4A84F. The design is highly editorial, modern, and perfectly suited for a luxury digital library interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBteOlQbm-fUU86EiWtfSfsmWZmM8jfDEpm45kliuUHQn5pGqJ6UJwCZI6L6ICFpTaW-4CbsXUR2e7rC6kh--UyFbAG2oGFEoGBF7AwL0VxFlf2ulSjkuU30wDkp5nzKjH7AY1zpf2-Bm2pisOATGU-kE6pgM1bL_XRsN0rg2kHwdC_0y7h2bRRVaFAvIODu8V46tczDOqG3RovtIO0M_6G7119ap_ldx9xToMspSx1kf_W2m2qIaQxi90xeMpVNrF0ZTqQR5AaaA"/>
+<div class="absolute bottom-0 left-0 w-full h-1 bg-surface-modal">
+<div class="h-full bg-primary-container" style="width: 45%;"></div>
+</div>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface truncate">The Sealed Nectar</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant truncate">Safiur Rahman...</p>
+</div>
+<!-- Book Card 2 (Shimmer Loading State Example) -->
+<div class="snap-start flex-none w-[160px] md:w-[200px]">
+<div class="w-full aspect-[2/3] rounded-lg shimmer mb-sm"></div>
+<div class="h-4 shimmer w-3/4 rounded mb-1"></div>
+<div class="h-3 shimmer w-1/2 rounded"></div>
+</div>
+<!-- Book Card 3 -->
+<div class="snap-start flex-none w-[160px] md:w-[200px] interactive cursor-pointer group">
+<div class="w-full aspect-[2/3] bg-surface-card rounded-lg border border-subtle overflow-hidden mb-sm relative">
+<img class="w-full h-full object-cover" data-alt="Minimalist book cover design for 'Purification of the Heart'. The cover uses a deep teal-charcoal gradient background, featuring an abstract, ethereal glowing element in the center reminiscent of a serene light. Thin gold (#D4A84F) typography accents the dark, premium aesthetic. High-end editorial style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0X8_aOaRIYBjBLpyNINGuA-1iA4iDOvtLvcJb8nTj0tCzU_59cDRfzyvb6dYUIqjDz12cyVK4d_Kh9MVkagshuN73BGUrO2MrwTyZwJ9JzWpR2JIb3UwRpVZ_1HB3WsPTfLbu19Nqb5VmBLi0lt7d-WzcGjFOfu8ff10YdIZeTWgkyanIDQNR__t8NwysYoqnmSww90uNNB_2UUJoCszohNx51oa-tWvAfqEDkdKQCdsnz-Tu64zdgGiriDxfxbJnn940LOuJ3Q"/>
+<div class="absolute bottom-0 left-0 w-full h-1 bg-surface-modal">
+<div class="h-full bg-primary-container" style="width: 12%;"></div>
+</div>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface truncate">Purification of the Heart</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant truncate">Hamza Yusuf</p>
+</div>
+</div>
+</section>
+<!-- Topics & Authors (Chips Layout) -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-lg md:gap-xxl">
+<div class="space-y-md">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Explore Topics</h3>
+<div class="flex flex-wrap gap-sm">
+<button class="interactive h-[32px] px-sm rounded bg-[#232E31] text-[#A7A7A7] font-label-md text-label-md hover:bg-surface-bright">Theology (Aqidah)</button>
+<button class="interactive h-[32px] px-sm rounded bg-secondary-container text-primary font-label-md text-label-md border border-primary/20">History (Seerah)</button>
+<button class="interactive h-[32px] px-sm rounded bg-[#232E31] text-[#A7A7A7] font-label-md text-label-md hover:bg-surface-bright">Jurisprudence (Fiqh)</button>
+<button class="interactive h-[32px] px-sm rounded bg-[#232E31] text-[#A7A7A7] font-label-md text-label-md hover:bg-surface-bright">Spirituality (Tazkiyah)</button>
+<button class="interactive h-[32px] px-sm rounded bg-[#232E31] text-[#A7A7A7] font-label-md text-label-md hover:bg-surface-bright">Philosophy</button>
+</div>
+</div>
+<div class="space-y-md">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Notable Authors</h3>
+<ul class="space-y-sm">
+<li class="flex items-center justify-between p-md bg-surface-card border border-subtle rounded-lg interactive cursor-pointer hover:border-outline-variant">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-modal flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">Al-Ghazali</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">1058–1111</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</li>
+<li class="flex items-center justify-between p-md bg-surface-card border border-subtle rounded-lg interactive cursor-pointer hover:border-outline-variant">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-modal flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">Ibn Rushd</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">1126–1198</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</li>
+</ul>
+</div>
+</section>
+</main>
+<!-- Bottom Nav Bar (Mobile Only per layout pivot) -->
+<nav class="md:hidden fixed bottom-base left-base right-base rounded-full z-50 glass-nav border border-outline-variant/30 dark:border-outline-variant/30 shadow-xl flex justify-around items-center h-16 w-[calc(100%-40px)] mx-auto px-xs">
+<button class="interactive flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-xs py-1 hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</button>
+<button class="interactive flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-xs py-1 hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="settings_accessibility">settings_accessibility</span>
+<span class="font-label-sm text-label-sm mt-1">Prayer</span>
+</button>
+<button class="interactive flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-xs py-1 hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="auto_stories">auto_stories</span>
+<span class="font-label-sm text-label-sm mt-1">Quran</span>
+</button>
+<!-- Active Tab: Knowledge -->
+<button class="interactive flex flex-col items-center justify-center bg-secondary-container/50 dark:bg-secondary-container/50 text-primary dark:text-primary rounded-full px-xs py-1 transition-all duration-220 hover:opacity-80 scale-98">
+<span class="material-symbols-outlined" data-icon="menu_book" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+<span class="font-label-sm text-label-sm mt-1">Knowledge</span>
+</button>
+<button class="interactive flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-xs py-1 hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</button>
+</nav>
+<style>
+        /* Utility to hide scrollbar but allow scrolling */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>

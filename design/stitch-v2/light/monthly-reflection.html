@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Monthly Reflection</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&amp;family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed-dim": "#eec064",
+                      "secondary-fixed": "#8bf7cb",
+                      "error": "#ba1a1a",
+                      "tertiary-container": "#3d2a00",
+                      "outline": "#75777e",
+                      "surface": "#fcf9f8",
+                      "on-secondary-fixed-variant": "#00513a",
+                      "surface-container-low": "#f6f3f2",
+                      "secondary-fixed-dim": "#6fdab0",
+                      "on-secondary-container": "#007354",
+                      "surface-bright": "#fcf9f8",
+                      "surface-dim": "#dcd9d9",
+                      "on-primary-fixed": "#0a1b39",
+                      "primary-fixed-dim": "#b7c6ed",
+                      "inverse-on-surface": "#f3f0ef",
+                      "on-primary": "#ffffff",
+                      "on-surface-variant": "#45474e",
+                      "tertiary-fixed": "#ffdea4",
+                      "tertiary": "#231700",
+                      "surface-tint": "#4f5e80",
+                      "on-error": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "secondary-container": "#8bf7cb",
+                      "on-tertiary-fixed": "#261900",
+                      "on-tertiary-fixed-variant": "#5d4200",
+                      "surface-container-lowest": "#ffffff",
+                      "outline-variant": "#c5c6ce",
+                      "inverse-surface": "#313030",
+                      "surface-container": "#f0edec",
+                      "error-container": "#ffdad6",
+                      "on-secondary-fixed": "#002115",
+                      "on-primary-fixed-variant": "#384667",
+                      "primary": "#071836",
+                      "surface-container-highest": "#e5e2e1",
+                      "primary-container": "#1e2d4c",
+                      "on-secondary": "#ffffff",
+                      "background": "#fcf9f8",
+                      "primary-fixed": "#d8e2ff",
+                      "on-surface": "#1c1b1b",
+                      "on-background": "#1c1b1b",
+                      "inverse-primary": "#b7c6ed",
+                      "on-primary-container": "#8695b9",
+                      "secondary": "#006c4f",
+                      "surface-variant": "#e5e2e1",
+                      "surface-container-high": "#ebe7e7",
+                      "on-tertiary-container": "#b88e38",
+                      "on-error-container": "#93000a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "8px",
+                      "section-gap": "40px",
+                      "container-padding-mobile": "24px",
+                      "stack-sm": "8px",
+                      "stack-md": "16px",
+                      "stack-lg": "24px",
+                      "gutter": "16px",
+                      "container-padding-desktop": "48px"
+              },
+              "fontFamily": {
+                      "display-md": [
+                              "EB Garamond"
+                      ],
+                      "headline-md": [
+                              "EB Garamond"
+                      ],
+                      "label-sm": [
+                              "Hanken Grotesk"
+                      ],
+                      "body-lg": [
+                              "Hanken Grotesk"
+                      ],
+                      "label-md": [
+                              "Hanken Grotesk"
+                      ],
+                      "headline-lg-mobile": [
+                              "EB Garamond"
+                      ],
+                      "body-md": [
+                              "Hanken Grotesk"
+                      ],
+                      "display-lg": [
+                              "EB Garamond"
+                      ],
+                      "headline-lg": [
+                              "EB Garamond"
+                      ]
+              },
+              "fontSize": {
+                      "display-md": [
+                              "36px",
+                              {
+                                      "lineHeight": "44px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #F7F6F3; /* Background Level 0 */
+        }
+        
+        .card-level-1 {
+            background-color: #FFFFFF;
+            border: 1px solid #E7E2DA;
+        }
+
+        .card-level-2 {
+            background-color: #FCFBF9;
+            box-shadow: 0 4px 20px rgba(30, 45, 76, 0.1);
+        }
+
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        /* Circular Progress */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface antialiased pb-32">
+<!-- TopAppBar -->
+<header class="bg-surface/80 dark:bg-surface-dim/80 text-primary dark:text-primary-fixed font-headline-md text-headline-md-mobile md:text-headline-md w-full sticky top-0 z-40 backdrop-blur-md border-b border-outline-variant/30 flat no shadows flex justify-between items-center px-container-padding-mobile md:px-container-padding-desktop h-16">
+<button class="hover:opacity-70 transition-opacity active:scale-95 transition-transform duration-200 text-on-surface-variant flex items-center justify-center p-2">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-display-md text-display-md tracking-widest text-primary dark:text-primary-fixed">NIYYAH</h1>
+<button class="hover:opacity-70 transition-opacity active:scale-95 transition-transform duration-200 text-on-surface-variant flex items-center justify-center p-2">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="max-w-4xl mx-auto px-container-padding-mobile md:px-container-padding-desktop py-section-gap flex flex-col gap-section-gap">
+<!-- Header Section -->
+<section class="text-center md:text-left flex flex-col gap-stack-sm items-center md:items-start">
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Monthly Reflection</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">A moment to pause, review your spiritual journey, and set intentions for the days ahead. Your progress is a beautiful testament to your dedication.</p>
+</section>
+<!-- Rank & Progress Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Rank Card -->
+<div class="card-level-2 rounded-xl p-stack-lg flex flex-col gap-stack-md col-span-1 md:col-span-1 items-center justify-center text-center relative overflow-hidden">
+<!-- Warm Stone / Gold accent background blob -->
+<div class="absolute top-[-50px] right-[-50px] w-32 h-32 bg-[#eec064] opacity-10 rounded-full blur-2xl"></div>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Spiritual Rank</h3>
+<div class="flex flex-col items-center gap-stack-sm mt-4">
+<span class="material-symbols-outlined text-[#d4a84f] text-5xl" data-icon="stars" style="font-variation-settings: 'FILL' 1;">stars</span>
+<div class="font-display-md text-display-md text-primary">Seeker</div>
+<div class="font-label-sm text-label-sm flex items-center gap-1 text-[#007354]">
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_upward">arrow_upward</span>
+                        Previous: Beginner
+                    </div>
+</div>
+</div>
+<!-- Consistency Stats -->
+<div class="col-span-1 md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-gutter">
+<!-- Prayer Consistency -->
+<div class="card-level-1 rounded-xl p-stack-lg flex flex-col items-center md:items-start gap-stack-md">
+<div class="flex w-full justify-between items-center">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Prayer Consistency</h3>
+<span class="material-symbols-outlined text-outline" data-icon="schedule">schedule</span>
+</div>
+<div class="flex items-center gap-stack-lg mt-4 w-full justify-center md:justify-start">
+<div class="relative w-24 h-24">
+<svg class="w-full h-full" viewbox="0 0 100 100">
+<circle class="text-surface-variant stroke-current" cx="50" cy="50" fill="transparent" r="40" stroke-width="8"></circle>
+<circle class="text-primary stroke-current progress-ring__circle" cx="50" cy="50" fill="transparent" r="40" stroke-dasharray="251.2" stroke-dashoffset="37.68" stroke-linecap="round" stroke-width="8"></circle> <!-- 85% -->
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-headline-md text-headline-md text-primary">85%</div>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-body-md text-body-md text-on-surface">25/30 Days</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Excellent rhythm</span>
+</div>
+</div>
+</div>
+<!-- Reading Progress -->
+<div class="card-level-1 rounded-xl p-stack-lg flex flex-col items-center md:items-start gap-stack-md">
+<div class="flex w-full justify-between items-center">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Quran Progress</h3>
+<span class="material-symbols-outlined text-outline" data-icon="auto_stories">auto_stories</span>
+</div>
+<div class="flex items-center gap-stack-lg mt-4 w-full justify-center md:justify-start">
+<div class="relative w-24 h-24">
+<svg class="w-full h-full" viewbox="0 0 100 100">
+<circle class="text-surface-variant stroke-current" cx="50" cy="50" fill="transparent" r="40" stroke-width="8"></circle>
+<circle class="text-[#eec064] stroke-current progress-ring__circle" cx="50" cy="50" fill="transparent" r="40" stroke-dasharray="251.2" stroke-dashoffset="100.48" stroke-linecap="round" stroke-width="8"></circle> <!-- 60% -->
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-headline-md text-headline-md text-primary">60%</div>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-body-md text-body-md text-on-surface">3 Juz Read</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Steady pace</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Journey Graph (Minimal) -->
+<section class="card-level-1 rounded-xl p-stack-lg flex flex-col gap-stack-lg">
+<div class="flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-primary">Journey Flow</h3>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-[#F2F0EC] text-[#666666] font-label-sm text-label-sm rounded-[12px]">Daily</span>
+<span class="px-3 py-1 bg-primary text-on-primary font-label-sm text-label-sm rounded-[12px]">Weekly</span>
+</div>
+</div>
+<!-- Abstract minimalist chart representation -->
+<div class="w-full h-48 flex items-end justify-between px-4 relative pt-8 border-b border-surface-variant">
+<!-- Trend line simulation -->
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100">
+<path d="M 0,80 Q 20,60 40,70 T 80,40 T 100,20" fill="none" stroke="#1E2D4C" stroke-linecap="round" stroke-width="2"></path>
+<path d="M 0,80 Q 20,60 40,70 T 80,40 T 100,20 L 100,100 L 0,100 Z" fill="url(#grad)" stroke="none"></path>
+<defs>
+<lineargradient id="grad" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#1E2D4C;stop-opacity:0.1"></stop>
+<stop offset="100%" style="stop-color:#1E2D4C;stop-opacity:0"></stop>
+</lineargradient>
+</defs>
+</svg>
+<!-- Axis markers -->
+<div class="flex flex-col items-center z-10 gap-2"><div class="w-1.5 h-1.5 rounded-full bg-primary mb-10"></div><span class="font-label-sm text-label-sm text-outline">W1</span></div>
+<div class="flex flex-col items-center z-10 gap-2"><div class="w-1.5 h-1.5 rounded-full bg-primary mb-12"></div><span class="font-label-sm text-label-sm text-outline">W2</span></div>
+<div class="flex flex-col items-center z-10 gap-2"><div class="w-1.5 h-1.5 rounded-full bg-primary mb-16"></div><span class="font-label-sm text-label-sm text-outline">W3</span></div>
+<div class="flex flex-col items-center z-10 gap-2"><div class="w-1.5 h-1.5 rounded-full bg-primary mb-24"></div><span class="font-label-sm text-label-sm text-outline">W4</span></div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-center italic mt-2">"Small, consistent deeds are most beloved."</p>
+</section>
+<!-- Motivational Verse & Actions -->
+<section class="flex flex-col items-center text-center gap-stack-lg mt-8 mb-12">
+<div class="max-w-xl flex flex-col items-center gap-4">
+<span class="material-symbols-outlined text-[#d4a84f] text-3xl" data-icon="format_quote">format_quote</span>
+<blockquote class="font-display-md text-display-md text-primary italic leading-relaxed">
+                    "And He found you lost and guided you."
+                </blockquote>
+<cite class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest not-italic">— Surah Ad-Duha (93:7)</cite>
+</div>
+<div class="flex gap-4 mt-8">
+<button class="bg-[rgba(206,192,187,0.15)] text-primary-container px-6 py-3 rounded-[16px] font-label-md text-label-md flex items-center gap-2 hover:bg-[rgba(206,192,187,0.25)] transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                    Export Report
+                </button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden bg-white/80 dark:bg-surface-container/80 text-primary dark:text-primary-fixed font-label-sm text-label-sm fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-full z-50 backdrop-blur-xl border border-white/40 shadow-[0_4px_20px_rgba(30,45,76,0.1)] flex justify-around items-center py-3 px-6">
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary transition-colors active:scale-90 transition-all duration-300">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span>Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary transition-colors active:scale-90 transition-all duration-300">
+<span class="material-symbols-outlined mb-1" data-icon="schedule">schedule</span>
+<span>Prayer</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary transition-colors active:scale-90 transition-all duration-300">
+<span class="material-symbols-outlined mb-1" data-icon="auto_stories">auto_stories</span>
+<span>Quran</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary transition-colors active:scale-90 transition-all duration-300">
+<span class="material-symbols-outlined mb-1" data-icon="menu_book">menu_book</span>
+<span>Knowledge</span>
+</button>
+<!-- Active Tab: Profile (matches 'Monthly Reflection' intent closely as it's personal stats) -->
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim relative after:content-[''] after:w-1 after:h-1 after:bg-tertiary-fixed-dim after:rounded-full after:mt-1 hover:text-primary transition-colors active:scale-90 transition-all duration-300">
+<span class="material-symbols-outlined mb-1" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span>Profile</span>
+</button>
+</nav>
+</body></html>

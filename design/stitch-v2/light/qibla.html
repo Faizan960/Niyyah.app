@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Qibla - NIYYAH</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#eec064",
+                        "secondary-fixed": "#8bf7cb",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#3d2a00",
+                        "outline": "#75777e",
+                        "surface": "#fcf9f8",
+                        "on-secondary-fixed-variant": "#00513a",
+                        "surface-container-low": "#f6f3f2",
+                        "secondary-fixed-dim": "#6fdab0",
+                        "on-secondary-container": "#007354",
+                        "surface-bright": "#fcf9f8",
+                        "surface-dim": "#dcd9d9",
+                        "on-primary-fixed": "#0a1b39",
+                        "primary-fixed-dim": "#b7c6ed",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#45474e",
+                        "tertiary-fixed": "#ffdea4",
+                        "tertiary": "#231700",
+                        "surface-tint": "#4f5e80",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#8bf7cb",
+                        "on-tertiary-fixed": "#261900",
+                        "on-tertiary-fixed-variant": "#5d4200",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#c5c6ce",
+                        "inverse-surface": "#313030",
+                        "surface-container": "#f0edec",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#002115",
+                        "on-primary-fixed-variant": "#384667",
+                        "primary": "#071836",
+                        "surface-container-highest": "#e5e2e1",
+                        "primary-container": "#1e2d4c",
+                        "on-secondary": "#ffffff",
+                        "background": "#fcf9f8",
+                        "primary-fixed": "#d8e2ff",
+                        "on-surface": "#1c1b1b",
+                        "on-background": "#1c1b1b",
+                        "inverse-primary": "#b7c6ed",
+                        "on-primary-container": "#8695b9",
+                        "secondary": "#006c4f",
+                        "surface-variant": "#e5e2e1",
+                        "surface-container-high": "#ebe7e7",
+                        "on-tertiary-container": "#b88e38",
+                        "on-error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "8px",
+                        "section-gap": "40px",
+                        "container-padding-mobile": "24px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "stack-lg": "24px",
+                        "gutter": "16px",
+                        "container-padding-desktop": "48px"
+                    },
+                    "fontFamily": {
+                        "display-md": ["EB Garamond"],
+                        "headline-md": ["EB Garamond"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "label-md": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["EB Garamond"],
+                        "body-md": ["Hanken Grotesk"],
+                        "display-lg": ["EB Garamond"],
+                        "headline-lg": ["EB Garamond"]
+                    },
+                    "fontSize": {
+                        "display-md": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #F7F6F3; /* Background Level 0 */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .luxury-card {
+            background-color: #FFFFFF;
+            border: 1px solid #E7E2DA;
+            box-shadow: none;
+        }
+        
+        .compass-dial {
+            background: radial-gradient(circle, #FCFBF9 0%, #F7F6F3 100%);
+            border: 1px solid #E7E2DA;
+            box-shadow: 0 4px 20px rgba(30, 45, 76, 0.05), inset 0 2px 10px rgba(0,0,0,0.02);
+        }
+
+        .needle {
+            filter: drop-shadow(0 4px 8px rgba(30, 45, 76, 0.15));
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 20px rgba(30, 45, 76, 0.1);
+        }
+
+        .brand-text {
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface flex flex-col min-h-screen">
+<!-- TopAppBar (Based on JSON, but adjusted for Qibla intent) -->
+<header class="w-full sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-container-padding-mobile md:px-container-padding-desktop h-16">
+<button class="text-on-surface-variant hover:opacity-70 transition-opacity active:scale-95 duration-200">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-display-md text-display-md tracking-widest text-primary brand-text">QIBLA</h1>
+<button class="text-on-surface-variant hover:opacity-70 transition-opacity active:scale-95 duration-200">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<!-- Main Content Canvas (Fixed-Fluid Layout) -->
+<main class="flex-grow w-full max-w-4xl mx-auto px-container-padding-mobile md:px-container-padding-desktop py-section-gap flex flex-col items-center pb-32">
+<!-- Location Context -->
+<div class="text-center mb-stack-lg animate-[fadeIn_1s_ease-out]">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-1">Current Location</p>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Mecca, Saudi Arabia</h2>
+<div class="flex items-center justify-center gap-2 mt-2">
+<span class="material-symbols-outlined text-secondary text-sm">my_location</span>
+<span class="font-body-sm text-body-sm text-secondary">High Accuracy</span>
+</div>
+</div>
+<!-- The Compass (Luxury Watch Aesthetic) -->
+<div class="relative w-full max-w-[320px] aspect-square my-section-gap">
+<!-- Outer Bezel -->
+<div class="absolute inset-0 rounded-full compass-dial flex items-center justify-center">
+<!-- Inner Marks -->
+<svg class="absolute w-full h-full p-4" viewbox="0 0 100 100">
+<circle cx="50" cy="50" fill="none" r="48" stroke="#E7E2DA" stroke-width="0.5"></circle>
+<!-- Ticks generation via simple SVG paths representing watch ticks -->
+<g stroke="#CEC0BB" stroke-width="0.5">
+<line x1="50" x2="50" y1="2" y2="6"></line>
+<line x1="50" x2="50" y1="94" y2="98"></line>
+<line x1="2" x2="6" y1="50" y2="50"></line>
+<line x1="94" x2="98" y1="50" y2="50"></line>
+</g>
+<g fill="#1E2D4C" font-family="'EB Garamond', serif" font-size="6" font-weight="600" text-anchor="middle">
+<text x="50" y="14">N</text>
+<text x="50" y="92">S</text>
+<text x="8" y="52">W</text>
+<text x="92" y="52">E</text>
+</g>
+</svg>
+<!-- Qibla Direction Indicator (The Emerald Accent) -->
+<div class="absolute w-full h-full pointer-events-none" style="transform: rotate(45deg);">
+<svg class="absolute inset-0 w-full h-full p-2" viewbox="0 0 100 100">
+<!-- Kaaba Icon / Direction Marker -->
+<path d="M50 8 L53 14 L47 14 Z" fill="#006c4f"></path>
+<rect fill="rgba(0, 108, 79, 0.2)" height="80" width="1" x="49.5" y="14"></rect>
+</svg>
+</div>
+<!-- The Needle -->
+<div class="needle absolute w-8 h-full py-12 flex flex-col items-center" id="compass-needle">
+<!-- North Point -->
+<svg class="w-4 h-24" viewbox="0 0 20 60">
+<path d="M10 0 L20 60 L10 50 L0 60 Z" fill="#1E2D4C"></path>
+<path d="M10 0 L20 60 L10 50 Z" fill="rgba(255,255,255,0.3)"></path>
+</svg>
+<!-- Center Pivot -->
+<div class="w-3 h-3 rounded-full bg-[#D4A84F] border-2 border-white absolute top-1/2 -translate-y-1/2 z-10 shadow-sm"></div>
+<!-- South Point -->
+<svg class="w-4 h-24 transform rotate-180 mt-auto" viewbox="0 0 20 60">
+<path d="M10 0 L20 60 L10 50 L0 60 Z" fill="#CEC0BB"></path>
+<path d="M10 0 L20 60 L10 50 Z" fill="rgba(255,255,255,0.4)"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Metadata (Distance & Calibration) -->
+<div class="grid grid-cols-2 gap-gutter w-full max-w-sm mt-stack-lg">
+<div class="luxury-card rounded-xl p-stack-md flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-outline mb-2" style="font-variation-settings: 'FILL' 0;">route</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">Distance</p>
+<p class="font-headline-md text-headline-md text-primary">0 km</p>
+</div>
+<div class="luxury-card rounded-xl p-stack-md flex flex-col items-center justify-center text-center cursor-pointer hover:bg-surface-container-low transition-colors active:scale-95">
+<span class="material-symbols-outlined text-outline mb-2" style="font-variation-settings: 'FILL' 0;">compass_calibration</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">Status</p>
+<p class="font-label-md text-label-md text-secondary">Calibrated</p>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Shared Component JSON) -->
+<!-- Suppressed on desktop (hidden md:hidden), shown on mobile as sticky nav -->
+<nav class="md:hidden glass-nav fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-full z-50 flex justify-around items-center py-3 px-6">
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary transition-colors active:scale-90 duration-300">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary transition-colors active:scale-90 duration-300">
+<span class="material-symbols-outlined">schedule</span>
+<span class="font-label-sm text-label-sm mt-1">Prayer</span>
+</button>
+<!-- Assuming Qibla is related to Prayer, but let's highlight none since it's a specific tool, 
+             or highlight Prayer if it falls under that intent. We will leave them inactive based on strict match rule unless Home.
+             Actually, let's just render the JSON exactly. Active state logic says "Intent Fallback: ONLY use semantic intent if there is no direct match". 
+             Qibla isn't in the list [Home, Prayer, Quran, Knowledge, Profile]. 
+             We highlight nothing to prioritize the tool intent, or Prayer if it's considered part of prayer prep.
+             Let's keep them inactive to strictly follow "Do NOT highlight generic tabs".
+        -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary transition-colors active:scale-90 duration-300">
+<span class="material-symbols-outlined">auto_stories</span>
+<span class="font-label-sm text-label-sm mt-1">Quran</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary transition-colors active:scale-90 duration-300">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-label-sm text-label-sm mt-1">Knowledge</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary transition-colors active:scale-90 duration-300">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</button>
+</nav>
+<script>
+        // Simple script to simulate compass movement for presentation
+        document.addEventListener('DOMContentLoaded', () => {
+            const needle = document.getElementById('compass-needle');
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', (event) => {
+                    let alpha = event.webkitCompassHeading || Math.abs(event.alpha - 360);
+                    if (alpha) {
+                        needle.style.transform = `rotate(${-alpha}deg)`;
+                    }
+                });
+            } else {
+                // Fallback subtle animation if no sensor
+                let angle = 0;
+                setInterval(() => {
+                    angle = Math.sin(Date.now() / 2000) * 15; // subtle sway
+                    needle.style.transform = `rotate(${angle}deg)`;
+                }, 50);
+            }
+        });
+    </script>
+</body></html>

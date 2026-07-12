@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Salah Lock Screen</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: 300; /* Matching Serene Premiumism */
+            font-style: normal;
+            font-size: 24px;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        
+        /* Shimmer loading effect for subtle background ambiance */
+        @keyframes ambient-glow {
+            0% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+            100% { opacity: 0.3; transform: scale(1); }
+        }
+        .bg-glow {
+            animation: ambient-glow 8s ease-in-out infinite;
+        }
+
+        /* Number transition classes */
+        .digit-enter {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        .digit-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 300ms, transform 300ms cubic-bezier(0.2, 0, 0, 1);
+        }
+    </style>
+<!-- Tailwind Config -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-on-surface": "#2b322e",
+                        "on-primary-container": "#003222",
+                        "surface-container-high": "#252b28",
+                        "on-tertiary": "#412d00",
+                        "surface-container-highest": "#303632",
+                        "on-secondary": "#193057",
+                        "tertiary-fixed": "#ffdea4",
+                        "surface-dim": "#0f1512",
+                        "surface-tint": "#61dcac",
+                        "outline": "#86948c",
+                        "on-primary": "#003827",
+                        "tertiary-container": "#b58c36",
+                        "on-surface": "#dee4de",
+                        "surface-bright": "#343b37",
+                        "on-secondary-fixed": "#001a41",
+                        "inverse-primary": "#006c4d",
+                        "surface": "#0f1512",
+                        "secondary": "#b1c7f7",
+                        "background": "#0f1512",
+                        "primary": "#61dcac",
+                        "surface-container-low": "#171d1a",
+                        "on-secondary-container": "#a0b5e4",
+                        "outline-variant": "#3d4a43",
+                        "on-tertiary-container": "#3a2800",
+                        "surface-container": "#1b211e",
+                        "primary-container": "#18a67a",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed": "#261900",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#31466f",
+                        "inverse-surface": "#dee4de",
+                        "on-error": "#690005",
+                        "surface-container-lowest": "#090f0c",
+                        "secondary-container": "#31466f",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#b1c7f7",
+                        "tertiary-fixed-dim": "#eec064",
+                        "primary-fixed": "#7ff9c7",
+                        "on-primary-fixed-variant": "#005139",
+                        "on-primary-fixed": "#002115",
+                        "on-surface-variant": "#bccac1",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-background": "#dee4de",
+                        "primary-fixed-dim": "#61dcac",
+                        "surface-variant": "#303632",
+                        "on-tertiary-fixed-variant": "#5d4200",
+                        "tertiary": "#eec064"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem",
+                        "3xl": "2rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "lg": "24px",
+                        "xl": "32px",
+                        "base": "20px",
+                        "sm": "12px",
+                        "xs": "8px",
+                        "xxl": "40px",
+                        "huge": "48px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["EB Garamond"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["EB Garamond"],
+                        "headline-lg": ["EB Garamond"],
+                        "display-lg-mobile": ["EB Garamond"],
+                        "body-lg": ["EB Garamond"],
+                        "headline-xl": ["EB Garamond"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.03em", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "500" }],
+                        "display-lg-mobile": ["36px", { "lineHeight": "42px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "body-lg": ["20px", { "lineHeight": "32px", "fontWeight": "400" }],
+                        "headline-xl": ["32px", { "lineHeight": "40px", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md h-screen w-full overflow-hidden flex flex-col relative selection:bg-primary-container selection:text-on-primary-container">
+<!-- Ambient Background Glow -->
+<div class="absolute inset-0 pointer-events-none overflow-hidden z-0 flex items-center justify-center">
+<div class="w-[300px] h-[300px] rounded-full bg-primary-container/5 blur-[100px] bg-glow"></div>
+</div>
+<!-- Mock Mobile Status Bar (Visual anchor for lock screen context) -->
+<div class="w-full flex justify-between items-center px-lg py-sm z-10 opacity-70">
+<span class="font-label-sm text-label-sm text-on-surface">12:30</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">signal_cellular_alt</span>
+<span class="material-symbols-outlined text-[16px]">wifi</span>
+<span class="material-symbols-outlined text-[16px]">battery_full</span>
+</div>
+</div>
+<!-- Main Content Area: Focus Mode -->
+<main class="flex-grow flex flex-col items-center justify-center z-10 px-lg -mt-xxl">
+<!-- Focus Title -->
+<div class="flex flex-col items-center mb-xl opacity-90 transition-all duration-700 ease-out translate-y-0" id="focus-header">
+<span class="material-symbols-outlined text-primary-container text-[32px] mb-sm" style="font-variation-settings: 'FILL' 1;">mosque</span>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-wide">Dhuhr Focus</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1 uppercase tracking-widest">Device Locked</p>
+</div>
+<!-- Countdown Timer -->
+<div class="relative flex flex-col items-center justify-center mb-xxl">
+<!-- Time Display -->
+<div class="font-display-lg text-display-lg text-primary-container tracking-tighter flex items-baseline gap-1" style="font-size: 80px; line-height: 1;">
+<span id="min-tens">0</span><span id="min-units">1</span>
+<span class="opacity-50 mx-1">:</span>
+<span id="sec-tens">2</span><span class="inline-block transition-transform duration-300" id="sec-units">4</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant mt-sm opacity-80">Remaining</p>
+</div>
+<!-- Restricted Apps (Permitted during focus) -->
+<div class="flex flex-col items-center w-full max-w-sm mt-lg">
+<div class="flex items-center justify-center gap-lg bg-surface-container-low/50 backdrop-blur-md rounded-full px-xl py-sm border border-outline-variant/30">
+<button class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity duration-150 group">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface">call</span>
+</div>
+</button>
+<div class="w-px h-6 bg-outline-variant/50"></div>
+<button class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity duration-150 group">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface">auto_stories</span>
+</div>
+</button>
+<div class="w-px h-6 bg-outline-variant/50"></div>
+<button class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity duration-150 group">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface">emergency</span>
+</div>
+</button>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-sm opacity-60">Emergency &amp; Prayer Apps Only</p>
+</div>
+</main>
+<!-- Bottom NFC Verification Area -->
+<div class="z-20 w-full px-base pb-base">
+<div class="bg-surface-container-low/80 backdrop-blur-xl border border-outline-variant/30 rounded-[32px] p-lg flex flex-col items-center justify-center relative overflow-hidden group">
+<!-- Subtle highlight on top edge -->
+<div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-container/30 to-transparent"></div>
+<div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mb-sm relative">
+<!-- Pulsing ring -->
+<div class="absolute inset-0 rounded-full border-2 border-primary-container/20 animate-ping" style="animation-duration: 3s;"></div>
+<span class="material-symbols-outlined text-primary-container text-[32px]" style="font-variation-settings: 'FILL' 1;">nfc</span>
+</div>
+<h2 class="font-body-lg text-body-lg text-on-surface mb-1">Verify to Unlock</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant text-center max-w-[200px]">Tap your prayer mat NFC tag or Niya ring to exit focus mode early.</p>
+</div>
+</div>
+<script>
+        // Simple countdown logic to show "Smooth numerical digit transitions"
+        let totalSeconds = 84; // 01:24
+        const secUnitsSpan = document.getElementById('sec-units');
+        const secTensSpan = document.getElementById('sec-tens');
+        const minUnitsSpan = document.getElementById('min-units');
+
+        function updateTimer() {
+            if (totalSeconds <= 0) return;
+            
+            totalSeconds--;
+            
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            
+            const mUnits = minutes % 10;
+            const sTens = Math.floor(seconds / 10);
+            const sUnits = seconds % 10;
+
+            // Animate only the changing digits for smoothness (focusing on seconds unit for demo)
+            if (secUnitsSpan.innerText !== sUnits.toString()) {
+                secUnitsSpan.style.transform = 'translateY(10px)';
+                secUnitsSpan.style.opacity = '0';
+                
+                setTimeout(() => {
+                    secUnitsSpan.innerText = sUnits;
+                    secUnitsSpan.style.transform = 'translateY(0)';
+                    secUnitsSpan.style.opacity = '1';
+                }, 150);
+            }
+            
+            secTensSpan.innerText = sTens;
+            minUnitsSpan.innerText = mUnits;
+        }
+
+        setInterval(updateTimer, 1000);
+
+        // Entrance animation logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const header = document.getElementById('focus-header');
+            header.style.opacity = '0';
+            header.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                header.style.opacity = '0.9';
+                header.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    </script>
+</body></html>

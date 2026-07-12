@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIYYAH - Azkar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-on-surface": "#2b322e",
+                      "on-primary-container": "#003222",
+                      "surface-container-high": "#252b28",
+                      "on-tertiary": "#412d00",
+                      "surface-container-highest": "#303632",
+                      "on-secondary": "#193057",
+                      "tertiary-fixed": "#ffdea4",
+                      "surface-dim": "#0f1512",
+                      "surface-tint": "#61dcac",
+                      "outline": "#86948c",
+                      "on-primary": "#003827",
+                      "tertiary-container": "#b58c36",
+                      "on-surface": "#dee4de",
+                      "surface-bright": "#343b37",
+                      "on-secondary-fixed": "#001a41",
+                      "inverse-primary": "#006c4d",
+                      "surface": "#0f1512",
+                      "secondary": "#b1c7f7",
+                      "background": "#0f1512",
+                      "primary": "#61dcac",
+                      "surface-container-low": "#171d1a",
+                      "on-secondary-container": "#a0b5e4",
+                      "outline-variant": "#3d4a43",
+                      "on-tertiary-container": "#3a2800",
+                      "surface-container": "#1b211e",
+                      "primary-container": "#18a67a",
+                      "error": "#ffb4ab",
+                      "on-tertiary-fixed": "#261900",
+                      "error-container": "#93000a",
+                      "on-secondary-fixed-variant": "#31466f",
+                      "inverse-surface": "#dee4de",
+                      "on-error": "#690005",
+                      "surface-container-lowest": "#090f0c",
+                      "secondary-container": "#31466f",
+                      "on-error-container": "#ffdad6",
+                      "secondary-fixed-dim": "#b1c7f7",
+                      "tertiary-fixed-dim": "#eec064",
+                      "primary-fixed": "#7ff9c7",
+                      "on-primary-fixed-variant": "#005139",
+                      "on-primary-fixed": "#002115",
+                      "on-surface-variant": "#bccac1",
+                      "secondary-fixed": "#d8e2ff",
+                      "on-background": "#dee4de",
+                      "primary-fixed-dim": "#61dcac",
+                      "surface-variant": "#303632",
+                      "on-tertiary-fixed-variant": "#5d4200",
+                      "tertiary": "#eec064",
+                      "custom-bg": "#0B0F10",
+                      "custom-surface": "#232E31",
+                      "custom-gold": "#D4A84F"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem",
+                      "2xl": "1rem",
+                      "3xl": "1.5rem"
+              },
+              "spacing": {
+                      "md": "16px",
+                      "lg": "24px",
+                      "xl": "32px",
+                      "base": "20px",
+                      "sm": "12px",
+                      "xs": "8px",
+                      "xxl": "40px",
+                      "huge": "48px"
+              },
+              "fontFamily": {
+                      "body-md": ["EB Garamond", "serif"],
+                      "label-sm": ["Inter", "sans-serif"],
+                      "display-lg": ["EB Garamond", "serif"],
+                      "headline-lg": ["EB Garamond", "serif"],
+                      "display-lg-mobile": ["EB Garamond", "serif"],
+                      "body-lg": ["EB Garamond", "serif"],
+                      "headline-xl": ["EB Garamond", "serif"],
+                      "label-md": ["Inter", "sans-serif"]
+              },
+              "fontSize": {
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.03em", "fontWeight": "500"}],
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                      "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                      "display-lg-mobile": ["36px", {"lineHeight": "42px", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                      "body-lg": ["20px", {"lineHeight": "32px", "fontWeight": "400"}],
+                      "headline-xl": ["32px", {"lineHeight": "40px", "fontWeight": "500"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500"}]
+              },
+              "animation": {
+                'slide-up': 'slideUp 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                'fade-in': 'fadeIn 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards',
+              },
+              "keyframes": {
+                slideUp: {
+                  '0%': { transform: 'translateY(12px)', opacity: '0' },
+                  '100%': { transform: 'translateY(0)', opacity: '1' },
+                },
+                fadeIn: {
+                  '0%': { opacity: '0' },
+                  '100%': { opacity: '1' },
+                }
+              }
+            },
+          }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0B0F10; /* custom-bg fallback */
+            color: #dee4de;
+        }
+        
+        .active-scale {
+            transition: transform 120ms ease-out;
+        }
+        
+        .active-scale:active {
+            transform: scale(0.98);
+        }
+
+        /* Staggered animation delays */
+        .stagger-1 { animation-delay: 20ms; opacity: 0; }
+        .stagger-2 { animation-delay: 40ms; opacity: 0; }
+        .stagger-3 { animation-delay: 60ms; opacity: 0; }
+        .stagger-4 { animation-delay: 80ms; opacity: 0; }
+        .stagger-5 { animation-delay: 100ms; opacity: 0; }
+        .stagger-6 { animation-delay: 120ms; opacity: 0; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-custom-bg min-h-screen text-on-background pb-[100px] pt-20 overflow-x-hidden font-body-md antialiased">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 border-b border-outline-variant bg-surface flex items-center justify-between px-md h-16 flat no shadows">
+<button class="text-primary active-scale flex items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined font-headline-lg-mobile text-headline-lg-mobile text-primary">menu</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary tracking-tight font-bold">NIYYAH</h1>
+<button class="text-primary active-scale flex items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined font-headline-lg-mobile text-headline-lg-mobile text-primary">notifications</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="px-md md:px-lg max-w-7xl mx-auto flex flex-col gap-xl">
+<!-- Header Section -->
+<section class="mt-sm animate-slide-up stagger-1">
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-on-surface mb-xs">Azkar</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Daily supplications and remembrances.</p>
+</section>
+<!-- Search / Filter -->
+<section class="animate-slide-up stagger-2">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-[#12181A] border border-[#2A3335] rounded-lg py-sm pl-xl pr-sm text-on-surface focus:border-primary focus:ring-0 focus:outline-none transition-colors font-label-md text-label-md placeholder:text-[#808080]" placeholder="Search azkar..." type="text"/>
+</div>
+</section>
+<!-- Favorited Quick Access -->
+<section class="animate-slide-up stagger-3">
+<div class="flex items-center justify-between mb-sm">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Favorites</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
+<!-- Favorite Item 1 -->
+<div class="bg-custom-surface border border-[#2A3335] rounded-xl p-lg flex items-center justify-between active-scale cursor-pointer group hover:bg-[#2A3335] transition-colors">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant group-hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-custom-gold" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</div>
+<div>
+<h4 class="font-headline-lg text-headline-lg text-on-surface">Morning Adhkar</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">25 Supplications</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<!-- Favorite Item 2 -->
+<div class="bg-custom-surface border border-[#2A3335] rounded-xl p-lg flex items-center justify-between active-scale cursor-pointer group hover:bg-[#2A3335] transition-colors">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant group-hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-custom-gold" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</div>
+<div>
+<h4 class="font-headline-lg text-headline-lg text-on-surface">Evening Adhkar</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">20 Supplications</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Categories Bento Grid -->
+<section class="animate-slide-up stagger-4">
+<h3 class="font-headline-lg text-headline-lg text-on-surface mb-sm">Categories</h3>
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-sm">
+<!-- Category: Morning -->
+<div class="bg-custom-surface border border-[#2A3335] rounded-2xl p-lg flex flex-col justify-between aspect-square active-scale cursor-pointer group hover:border-primary/50 transition-colors relative overflow-hidden">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors"></div>
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-auto border border-outline-variant">
+<span class="material-symbols-outlined text-custom-gold text-2xl">wb_sunny</span>
+</div>
+<div>
+<h4 class="font-headline-lg text-headline-lg text-on-surface mb-1">Morning</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Start your day</p>
+</div>
+</div>
+<!-- Category: Evening -->
+<div class="bg-custom-surface border border-[#2A3335] rounded-2xl p-lg flex flex-col justify-between aspect-square active-scale cursor-pointer group hover:border-primary/50 transition-colors relative overflow-hidden">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-tertiary/10 rounded-full blur-2xl group-hover:bg-tertiary/20 transition-colors"></div>
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-auto border border-outline-variant">
+<span class="material-symbols-outlined text-custom-gold text-2xl">dark_mode</span>
+</div>
+<div>
+<h4 class="font-headline-lg text-headline-lg text-on-surface mb-1">Evening</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">End your day</p>
+</div>
+</div>
+<!-- Category: After Prayer -->
+<div class="bg-custom-surface border border-[#2A3335] rounded-2xl p-lg flex flex-col justify-between aspect-[2/1] col-span-2 md:col-span-1 md:aspect-square active-scale cursor-pointer group hover:border-primary/50 transition-colors relative overflow-hidden">
+<div class="absolute -left-4 -bottom-4 w-32 h-32 bg-secondary/10 rounded-full blur-2xl group-hover:bg-secondary/20 transition-colors"></div>
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-auto border border-outline-variant">
+<span class="material-symbols-outlined text-custom-gold text-2xl">mosque</span>
+</div>
+<div>
+<h4 class="font-headline-lg text-headline-lg text-on-surface mb-1">After Prayer</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Post-Salah remembrances</p>
+</div>
+</div>
+<!-- Category: Travel -->
+<div class="bg-custom-surface border border-[#2A3335] rounded-2xl p-lg flex flex-col justify-between aspect-square active-scale cursor-pointer group hover:border-primary/50 transition-colors relative overflow-hidden">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-auto border border-outline-variant">
+<span class="material-symbols-outlined text-custom-gold text-2xl">flight_takeoff</span>
+</div>
+<div>
+<h4 class="font-headline-lg text-headline-lg text-on-surface mb-1">Travel</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Journey prayers</p>
+</div>
+</div>
+<!-- Category: Hardship -->
+<div class="bg-custom-surface border border-[#2A3335] rounded-2xl p-lg flex flex-col justify-between aspect-square active-scale cursor-pointer group hover:border-primary/50 transition-colors relative overflow-hidden">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-auto border border-outline-variant">
+<span class="material-symbols-outlined text-custom-gold text-2xl">water_drop</span>
+</div>
+<div>
+<h4 class="font-headline-lg text-headline-lg text-on-surface mb-1">Hardship</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Times of difficulty</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Daily Streak or Progress Graphic (Conceptual) -->
+<section class="animate-slide-up stagger-5 mb-lg">
+<div class="bg-custom-surface border border-[#2A3335] rounded-2xl p-lg relative overflow-hidden">
+<div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-md">
+<div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Daily Goal</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">You've completed 3 of 5 daily adhkar sessions.</p>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-sm font-bold">check</span></div>
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-sm font-bold">check</span></div>
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-sm font-bold">check</span></div>
+<div class="w-8 h-8 rounded-full bg-surface-container border border-[#2A3335]"></div>
+<div class="w-8 h-8 rounded-full bg-surface-container border border-[#2A3335]"></div>
+</div>
+</div>
+<!-- Abstract background texture/gradient -->
+<div class="absolute right-0 bottom-0 w-64 h-64 bg-gradient-to-tl from-primary/10 to-transparent rounded-full blur-3xl translate-x-1/3 translate-y-1/3"></div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-base left-base right-base rounded-full z-50 border border-outline-variant/30 bg-surface/70 dark:bg-surface/70 backdrop-blur-xl shadow-xl flex justify-around items-center h-16 w-[calc(100%-40px)] mx-auto px-xs">
+<!-- Inactive: Home -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-xs py-1 hover:opacity-80 active-scale group" href="#">
+<span class="material-symbols-outlined font-label-sm text-label-sm group-hover:text-primary transition-colors">home</span>
+<span class="font-label-sm text-label-sm mt-1 text-[10px]">Home</span>
+</a>
+<!-- Inactive: Prayer -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-xs py-1 hover:opacity-80 active-scale group" href="#">
+<span class="material-symbols-outlined font-label-sm text-label-sm group-hover:text-primary transition-colors">settings_accessibility</span>
+<span class="font-label-sm text-label-sm mt-1 text-[10px]">Prayer</span>
+</a>
+<!-- Inactive: Quran -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-xs py-1 hover:opacity-80 active-scale group" href="#">
+<span class="material-symbols-outlined font-label-sm text-label-sm group-hover:text-primary transition-colors">auto_stories</span>
+<span class="font-label-sm text-label-sm mt-1 text-[10px]">Quran</span>
+</a>
+<!-- Active: Knowledge (Semantic map for Azkar/Learning) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container/50 text-primary rounded-full px-xs py-1 transition-all duration-220 hover:opacity-80 active-scale group" href="#">
+<span class="material-symbols-outlined font-label-sm text-label-sm" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+<span class="font-label-sm text-label-sm mt-1 text-[10px]">Knowledge</span>
+</a>
+<!-- Inactive: Profile -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-xs py-1 hover:opacity-80 active-scale group" href="#">
+<span class="material-symbols-outlined font-label-sm text-label-sm group-hover:text-primary transition-colors">person</span>
+<span class="font-label-sm text-label-sm mt-1 text-[10px]">Profile</span>
+</a>
+</nav>
+</body></html>

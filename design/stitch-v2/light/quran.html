@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIYYAH - Quran</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#e5e2e1",
+                        "on-secondary-fixed-variant": "#00513a",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#231700",
+                        "outline-variant": "#c5c6ce",
+                        "on-secondary": "#ffffff",
+                        "outline": "#75777e",
+                        "surface": "#fcf9f8",
+                        "surface-container-highest": "#e5e2e1",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#ffdea4",
+                        "on-primary-container": "#8695b9",
+                        "on-surface-variant": "#45474e",
+                        "primary": "#071836",
+                        "secondary-fixed-dim": "#6fdab0",
+                        "tertiary-container": "#3d2a00",
+                        "primary-fixed": "#d8e2ff",
+                        "on-surface": "#1c1b1b",
+                        "surface-dim": "#dcd9d9",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#b7c6ed",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#f0edec",
+                        "on-secondary-fixed": "#002115",
+                        "tertiary-fixed-dim": "#eec064",
+                        "secondary": "#006c4f",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#5d4200",
+                        "surface-container-low": "#f6f3f2",
+                        "on-background": "#1c1b1b",
+                        "on-primary-fixed": "#0a1b39",
+                        "secondary-fixed": "#8bf7cb",
+                        "on-primary-fixed-variant": "#384667",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#1e2d4c",
+                        "inverse-surface": "#313030",
+                        "on-tertiary-container": "#b88e38",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed": "#261900",
+                        "on-secondary-container": "#007354",
+                        "secondary-container": "#8bf7cb",
+                        "background": "#fcf9f8",
+                        "inverse-primary": "#b7c6ed",
+                        "surface-tint": "#4f5e80",
+                        "surface-container-high": "#ebe7e7",
+                        "surface-bright": "#fcf9f8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding-desktop": "48px",
+                        "stack-sm": "8px",
+                        "gutter": "16px",
+                        "container-padding-mobile": "24px",
+                        "unit": "8px",
+                        "section-gap": "40px",
+                        "stack-md": "16px",
+                        "stack-lg": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["EB Garamond"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-md": ["EB Garamond"],
+                        "display-lg": ["EB Garamond"],
+                        "label-md": ["Hanken Grotesk"],
+                        "display-md": ["EB Garamond"],
+                        "headline-lg": ["EB Garamond"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-md": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #F7F6F3; } /* Level 0 Background */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-nav { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface antialiased min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim docked full-width top-0 sticky flat no shadows z-40 hidden md:flex">
+<div class="flex justify-between items-center px-container-padding-mobile py-4 w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="text-primary dark:text-primary-fixed hover:opacity-80 transition-opacity Active: scale-95 duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+</div>
+<h1 class="font-display-md text-display-md font-medium tracking-tight text-primary dark:text-primary-fixed text-center absolute left-1/2 -translate-x-1/2">
+                NIYYAH
+            </h1>
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A minimal user profile avatar in a digital sanctuary aesthetic. Soft, neutral background with a simple geometric or subtle organic shape representing a user profile, rendered in muted earthy tones like warm stone and deep navy." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZTQ6DLDxEE7q0Ko5Gp9qiedzCWen2sGo8GQ6NNmoi5_PIXGlVaOY0gi0-fyGf9Z7DfceNsxVKfV4nJS8mGgt8fPw_HnZBpXAKtJ9TxONGsKsuPKBbtQGBwlVR340EHCBh1Jw4MreR51E85Jn7UQrjmXMmM6OypSDsAoED7lWbaL9KXSekTWdKkmBQZA5vfpkYDiGRwfRUaPynq7B-1UJSBTRrTBRqeivclb0jTgePulLuDdkZ5kE08w7PilYtrcRxND3NK7RNNg"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Mobile Header -->
+<header class="md:hidden sticky top-0 z-40 bg-[#F7F6F3]/90 backdrop-blur-md px-container-padding-mobile py-6 flex justify-between items-center">
+<h1 class="font-display-md text-display-md font-medium tracking-tight text-primary">Quran</h1>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-[#E7E2DA]">
+<span class="material-symbols-outlined text-primary">search</span>
+</button>
+</header>
+<!-- Main Canvas -->
+<main class="max-w-3xl mx-auto px-container-padding-mobile md:px-0 md:pt-12">
+<!-- Search Bar (Desktop) -->
+<div class="hidden md:block mb-section-gap relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-white border border-[#E7E2DA] rounded-xl py-4 pl-12 pr-4 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary transition-colors focus:ring-0 placeholder:text-outline-variant shadow-sm" placeholder="Search Surah, Ayat, or Topic..." type="text"/>
+</div>
+<!-- Continue Reading Card -->
+<section class="mb-section-gap">
+<h2 class="font-label-md text-label-md uppercase text-outline mb-stack-md tracking-widest">Continue Reading</h2>
+<div class="bg-white border border-[#E7E2DA] rounded-2xl p-6 md:p-8 relative overflow-hidden flex flex-col justify-between min-h-[220px] group cursor-pointer hover:shadow-[0_4px_20px_rgba(30,45,76,0.05)] transition-shadow">
+<!-- Background Decoration (Subtle Pattern) -->
+<div class="absolute right-0 top-0 w-1/2 h-full opacity-5 pointer-events-none" style="background-image: radial-gradient(#1E2D4C 1px, transparent 1px); background-size: 16px 16px;"></div>
+<div>
+<div class="flex justify-between items-start mb-2">
+<span class="bg-[#F2F0EC] text-[#666666] font-label-sm text-label-sm px-3 py-1 rounded-xl">Juz 1</span>
+<span class="material-symbols-outlined text-outline">bookmark</span>
+</div>
+<h3 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mt-2">Al-Fatihah</h3>
+<p class="font-body-md text-body-md text-outline-variant mt-1">Ayah 4 - 7</p>
+</div>
+<div class="mt-8">
+<div class="flex justify-between font-label-sm text-label-sm text-outline-variant mb-2">
+<span>Progress</span>
+<span>14%</span>
+</div>
+<div class="w-full bg-[#F2F0EC] h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full w-[14%]"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Recently Read (Horizontal Scroll) -->
+<section class="mb-section-gap">
+<h2 class="font-label-md text-label-md uppercase text-outline mb-stack-md tracking-widest">Recently Read</h2>
+<div class="flex overflow-x-auto hide-scrollbar gap-4 -mx-container-padding-mobile px-container-padding-mobile md:mx-0 md:px-0">
+<!-- Card 1 -->
+<div class="flex-none w-[200px] bg-white border border-[#E7E2DA] rounded-xl p-5 cursor-pointer hover:shadow-[0_4px_20px_rgba(30,45,76,0.05)] transition-shadow">
+<h4 class="font-headline-md text-headline-md text-primary mb-1">Al-Baqarah</h4>
+<p class="font-label-sm text-label-sm text-outline-variant">Page 2</p>
+</div>
+<!-- Card 2 -->
+<div class="flex-none w-[200px] bg-white border border-[#E7E2DA] rounded-xl p-5 cursor-pointer hover:shadow-[0_4px_20px_rgba(30,45,76,0.05)] transition-shadow">
+<h4 class="font-headline-md text-headline-md text-primary mb-1">Yasin</h4>
+<p class="font-label-sm text-label-sm text-outline-variant">Page 440</p>
+</div>
+<!-- Card 3 -->
+<div class="flex-none w-[200px] bg-white border border-[#E7E2DA] rounded-xl p-5 cursor-pointer hover:shadow-[0_4px_20px_rgba(30,45,76,0.05)] transition-shadow">
+<h4 class="font-headline-md text-headline-md text-primary mb-1">Al-Mulk</h4>
+<p class="font-label-sm text-label-sm text-outline-variant">Page 562</p>
+</div>
+<!-- Empty padding to allow full scroll on mobile -->
+<div class="flex-none w-4 md:hidden"></div>
+</div>
+</section>
+<!-- Bookmarks & Collections Bento -->
+<section class="mb-section-gap">
+<h2 class="font-label-md text-label-md uppercase text-outline mb-stack-md tracking-widest">Your Library</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Bookmarks -->
+<div class="bg-[#FCFBF9] border border-[#E7E2DA] rounded-2xl p-6 shadow-[0_4px_20px_rgba(30,45,76,0.1)] flex flex-col justify-between min-h-[180px] cursor-pointer">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-full bg-[#CEC0BB]/15 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">bookmark_added</span>
+</div>
+<span class="bg-white border border-[#E7E2DA] rounded-full px-3 py-1 font-label-sm text-label-sm text-primary">12 Saved</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Bookmarks</h3>
+<p class="font-body-md text-body-md text-outline-variant mt-1">Verses you've saved</p>
+</div>
+</div>
+<!-- Collections -->
+<div class="bg-white border border-[#E7E2DA] rounded-2xl p-6 flex flex-col justify-between min-h-[180px] cursor-pointer hover:bg-[#FCFBF9] transition-colors">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-full bg-[#ACBDAA]/15 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">folder_open</span>
+</div>
+<span class="bg-[#F2F0EC] border border-[#E7E2DA] rounded-full px-3 py-1 font-label-sm text-label-sm text-outline">3 Folders</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Collections</h3>
+<p class="font-body-md text-body-md text-outline-variant mt-1">Organized by topic</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-full px-6 py-3 border border-white/20 shadow-[0_4px_20px_rgba(30,45,76,0.1)] bg-white/80 dark:bg-surface-container-highest/80 backdrop-blur-xl z-50 flex justify-between items-center md:hidden glass-nav">
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="font-label-sm text-label-sm mt-1 hidden">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">mosque</span>
+<span class="font-label-sm text-label-sm mt-1 hidden">Prayer</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-secondary-fixed relative after:content-[''] after:w-1 after:h-1 after:bg-[#D4A84F] after:rounded-full after:mt-1 Active: scale-110 duration-200 ease-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+<span class="font-label-sm text-label-sm mt-1 hidden">Quran</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">auto_stories</span>
+<span class="font-label-sm text-label-sm mt-1 hidden">Knowledge</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="font-label-sm text-label-sm mt-1 hidden">Profile</span>
+</a>
+</nav>
+</body></html>

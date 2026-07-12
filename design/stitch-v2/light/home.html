@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIYYAH - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#e5e2e1",
+                        "on-secondary-fixed-variant": "#00513a",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#231700",
+                        "outline-variant": "#c5c6ce",
+                        "on-secondary": "#ffffff",
+                        "outline": "#75777e",
+                        "surface": "#fcf9f8",
+                        "surface-container-highest": "#e5e2e1",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#ffdea4",
+                        "on-primary-container": "#8695b9",
+                        "on-surface-variant": "#45474e",
+                        "primary": "#071836",
+                        "secondary-fixed-dim": "#6fdab0",
+                        "tertiary-container": "#3d2a00",
+                        "primary-fixed": "#d8e2ff",
+                        "on-surface": "#1c1b1b",
+                        "surface-dim": "#dcd9d9",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#b7c6ed",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#f0edec",
+                        "on-secondary-fixed": "#002115",
+                        "tertiary-fixed-dim": "#eec064",
+                        "secondary": "#006c4f",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#5d4200",
+                        "surface-container-low": "#f6f3f2",
+                        "on-background": "#1c1b1b",
+                        "on-primary-fixed": "#0a1b39",
+                        "secondary-fixed": "#8bf7cb",
+                        "on-primary-fixed-variant": "#384667",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#1e2d4c",
+                        "inverse-surface": "#313030",
+                        "on-tertiary-container": "#b88e38",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed": "#261900",
+                        "on-secondary-container": "#007354",
+                        "secondary-container": "#8bf7cb",
+                        "background": "#fcf9f8",
+                        "inverse-primary": "#b7c6ed",
+                        "surface-tint": "#4f5e80",
+                        "surface-container-high": "#ebe7e7",
+                        "surface-bright": "#fcf9f8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "2xl": "1.5rem"
+                    },
+                    "spacing": {
+                        "container-padding-desktop": "48px",
+                        "stack-sm": "8px",
+                        "gutter": "16px",
+                        "container-padding-mobile": "24px",
+                        "unit": "8px",
+                        "section-gap": "40px",
+                        "stack-md": "16px",
+                        "stack-lg": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["EB Garamond", "serif"],
+                        "body-md": ["Hanken Grotesk", "sans-serif"],
+                        "headline-md": ["EB Garamond", "serif"],
+                        "display-lg": ["EB Garamond", "serif"],
+                        "label-md": ["Hanken Grotesk", "sans-serif"],
+                        "display-md": ["EB Garamond", "serif"],
+                        "headline-lg": ["EB Garamond", "serif"],
+                        "label-sm": ["Hanken Grotesk", "sans-serif"],
+                        "body-lg": ["Hanken Grotesk", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "500"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "display-md": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "500"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #F7F6F3; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background font-body-md antialiased min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="bg-surface docked full-width top-0 sticky flex justify-between items-center px-container-padding-mobile md:px-container-padding-desktop py-4 w-full z-40 border-none">
+<button class="text-primary hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-display-md text-display-md font-medium tracking-tight text-primary">NIYYAH</h1>
+<button class="w-10 h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity border border-[#E7E2DA]">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A refined, minimalist portrait of a calm individual in soft, high-key lighting, embodying a serene spiritual aesthetic. Muted earth tones and crisp white clothing, shot with shallow depth of field in a modern studio." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvbnD0GStAJepdc1imvZPI4fDTvSVi83nbN7OEzQsOUa0Etf6FOrTqTYZ2CZ8xVbKJYzyYsZh1Z2-1praELpEhiKcIApO_62-gU9CdAN75ueOdtmihG5_JGJm3lNQn0QnWUTWkSp3JyXg1DVUiSf3maeWWliS1hYoVGxzETr1Nn2uccUeTlMG69H0GURs4brCI1Pz4Vb9IWwQydcLTJbmWThvzWeoYURJnCMavAhuufFzpGHZnJ3B9fuY2ACf6qSIcBmmxRgBlXg"/>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="max-w-3xl mx-auto px-container-padding-mobile md:px-container-padding-desktop pt-8">
+<!-- Greeting Section -->
+<section class="mb-section-gap flex flex-col items-center text-center">
+<p class="font-label-md text-label-md text-outline uppercase tracking-widest mb-2">12 Safar 1446 • 16 August 2024</p>
+<h2 class="font-display-lg text-display-lg text-primary mb-2">Assalamu Alaikum</h2>
+</section>
+<!-- Today's Intention -->
+<section class="mb-section-gap">
+<div class="bg-white border border-[#E7E2DA] rounded-2xl p-6 md:p-8 flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary text-2xl mt-1">favorite</span>
+<div>
+<h3 class="font-label-md text-label-md text-outline uppercase mb-2">Today's Intention</h3>
+<p class="font-headline-md text-headline-md text-primary leading-relaxed">"To approach every task today with patience and seeking only His pleasure."</p>
+</div>
+</div>
+</section>
+<!-- Prayer Hero Card -->
+<section class="mb-section-gap relative rounded-[32px] overflow-hidden bg-primary-container text-white shadow-[0_20px_40px_rgba(30,45,76,0.15)] h-[400px]">
+<div class="absolute inset-0 z-0 opacity-40 mix-blend-overlay">
+<img alt="Mosque Architecture" class="w-full h-full object-cover" data-alt="A sweeping, abstract architectural view of a modern mosque interior bathed in warm golden hour sunlight. Long, dramatic shadows emphasize the clean lines and minimalist aesthetic. Deep navy blue and warm gold tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7hGzWR4KPOZG3WPOv7qoL-QWAWtPE62fVLWRK7SfxNzw1hmlzwlnnO5x30bZDIF6ws5WF_F9nXNLUrmBhUO967_7EdfwiUfwhiwTQT9LPFzBDUimFcIbMv9nVu95NSwbifFW5hQHfdnrtt2vhU5aEar646-gpkPvVvPC4RP1XuTBhTS6FKiLuSFA9AzljFYNaG5ltEIX56fT0wBu7oOgPZS5-2N0HnprKnFrjpnWWpgdS4q3axn3uci41nCRFc_LWBezlIYrZGQ"/>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary-container via-primary-container/80 to-transparent z-10"></div>
+<div class="relative z-20 h-full p-8 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div>
+<span class="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-md font-label-sm text-label-sm uppercase mb-4 border border-white/10">Next Prayer</span>
+<h3 class="font-display-lg text-display-lg">Dhuhr</h3>
+</div>
+<div class="text-right">
+<span class="block font-headline-lg text-headline-lg">1:15 PM</span>
+<span class="block font-body-md text-white/70">in 45 mins</span>
+</div>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-6 text-white/80">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="font-body-md">Central Mosque, London</span>
+</div>
+<button class="bg-white text-primary-container font-label-md text-label-md px-6 py-3 rounded-full hover:bg-surface-variant transition-colors inline-flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">directions_walk</span>
+                        Directions
+                    </button>
+</div>
+</div>
+</section>
+<!-- Prayer Timeline -->
+<section class="mb-section-gap">
+<h4 class="font-label-md text-label-md text-outline uppercase mb-6 pl-4">Daily Prayers</h4>
+<div class="flex gap-4 overflow-x-auto hide-scrollbar pb-4 pl-4 pr-container-padding-mobile snap-x">
+<!-- Completed (Fajr) -->
+<div class="snap-start shrink-0 w-28 bg-[#FCFBF9] border border-[#E7E2DA] rounded-2xl p-4 flex flex-col items-center justify-center gap-3 opacity-60">
+<span class="material-symbols-outlined text-secondary" data-weight="fill">check_circle</span>
+<div class="text-center">
+<span class="block font-label-md text-label-md text-outline">Fajr</span>
+<span class="block font-body-md text-outline">4:30 AM</span>
+</div>
+</div>
+<!-- Active (Dhuhr) -->
+<div class="snap-start shrink-0 w-28 bg-white border-2 border-primary rounded-2xl p-4 flex flex-col items-center justify-center gap-3 shadow-[0_4px_20px_rgba(30,45,76,0.1)] relative">
+<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#D4A84F] border-2 border-white"></div>
+<span class="material-symbols-outlined text-primary">light_mode</span>
+<div class="text-center">
+<span class="block font-label-md text-label-md text-primary">Dhuhr</span>
+<span class="block font-body-md text-primary font-medium">1:15 PM</span>
+</div>
+</div>
+<!-- Upcoming (Asr) -->
+<div class="snap-start shrink-0 w-28 bg-white border border-[#E7E2DA] rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+<span class="material-symbols-outlined text-outline">wb_twilight</span>
+<div class="text-center">
+<span class="block font-label-md text-label-md text-primary">Asr</span>
+<span class="block font-body-md text-outline">5:45 PM</span>
+</div>
+</div>
+<!-- Upcoming (Maghrib) -->
+<div class="snap-start shrink-0 w-28 bg-white border border-[#E7E2DA] rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+<span class="material-symbols-outlined text-outline">brightness_3</span>
+<div class="text-center">
+<span class="block font-label-md text-label-md text-primary">Maghrib</span>
+<span class="block font-body-md text-outline">8:20 PM</span>
+</div>
+</div>
+<!-- Upcoming (Isha) -->
+<div class="snap-start shrink-0 w-28 bg-white border border-[#E7E2DA] rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+<span class="material-symbols-outlined text-outline">nights_stay</span>
+<div class="text-center">
+<span class="block font-label-md text-label-md text-primary">Isha</span>
+<span class="block font-body-md text-outline">10:00 PM</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Nav Bar -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
+<div class="bg-white/80 dark:bg-surface-container-highest/80 backdrop-blur-xl border border-white/20 shadow-[0_4px_20px_rgba(30,45,76,0.1)] rounded-full px-6 py-3 flex justify-between items-center">
+<button class="flex flex-col items-center justify-center text-primary dark:text-secondary-fixed relative after:content-[''] after:w-1 after:h-1 after:bg-[#D4A84F] after:rounded-full after:mt-1 hover:text-primary transition-colors active:scale-110 duration-200 ease-out group">
+<span class="material-symbols-outlined" data-weight="fill">home</span>
+<span class="font-label-sm text-label-sm sr-only group-hover:not-sr-only group-hover:absolute group-hover:-top-6 bg-primary text-white px-2 py-1 rounded">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-outline hover:text-primary transition-colors group relative">
+<span class="material-symbols-outlined">mosque</span>
+<span class="font-label-sm text-label-sm sr-only group-hover:not-sr-only group-hover:absolute group-hover:-top-6 bg-primary text-white px-2 py-1 rounded">Prayer</span>
+</button>
+<button class="flex flex-col items-center justify-center text-outline hover:text-primary transition-colors group relative">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-label-sm text-label-sm sr-only group-hover:not-sr-only group-hover:absolute group-hover:-top-6 bg-primary text-white px-2 py-1 rounded">Quran</span>
+</button>
+<button class="flex flex-col items-center justify-center text-outline hover:text-primary transition-colors group relative">
+<span class="material-symbols-outlined">auto_stories</span>
+<span class="font-label-sm text-label-sm sr-only group-hover:not-sr-only group-hover:absolute group-hover:-top-6 bg-primary text-white px-2 py-1 rounded">Knowledge</span>
+</button>
+<button class="flex flex-col items-center justify-center text-outline hover:text-primary transition-colors group relative">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm sr-only group-hover:not-sr-only group-hover:absolute group-hover:-top-6 bg-primary text-white px-2 py-1 rounded">Profile</span>
+</button>
+</div>
+</nav>
+</body></html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIYYAH - Prayer Times</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&amp;family=Hanken+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#e5e2e1",
+                        "on-secondary-fixed-variant": "#00513a",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#231700",
+                        "outline-variant": "#c5c6ce",
+                        "on-secondary": "#ffffff",
+                        "outline": "#75777e",
+                        "surface": "#fcf9f8",
+                        "surface-container-highest": "#e5e2e1",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#ffdea4",
+                        "on-primary-container": "#8695b9",
+                        "on-surface-variant": "#45474e",
+                        "primary": "#071836",
+                        "secondary-fixed-dim": "#6fdab0",
+                        "tertiary-container": "#3d2a00",
+                        "primary-fixed": "#d8e2ff",
+                        "on-surface": "#1c1b1b",
+                        "surface-dim": "#dcd9d9",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#b7c6ed",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#f0edec",
+                        "on-secondary-fixed": "#002115",
+                        "tertiary-fixed-dim": "#eec064",
+                        "secondary": "#006c4f",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#5d4200",
+                        "surface-container-low": "#f6f3f2",
+                        "on-background": "#1c1b1b",
+                        "on-primary-fixed": "#0a1b39",
+                        "secondary-fixed": "#8bf7cb",
+                        "on-primary-fixed-variant": "#384667",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#1e2d4c",
+                        "inverse-surface": "#313030",
+                        "on-tertiary-container": "#b88e38",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed": "#261900",
+                        "on-secondary-container": "#007354",
+                        "secondary-container": "#8bf7cb",
+                        "background": "#fcf9f8",
+                        "inverse-primary": "#b7c6ed",
+                        "surface-tint": "#4f5e80",
+                        "surface-container-high": "#ebe7e7",
+                        "surface-bright": "#fcf9f8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding-desktop": "48px",
+                        "stack-sm": "8px",
+                        "gutter": "16px",
+                        "container-padding-mobile": "24px",
+                        "unit": "8px",
+                        "section-gap": "40px",
+                        "stack-md": "16px",
+                        "stack-lg": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["EB Garamond"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-md": ["EB Garamond"],
+                        "display-lg": ["EB Garamond"],
+                        "label-md": ["Hanken Grotesk"],
+                        "display-md": ["EB Garamond"],
+                        "headline-lg": ["EB Garamond"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-md": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #F7F6F3; /* Brand Layer 0 */
+        }
+        .editorial-card {
+            background-color: #FFFFFF;
+            border: 1px solid #E7E2DA;
+            border-radius: 16px;
+        }
+        .action-card {
+            background-color: #FFFFFF;
+            border: 1px solid #E7E2DA;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+        .action-card:active {
+            background-color: #FCFBF9;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface antialiased pb-24">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim docked full-width top-0 sticky flat no shadows">
+<div class="flex justify-between items-center px-container-padding-mobile py-4 w-full">
+<button class="text-primary dark:text-primary-fixed hover:opacity-80 transition-opacity active:scale-95 duration-150 flex items-center justify-center p-2 rounded-full">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-display-md text-display-md font-medium tracking-tight text-primary dark:text-primary-fixed">NIYYAH</h1>
+<button class="hover:opacity-80 transition-opacity active:scale-95 duration-150 rounded-full overflow-hidden w-8 h-8 flex-shrink-0">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A small, minimalist profile picture of a serene user in a natural, light-filled setting, muted earthy tones, high quality, subtle lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKkGuvGLpqaPC1dMBQRI_Bk54KrZ8J17Gt89-MdmmHswdfRwtRadFWjM0VVSEzzHva8Emcq0xxhexoFtvEF1wGq6g50BeFi4KOkmfgZUdhQmat-5X8YfGQypkJ0LCqAnrXP2h03IrutQ8vrQi64JztYfe-vcNcJvEoXFeVcFDUsHmdL0dAbByRj0yMjWrCqf1LQCN-rEfac882Iyg_tdwWbOFalgF9G0wrKM9ehCHsLjCC1xlB--BOlAr3F30TcbBh-G2Ela9Lbg"/>
+</button>
+</div>
+</header>
+<main class="max-w-md mx-auto px-container-padding-mobile mt-section-gap">
+<!-- Header / Location -->
+<div class="text-center mb-stack-lg">
+<p class="font-label-md text-label-md uppercase text-outline tracking-widest mb-1 flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+                London, UK
+            </p>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Monday, 14 Oct</h2>
+<p class="font-body-md text-body-md text-outline">10 Rabi' al-Thani 1445 AH</p>
+</div>
+<!-- Next Prayer Hero Card -->
+<div class="editorial-card p-6 mb-section-gap flex flex-col items-center justify-center text-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-5 pointer-events-none" style="background-image: radial-gradient(circle at center, #1E2D4C 0%, transparent 70%);"></div>
+<span class="font-label-md text-label-md text-primary uppercase tracking-widest mb-2 relative z-10">Next Prayer</span>
+<h3 class="font-display-lg text-display-lg text-primary mb-1 relative z-10">Dhuhr</h3>
+<p class="font-headline-md text-headline-md text-outline mb-6 relative z-10">1:05 PM</p>
+<div class="bg-surface-container px-6 py-3 rounded-full mb-2 relative z-10">
+<span class="font-label-md text-label-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">timer</span>
+                    - 02 : 45 : 12
+                </span>
+</div>
+<button class="absolute top-4 right-4 text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<!-- Prayer List -->
+<div class="space-y-stack-sm mb-section-gap">
+<h4 class="font-label-md text-label-md uppercase text-outline tracking-widest mb-4">Today's Schedule</h4>
+<!-- Fajr -->
+<div class="action-card p-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary opacity-50">
+<span class="material-symbols-outlined">wb_twilight</span>
+</div>
+<div>
+<h5 class="font-headline-md text-[20px] text-primary leading-tight">Fajr</h5>
+<p class="font-body-md text-[14px] text-outline">5:30 AM</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface px-2 py-1 rounded">Jamaat 6:00 AM</span>
+<button class="w-6 h-6 rounded-full border border-primary bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</button>
+</div>
+</div>
+<!-- Sunrise (Info only) -->
+<div class="p-4 flex items-center justify-between opacity-60">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 flex items-center justify-center text-outline">
+<span class="material-symbols-outlined">light_mode</span>
+</div>
+<div>
+<h5 class="font-body-md text-outline">Sunrise</h5>
+</div>
+</div>
+<div class="text-right">
+<p class="font-body-md text-outline">6:45 AM</p>
+</div>
+</div>
+<!-- Dhuhr (Next) -->
+<div class="action-card p-4 flex items-center justify-between border-primary bg-white shadow-[0_4px_20px_rgba(30,45,76,0.05)]">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">sunny</span>
+</div>
+<div>
+<h5 class="font-headline-md text-[20px] text-primary leading-tight font-semibold">Dhuhr</h5>
+<p class="font-body-md text-[14px] text-primary">1:05 PM</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-sm text-label-sm text-primary bg-primary-fixed px-2 py-1 rounded">Jamaat 1:30 PM</span>
+<button class="w-6 h-6 rounded-full border border-outline hover:border-primary transition-colors flex items-center justify-center">
+</button>
+</div>
+</div>
+<!-- Asr -->
+<div class="action-card p-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">partly_cloudy_day</span>
+</div>
+<div>
+<h5 class="font-headline-md text-[20px] text-primary leading-tight">Asr</h5>
+<p class="font-body-md text-[14px] text-outline">3:45 PM</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface px-2 py-1 rounded">Jamaat 4:15 PM</span>
+<button class="w-6 h-6 rounded-full border border-outline hover:border-primary transition-colors flex items-center justify-center">
+</button>
+</div>
+</div>
+<!-- Maghrib -->
+<div class="action-card p-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">nights_stay</span>
+</div>
+<div>
+<h5 class="font-headline-md text-[20px] text-primary leading-tight">Maghrib</h5>
+<p class="font-body-md text-[14px] text-outline">6:12 PM</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface px-2 py-1 rounded">Jamaat 6:20 PM</span>
+<button class="w-6 h-6 rounded-full border border-outline hover:border-primary transition-colors flex items-center justify-center">
+</button>
+</div>
+</div>
+<!-- Isha -->
+<div class="action-card p-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">mode_night</span>
+</div>
+<div>
+<h5 class="font-headline-md text-[20px] text-primary leading-tight">Isha</h5>
+<p class="font-body-md text-[14px] text-outline">7:30 PM</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface px-2 py-1 rounded">Jamaat 8:00 PM</span>
+<button class="w-6 h-6 rounded-full border border-outline hover:border-primary transition-colors flex items-center justify-center">
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-0 right-0 z-50 flex justify-between items-center md:hidden pointer-events-none">
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-full px-6 py-3 bg-white/80 dark:bg-surface-container-highest/80 backdrop-blur-xl border border-white/20 shadow-[0_4px_20px_rgba(30,45,76,0.1)] pointer-events-auto flex justify-between items-center">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-sm text-[10px]">Home</span>
+</a>
+<!-- Prayer (Active) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-secondary-fixed relative after:content-[''] after:w-1 after:h-1 after:bg-[#D4A84F] after:rounded-full after:mt-1 active:scale-110 duration-200 ease-out" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">mosque</span>
+<span class="font-label-sm text-[10px]">Prayer</span>
+</a>
+<!-- Quran -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">menu_book</span>
+<span class="font-label-sm text-[10px]">Quran</span>
+</a>
+<!-- Knowledge -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">auto_stories</span>
+<span class="font-label-sm text-[10px]">Knowledge</span>
+</a>
+<!-- Profile -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-label-sm text-[10px]">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

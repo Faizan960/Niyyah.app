@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Salah Focus Mode</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&amp;family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS Config -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#eec064",
+                        "secondary-fixed": "#8bf7cb",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#3d2a00",
+                        "outline": "#75777e",
+                        "surface": "#fcf9f8",
+                        "on-secondary-fixed-variant": "#00513a",
+                        "surface-container-low": "#f6f3f2",
+                        "secondary-fixed-dim": "#6fdab0",
+                        "on-secondary-container": "#007354",
+                        "surface-bright": "#fcf9f8",
+                        "surface-dim": "#dcd9d9",
+                        "on-primary-fixed": "#0a1b39",
+                        "primary-fixed-dim": "#b7c6ed",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#45474e",
+                        "tertiary-fixed": "#ffdea4",
+                        "tertiary": "#231700",
+                        "surface-tint": "#4f5e80",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#8bf7cb",
+                        "on-tertiary-fixed": "#261900",
+                        "on-tertiary-fixed-variant": "#5d4200",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#c5c6ce",
+                        "inverse-surface": "#313030",
+                        "surface-container": "#f0edec",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#002115",
+                        "on-primary-fixed-variant": "#384667",
+                        "primary": "#071836",
+                        "surface-container-highest": "#e5e2e1",
+                        "primary-container": "#1e2d4c",
+                        "on-secondary": "#ffffff",
+                        "background": "#fcf9f8",
+                        "primary-fixed": "#d8e2ff",
+                        "on-surface": "#1c1b1b",
+                        "on-background": "#1c1b1b",
+                        "inverse-primary": "#b7c6ed",
+                        "on-primary-container": "#8695b9",
+                        "secondary": "#006c4f",
+                        "surface-variant": "#e5e2e1",
+                        "surface-container-high": "#ebe7e7",
+                        "on-tertiary-container": "#b88e38",
+                        "on-error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "8px",
+                        "section-gap": "40px",
+                        "container-padding-mobile": "24px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "stack-lg": "24px",
+                        "gutter": "16px",
+                        "container-padding-desktop": "48px"
+                    },
+                    "fontFamily": {
+                        "display-md": ["EB Garamond"],
+                        "headline-md": ["EB Garamond"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "label-md": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["EB Garamond"],
+                        "body-md": ["Hanken Grotesk"],
+                        "display-lg": ["EB Garamond"],
+                        "headline-lg": ["EB Garamond"]
+                    },
+                    "fontSize": {
+                        "display-md": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Hide scrollbar for clean UI but allow scrolling */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Subtle pulse for timer */
+        @keyframes subtlePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        .timer-pulse {
+            animation: subtlePulse 2s ease-in-out infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-primary-container text-on-primary min-h-screen flex flex-col font-body-md relative overflow-hidden antialiased">
+<!-- Atmospheric Background Elements (Tonal Layering, No Shadows) -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-secondary-fixed/5 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute bottom-0 right-0 w-[400px] h-[400px] bg-primary-fixed/5 rounded-full blur-3xl pointer-events-none"></div>
+<!-- Header Actions (Minimal) -->
+<header class="w-full flex justify-between items-center px-container-padding-mobile py-6 relative z-10 md:px-container-padding-desktop">
+<!-- Spacer for centering -->
+<div></div>
+<button class="group flex items-center gap-2 px-4 py-2 rounded-full border border-error-container/30 text-error-container/80 hover:bg-error-container/10 hover:text-error-container transition-all duration-300">
+<span class="material-symbols-outlined text-[18px]">lock_open</span>
+<span class="font-label-sm text-label-sm uppercase tracking-widest">Emergency</span>
+</button>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 w-full max-w-lg mx-auto flex flex-col items-center justify-center px-container-padding-mobile gap-section-gap relative z-10 pb-12">
+<!-- Focal Point: Prayer Timer -->
+<div class="flex flex-col items-center text-center w-full relative">
+<!-- Concentric decorative rings for spiritual focus -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center opacity-10">
+<div class="w-[280px] h-[280px] rounded-full border border-white"></div>
+<div class="w-[340px] h-[340px] rounded-full border border-white/50 absolute"></div>
+</div>
+<div class="flex flex-col items-center mb-stack-lg z-10">
+<span class="font-label-sm text-label-sm text-secondary-fixed-dim uppercase tracking-widest mb-2 opacity-80">Current Focus</span>
+<h2 class="font-display-md text-display-md text-on-primary">Dhuhr</h2>
+</div>
+<div class="z-10 flex flex-col items-center">
+<!-- Inline style override for extreme scale on the timer, keeping font family intact -->
+<h1 class="font-display-lg text-display-lg text-on-primary tracking-tighter tabular-nums timer-pulse" style="font-size: 5rem; line-height: 1;">01:24<span class="text-on-primary/50 text-4xl ml-1">:30</span></h1>
+<p class="font-body-md text-body-md text-on-primary/60 mt-stack-md">remaining until Asr</p>
+</div>
+</div>
+<!-- Controls -->
+<div class="w-full max-w-[280px] z-10">
+<button class="w-full bg-on-primary text-primary-container font-label-md text-label-md rounded-full py-4 flex items-center justify-center gap-2 hover:bg-surface-variant transition-colors uppercase tracking-widest">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">pause</span>
+                Pause Session
+            </button>
+</div>
+<!-- Secondary Information Container -->
+<div class="w-full flex flex-col gap-stack-lg z-10 mt-4">
+<!-- Verification Prompt -->
+<div class="bg-surface/5 border border-surface/10 rounded-xl p-6 flex flex-col sm:flex-row items-center text-center sm:text-left gap-stack-md backdrop-blur-md">
+<div class="w-12 h-12 shrink-0 rounded-full bg-secondary-fixed/10 border border-secondary-fixed/20 text-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">contactless</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-primary mb-1 text-[20px] leading-tight">Verify to Unlock</h3>
+<p class="font-body-md text-body-md text-on-primary/60 text-[14px] leading-relaxed">Scan your designated prayer mat NFC tag to complete this session mindfully.</p>
+</div>
+</div>
+<!-- Blocked Apps List -->
+<div class="w-full">
+<div class="flex items-center justify-between mb-stack-sm px-2">
+<h4 class="font-label-sm text-label-sm text-on-primary/50 uppercase tracking-widest">Restricted Access</h4>
+<span class="font-label-sm text-label-sm text-on-primary/30">Focus Mode</span>
+</div>
+<div class="flex gap-gutter overflow-x-auto pb-2 snap-x hide-scrollbar px-2">
+<!-- App Card 1 -->
+<div class="min-w-[88px] bg-white/5 border border-white/10 rounded-lg p-4 flex flex-col items-center gap-3 snap-start hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-on-primary/40 text-[32px]">photo_camera</span>
+<span class="font-label-sm text-label-sm text-on-primary/70">Social</span>
+</div>
+<!-- App Card 2 -->
+<div class="min-w-[88px] bg-white/5 border border-white/10 rounded-lg p-4 flex flex-col items-center gap-3 snap-start hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-on-primary/40 text-[32px]">mail</span>
+<span class="font-label-sm text-label-sm text-on-primary/70">Email</span>
+</div>
+<!-- App Card 3 -->
+<div class="min-w-[88px] bg-white/5 border border-white/10 rounded-lg p-4 flex flex-col items-center gap-3 snap-start hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-on-primary/40 text-[32px]">language</span>
+<span class="font-label-sm text-label-sm text-on-primary/70">Browser</span>
+</div>
+<!-- App Card 4 -->
+<div class="min-w-[88px] bg-white/5 border border-white/10 rounded-lg p-4 flex flex-col items-center gap-3 snap-start hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-on-primary/40 text-[32px]">chat</span>
+<span class="font-label-sm text-label-sm text-on-primary/70">Messages</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Script for simple timer update logic (Visual only) -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const timerElement = document.querySelector('h1.tabular-nums');
+            if (!timerElement) return;
+
+            let seconds = 30;
+            let minutes = 24;
+            let hours = 1;
+
+            setInterval(() => {
+                seconds--;
+                if (seconds < 0) {
+                    seconds = 59;
+                    minutes--;
+                    if (minutes < 0) {
+                        minutes = 59;
+                        hours--;
+                        if (hours < 0) {
+                            hours = 0; minutes = 0; seconds = 0; // Stop at 0
+                        }
+                    }
+                }
+
+                const h = hours.toString().padStart(2, '0');
+                const m = minutes.toString().padStart(2, '0');
+                const s = seconds.toString().padStart(2, '0');
+
+                timerElement.innerHTML = `${h}:${m}<span class="text-on-primary/50 text-4xl ml-1">:${s}</span>`;
+            }, 1000);
+        });
+    </script>
+</body></html>
