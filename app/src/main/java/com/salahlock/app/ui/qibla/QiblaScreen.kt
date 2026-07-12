@@ -79,136 +79,94 @@ fun QiblaScreen(
         }
     }
 
+        // Stitch V2 qibla: clean canvas, location chip on top, compass center,
+        // serif degree readout + "Distance to Kaaba" below. No split background.
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Split Background & Mosque Silhouettes
-            MosqueSplitBackground()
-
             if (state.locationMissing) {
                 MissingLocationState()
             } else {
-                // Top Section (Anchored to top)
-                Box(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 48.dp)
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp)
+                        .padding(top = 32.dp, bottom = 90.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    TopPrayerInfo(state)
-                }
+                    Text(
+                        text = "Qibla",
+                        fontFamily = NiyyahSerif,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 32.sp,
+                        lineHeight = 40.sp,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    // Location chip — uppercase city, hairline border
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(14.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = state.cityName.ifEmpty { "Location Active" }.uppercase(),
+                            style = MaterialTheme.typography.labelMedium,
+                            letterSpacing = 1.5.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
 
-                // Compass Section (Anchored to bottom)
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 90.dp) // Accounts for bottom navigation space
-                ) {
+                    Spacer(Modifier.weight(1f))
                     CompassDial(state = state, isAligned = isAligned)
+                    Spacer(Modifier.weight(1f))
+
+                    // Degree readout — serif, aligned turns emerald
+                    val heading = ((state.azimuth % 360f + 360f) % 360f).roundToInt()
+                    Text(
+                        text = "$heading°",
+                        fontFamily = NiyyahSerif,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 56.sp,
+                        lineHeight = 60.sp,
+                        color = if (isAligned) EmeraldSecondary else MaterialTheme.colorScheme.onBackground,
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        text = "DISTANCE TO KAABA",
+                        style = MaterialTheme.typography.labelMedium,
+                        letterSpacing = 2.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = "%,d".format(state.distanceKm),
+                            fontFamily = NiyyahSerif,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 28.sp,
+                            lineHeight = 34.sp,
+                            color = MaterialTheme.colorScheme.onBackground,
+                        )
+                        Text(
+                            text = " km",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 3.dp),
+                        )
+                    }
                 }
             }
         }
-}
-
-@Composable
-private fun TopPrayerInfo(state: QiblaUiState) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        if (state.nextPrayer != null) {
-            Text(
-                text = state.nextPrayer.name.name,
-                style = MaterialTheme.typography.displaySmall,
-                color = Color.White,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = "Until",
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White.copy(alpha = 0.8f),
-                modifier = Modifier.padding(top = 4.dp, bottom = 0.dp)
-            )
-            
-            val formattedTime = state.nextPrayer.time.format(DateTimeFormatter.ofPattern("hh:mm"))
-            val amPm = state.nextPrayer.time.format(DateTimeFormatter.ofPattern("a"))
-            Row {
-                Text(
-                    text = formattedTime,
-                    style = MaterialTheme.typography.displayLarge.copy(fontSize = 76.sp),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.alignByBaseline()
-                )
-                Text(
-                    text = amPm,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.alignByBaseline().padding(start = 4.dp)
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.9f),
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = state.cityName.ifEmpty { "Location Active" },
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        // Cardinal direction calculation
-        val cardinals = arrayOf("N", "NE", "E", "SE", "S", "SW", "W", "NW")
-        val index = (((state.azimuth % 360f + 360f) % 360f) / 45).roundToInt() % 8
-        val cardinalStr = cardinals[index]
-        
-        Text(
-            text = "${((state.azimuth % 360f + 360f) % 360f).roundToInt()} $cardinalStr",
-            style = MaterialTheme.typography.headlineSmall,
-            color = Color.White.copy(alpha = 0.9f),
-            fontWeight = FontWeight.Medium
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Connect both arrows pill
-        Surface(
-            color = Color.White.copy(alpha = 0.15f),
-            shape = CircleShape
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Info, // Need to import this
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Connect both arrows",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Color.White
-                )
-            }
-        }
-    }
 }
 
 @Composable
@@ -221,8 +179,10 @@ private fun CompassDial(state: QiblaUiState, isAligned: Boolean) {
         )
     )
 
+    // Gold ring per Stitch (emerald when aligned); dial surface follows the theme
+    val restRing = GoldAccent
     val ringGlow by animateColorAsState(
-        targetValue = if (isAligned) EmeraldPrimary else Color.White,
+        targetValue = if (isAligned) EmeraldPrimary else restRing,
         animationSpec = tween(MotionTokens.Slow)
     )
 
@@ -249,14 +209,14 @@ private fun CompassDial(state: QiblaUiState, isAligned: Boolean) {
                 .fillMaxSize()
                 .padding(4.dp),
             shape = CircleShape,
-            color = DarkSurface,
+            color = MaterialTheme.colorScheme.surface,
             shadowElevation = 0.dp,
         ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
         Icon(
             imageVector = ImageVector.vectorResource(id = R.drawable.ic_islamic_pattern),
             contentDescription = null,
-            tint = Color.White.copy(alpha = 0.03f),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f),
             modifier = Modifier.fillMaxSize(0.8f)
         )
 
@@ -360,13 +320,13 @@ private fun MissingLocationState() {
                 Text(
                     text = "Location Required",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Enable location access to determine the Qibla direction.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
             }
@@ -387,41 +347,6 @@ private fun triggerHaptic(context: Context) {
         } else {
             @Suppress("DEPRECATION")
             vibrator.vibrate(50)
-        }
-    }
-}
-
-@Composable
-private fun MosqueSplitBackground() {
-    // SL-005 - generated dome/minaret Canvas shapes replaced with a proper SVG
-    // silhouette (ic_mosque_silhouette). The curved navy backdrop is kept - it is
-    // the section divider, not an illustration.
-    Box(modifier = Modifier.fillMaxSize()) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val w = size.width
-            val h = size.height
-            val curveBase = h * 0.55f
-            val bgPath = androidx.compose.ui.graphics.Path().apply {
-                moveTo(0f, 0f)
-                lineTo(w, 0f)
-                lineTo(w, curveBase)
-                quadraticTo(w / 2f, curveBase + 180f, 0f, curveBase)
-                close()
-            }
-            drawPath(bgPath, color = DeepNavy)
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.53f),
-            contentAlignment = Alignment.BottomCenter,
-        ) {
-            Icon(
-                imageVector = ImageVector.vectorResource(id = R.drawable.ic_mosque_silhouette),
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.06f),
-                modifier = Modifier.fillMaxWidth(0.96f).height(110.dp),
-            )
         }
     }
 }

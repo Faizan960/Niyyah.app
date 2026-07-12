@@ -73,15 +73,22 @@ fun KnowledgeScreen(
                 animationSpec = MotionTokens.normalTween(),
                 label = "knowledgeTitleAlpha",
             )
-            Text(
-                text = "Knowledge",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.Bold,
+            Column(
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
                     .alpha(titleAlpha),
-            )
+            ) {
+                Text(
+                    text = "Knowledge",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    text = "Explore the depths of Islamic heritage",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
