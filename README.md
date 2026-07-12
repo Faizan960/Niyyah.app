@@ -1,10 +1,12 @@
-# Niyyah (SalahLock) 🕌🔒
+# Niyyah 🕌
 
-**Lock your distractions. Unlock your prayers.**
+**Live with intention. Worship with sincerity. Return to Allah.**
 
-Niyyah (codename *SalahLock*) is a native Android app that blocks your most distracting apps during Islamic prayer windows — and only unblocks them once you verify that you've actually prayed. It combines a focus-lock system with accurate prayer times, Qibla direction, a Hadith & Azkar knowledge library, streaks, achievements, and private monthly spiritual reports.
+Niyyah (*intention*) — formerly **SalahLock** — is a calm companion for intentional Muslim living. It gently blocks your most distracting apps during Islamic prayer windows, unblocking them once you verify that you've prayed. Around that core it offers accurate prayer times, Qibla direction, a Hadith & Azkar knowledge library, streaks, and private monthly spiritual reflections.
 
-Built entirely with **Kotlin + Jetpack Compose**, offline-first, with no account required.
+Niyyah is not designed to capture attention — it is designed to return attention to Allah. The perfect user journey: open the app, receive guidance, leave the app, pray.
+
+Built entirely with **Kotlin + Jetpack Compose**, offline-first, with no account required. The full product and design specification lives in [`CLAUDE.md`](CLAUDE.md).
 
 ---
 

@@ -1,276 +1,955 @@
-## 2.5 Visual Style Library
+# NIYYAH — Master Product & Design Specification
 
-This section defines the approved visual identities for SalahLock.
-
-Developers and AI assistants must select styles only from this library.
-
-The goal is consistency across all future UI redesigns.
+Version: 1.0
+Status: Master Source of Truth
 
 ---
 
-### Style A — Premium Islamic Minimal (Default)
+# PRODUCT IDENTITY
 
-Status: Primary Design Language
+This product is no longer called **SalahLock**.
 
-Inspiration:
+The new brand is:
 
-* Apple Books
-* Quranly
-* Modern Islamic Architecture
-* Luxury Journals
-* Premium Reading Apps
+# NIYYAH
 
-Characteristics:
+Niyyah means **Intention**.
 
-* Large whitespace
-* Strong typography
-* Soft shadows
-* Minimal gradients
-* Surface-based hierarchy
-* Gold accents
-* Emerald used sparingly
+Every act begins with intention.
 
-Best For:
+Every prayer begins with intention.
 
-* Home
-* Knowledge
-* Hadith Reader
-* Azkar Reader
-* Profile
+Every habit begins with intention.
 
-Feeling:
-Calm • Spiritual • Premium • Focused
+Niyyah exists to help Muslims intentionally organize their worship, knowledge, habits, and daily life.
 
----
+It is **not** merely a prayer app.
 
-### Style B — Glass Spiritual
+It is **not** a productivity app.
 
-Status: Secondary
+It is **not** a habit tracker.
 
-Inspiration:
+It is a calm companion for intentional Muslim living.
 
-* Frosted glass
-* Modern mosque windows
-* VisionOS style interfaces
+Think of it as a premium Islamic operating system.
 
-Characteristics:
+Its purpose is not to maximize screen time.
 
-* Haze
-* Blur
-* Floating navigation
-* Floating controls
-* Layered depth
+Its purpose is to strengthen the relationship between the user and Allah.
 
-Allowed Only:
-
-* Bottom navigation
-* Quick actions
-* Filter sheets
-* Utility panels
-
-Forbidden:
-
-* Hadith Reader
-* Azkar Reader
-* Long reading screens
-
-Feeling:
-Elegant • Modern • Light
+The best experience is one where the user spends less time inside the app and more time practicing Islam.
 
 ---
 
-### Style C — Luxury Compass
+# PRODUCT VISION
 
-Status: Qibla Only
+Niyyah should become the place where a Muslim naturally returns throughout the day.
 
-Inspiration:
+For prayer.
 
-* Rolex
-* Omega
-* Premium watch faces
-* Brass navigation instruments
+For Quran.
 
-Characteristics:
+For remembrance.
 
-* Circular layouts
-* Gold accents
-* Fine dividers
-* Compass rings
+For learning.
 
-Best For:
+For reflection.
 
-* Qibla
-* Prayer Time Hero Components
+For consistency.
 
-Feeling:
-Precision • Trustworthy • Premium
+For intention.
+
+Every module should reinforce one simple idea:
+
+> Live every day with conscious intention for Allah.
 
 ---
 
-### Style D — Islamic Library
+# DESIGN PHILOSOPHY
 
-Status: Knowledge Module
+Opening Niyyah should never feel like opening software.
 
-Inspiration:
+It should feel like entering a peaceful mosque courtyard after Fajr.
 
-* Historical Islamic manuscripts
-* Premium book applications
-* Classical libraries
+The experience should immediately communicate:
 
-Characteristics:
+• Calm
 
-* Book covers
-* Editorial typography
-* Reading-first hierarchy
-* Warm accent colors
+• Peace
 
-Best For:
+• Reflection
 
-* Knowledge Screen
-* Collections
-* Search Results
-* Articles
+• Trust
 
-Feeling:
-Educational • Timeless • Scholarly
+• Warmth
 
----
+• Silence
 
-### Style E — Focus Mode
+• Simplicity
 
-Status: Lock Screens
+• Elegance
 
-Inspiration:
+• Spirituality
 
-* Meditation apps
-* Focus applications
-* Minimal lock experiences
+Never create urgency.
 
-Characteristics:
+Never create addiction.
 
-* Dark surfaces
-* Minimal UI
-* Large timers
-* Single call-to-action
+Never create pressure.
 
-Best For:
+Never imitate social media.
 
-* Lock Overlay
-* Verification Screens
+Never imitate gaming.
 
-Feeling:
-Distraction-Free • Purposeful
+Never imitate dashboards built around productivity metrics.
+
+The application is a sacred space.
+
+Respect that.
 
 ---
 
-## Approved Color Extensions
+# PRODUCT PRINCIPLES
 
-Derived from the Light Theme palette.
+Every feature must pass ALL of these questions.
 
-Light Palette:
+1.
+Does this help someone worship Allah better?
 
-Sage Green     #ACBDAA
-Navy Blue      #1E2D4C
-Medium Gray    #858585
-Warm Stone     #CEC0BB
+2.
+Does this reduce distraction?
 
-Dark Equivalents:
+3.
+Does this encourage sincerity instead of performance?
 
-BackgroundPrimary   #0B0F10
-BackgroundSecondary #12181A
+4.
+Does this encourage consistency instead of perfection?
 
-SurfacePrimary      #151B1C
-SurfaceSecondary    #1C2426
-SurfaceElevated     #232E31
+5.
+Would this feature still feel respectful inside a masjid?
 
-PrimaryText         #F5F5F5
-SecondaryText       #A7A7A7
+6.
+Does this reduce screen time rather than increase it?
 
-Divider             #2A3335
+7.
+Would this feature still feel timeless in five years?
 
-PrimaryEmerald      #0F8F6A
-SecondaryEmerald    #18A67A
+If the answer is NO to any question,
 
-GoldAccent          #D4A84F
-
-MutedSage           #7D927C
-DeepNavy            #253B63
-WarmStoneDark       #8C7D76
+reconsider the feature.
 
 ---
 
-## Design Hierarchy Rules
+# SUCCESS METRIC
 
-Reading Screens:
+The success of Niyyah is NOT measured by:
 
-* Style A only
-* No Glass
-* No large gradients
-* No animated backgrounds
+• Session duration
 
-Navigation:
+• Daily screen time
 
-* Style B allowed
+• Clicks
 
-Qibla:
+• Engagement
 
-* Style C preferred
+Success is measured by:
 
-Knowledge:
+• Consistent prayers
 
-* Style D preferred
+• Quran reading
 
-Lock System:
+• Dhikr
 
-* Style E required
+• Learning
 
----
+• Reflection
 
-## Visual Consistency Rules
+• Habit formation
 
-Corner Radius:
+• Returning to worship
 
-* Chips: 12dp
-* Small Cards: 16dp
-* Standard Cards: 24dp
-* Hero Cards: 32dp
+The perfect user journey is:
 
-Animation:
+Open app.
 
-* Preferred: 250ms
-* Maximum: 400ms
+Receive guidance.
 
-Elevation:
+Leave app.
 
-* Use sparingly
-* Prefer contrast through surfaces
-
-Icons:
-
-* Rounded Material Symbols
-* Consistent stroke weight
-
-Typography Priority:
-
-1. Content
-2. Navigation
-3. Metadata
-
-Never reverse this hierarchy.
+Pray.
 
 ---
 
-Final Rule:
+# BRAND PERSONALITY
 
-A screen should be identifiable by feeling alone.
+Niyyah is...
 
-Users should immediately recognize:
+Gentle.
 
-* Reading Screen
-* Knowledge Screen
-* Qibla Screen
-* Lock Screen
+Calm.
 
-without needing labels.
+Wise.
 
-Consistency creates trust.
+Patient.
+
+Minimal.
+
+Intentional.
+
+Trustworthy.
+
+Warm.
+
+Never loud.
+
+Never trendy.
+
+Never playful.
+
+Never childish.
+
+Never overly corporate.
+
+---
+
+# BRAND VOICE
+
+The application never speaks like software.
+
+It speaks like a gentle companion.
+
+Never use language that creates guilt.
+
+Never shame.
+
+Never pressure.
+
+Never manipulate.
+
+Prefer language that reflects:
+
+Mercy.
+
+Hope.
+
+Reflection.
+
+Encouragement.
+
+Consistency.
+
+Examples
+
+❌
+You missed Fajr.
+
+✅
+Fajr has passed.
+
+May Allah make the next prayer easy for you.
+
+---
+
+❌
+Your streak is broken.
+
+✅
+Every prayer is a new beginning.
+
+---
+
+❌
+Complete today's tasks.
+
+✅
+What intention would you like to begin with today?
+
+---
+
+❌
+Only 2 prayers completed.
+
+✅
+You've completed two prayers today.
+
+May Allah accept them.
+
+---
+
+# TARGET EMOTION
+
+The emotional experience matters more than visual complexity.
+
+When opening Niyyah,
+
+the user should feel:
+
+"I feel closer to Allah."
+
+not
+
+"This app looks impressive."
+
+---
+
+# CORE MODULES
+
+Home
+
+Prayer Times
+
+Salah Lock
+
+Quran
+
+Hadith
+
+Knowledge
+
+Azkar
+
+Qibla
+
+Collections
+
+Bookmarks
+
+Reading Progress
+
+Daily Progress
+
+Monthly Reflection
+
+Achievements
+
+Profile
+
+Settings
+
+Future AI Assistant
+
+Future Family Mode
+
+Future Mosque Integration
+
+Future Hajj Companion
+
+---
+
+# VISUAL DESIGN LANGUAGE
+
+Minimal
+
+Editorial
+
+Luxury
+
+Intentional
+
+Soft
+
+Elegant
+
+Timeless
+
+Calm
+
+Readable
+
+Premium
+
+Every screen should breathe.
+
+Whitespace is part of the design.
+
+Do not fill empty areas unnecessarily.
+
+Less UI.
+
+More focus.
+
+---
+
+# VISUAL INSPIRATION
+
+Apple Books
+
+Quranly
+
+Calm
+
+Headspace
+
+Muji
+
+Notion
+
+Luxury Journals
+
+Islamic Architecture
+
+Editorial Magazines
+
+Japanese Minimalism
+
+Swiss Typography
+
+---
+
+# COLOR PALETTE
+
+## Light Background
+
+Primary
+
+#F7F6F3
+
+Secondary
+
+#F2F0EC
+
+Surface
+
+#FFFFFF
+
+Elevated
+
+#FCFBF9
+
+---
+
+## Dark Mode
+
+Background
+
+#0B0F10
+
+Secondary
+
+#12181A
+
+Surface
+
+#151B1C
+
+Elevated
+
+#232E31
+
+---
+
+## Brand Colors
+
+Navy
+
+#1E2D4C
+
+Deep Navy
+
+#253B63
+
+Primary Emerald
+
+#0F8F6A
+
+Secondary Emerald
+
+#18A67A
+
+Sage
+
+#ACBDAA
+
+Muted Sage
+
+#7D927C
+
+Warm Stone
+
+#CEC0BB
+
+Warm Stone Dark
+
+#8C7D76
+
+Gold Accent
+
+#D4A84F
+
+---
+
+# TEXT COLORS
+
+Light
+
+Primary
+
+#111111
+
+Secondary
+
+#666666
+
+Muted
+
+#8C8C8C
+
+Dark
+
+Primary
+
+#F5F5F5
+
+Secondary
+
+#A7A7A7
+
+Muted
+
+#808080
+
+---
+
+# BORDERS
+
+Light
+
+#E7E2DA
+
+Dark
+
+#2A3335
+
+---
+
+# STATUS COLORS
+
+Success
+
+#0F8F6A
+
+Warning
+
+#F5A524
+
+Error
+
+#E5484D
+
+Information
+
+#2F6FEB
+
+---
+
+# GRADIENTS
+
+Gradients should be nearly invisible.
+
+Never loud.
+
+Sage
+
+#ACBDAA → #D8E1D6
+
+Gold
+
+#D4A84F → #F2D27A
+
+Navy
+
+#1E2D4C → #344B77
+
+---
+
+# CORNER RADII
+
+Buttons
+
+16dp
+
+Cards
+
+24dp
+
+Hero Cards
+
+32dp
+
+Bottom Sheets
+
+28dp
+
+Chips
+
+12dp
+
+Dialogs
+
+28dp
+
+---
+
+# ELEVATION
+
+Avoid heavy shadows.
+
+Prefer layered surfaces.
+
+Use depth through contrast,
+
+not blur.
+
+---
+
+# ICONOGRAPHY
+
+Rounded Material Symbols
+
+Outlined icons
+
+Filled only when selected
+
+Consistent stroke width
+
+No decorative icons
+
+---
+
+# TYPOGRAPHY
+
+Editorial hierarchy.
+
+Large headings.
+
+Comfortable spacing.
+
+Readable paragraphs.
+
+Prioritize reading comfort.
+
+Hierarchy
+
+Display
+
+Heading
+
+Section
+
+Body
+
+Caption
+
+Metadata
+
+---
+
+# MOTION
+
+Animations should disappear,
+
+not bounce.
+
+Preferred duration
+
+250ms
+
+Maximum
+
+400ms
+
+Curve
+
+Ease Out
+
+Never flashy.
+
+Never distracting.
+
+---
+
+# MODULE DESIGN LANGUAGE
+
+## HOME
+
+A calm dashboard.
+
+Large prayer card.
+
+Today's prayer.
+
+Prayer timeline.
+
+Continue reading.
+
+Daily verse.
+
+Knowledge recommendation.
+
+Monthly reflection.
+
+No clutter.
+
+---
+
+## SALAH LOCK
+
+Dark.
+
+Focused.
+
+One purpose.
+
+One action.
+
+Large countdown.
+
+Minimal interface.
+
+Elegant typography.
+
+Nothing unnecessary.
+
+---
+
+## QURAN
+
+Apple Books experience.
+
+Reading first.
+
+Large typography.
+
+Minimal controls.
+
+Long reading sessions.
+
+Bookmarks.
+
+Notes.
+
+Collections.
+
+---
+
+## HADITH
+
+Editorial layout.
+
+Beautiful spacing.
+
+Reading first.
+
+Minimal metadata.
+
+---
+
+## KNOWLEDGE
+
+Premium Islamic library.
+
+Collections.
+
+Series.
+
+Authors.
+
+Book-like experience.
+
+---
+
+## AZKAR
+
+Beautiful category tiles.
+
+Morning
+
+Evening
+
+Prayer
+
+Travel
+
+Sleep
+
+Daily
+
+No long scrolling lists.
+
+---
+
+## QIBLA
+
+Luxury watch aesthetic.
+
+Circular compass.
+
+Gold accents.
+
+Minimal interface.
+
+Premium SVG illustrations.
+
+Never geometric placeholder shapes.
+
+---
+
+## PROFILE
+
+Personal journal.
+
+Achievements.
+
+Reading history.
+
+Prayer consistency.
+
+Monthly reflections.
+
+Collections.
+
+Bookmarks.
+
+No gamification.
+
+---
+
+# ACCESSIBILITY
+
+High contrast.
+
+Large touch targets.
+
+Readable typography.
+
+Dynamic font support.
+
+Color must never be the only indicator.
+
+Screen reader friendly.
+
+---
+
+# PERFORMANCE
+
+Every screen should feel instant.
+
+Prefer native interactions.
+
+Avoid unnecessary animations.
+
+Optimize battery.
+
+Optimize startup time.
+
+Optimize memory.
+
+---
+
+# DO NOT
+
+❌ Neon colors
+
+❌ Loud gradients
+
+❌ Gaming aesthetics
+
+❌ Social media patterns
+
+❌ Endless scrolling
+
+❌ Dashboard overload
+
+❌ Oversized FABs
+
+❌ Decorative illustrations
+
+❌ Bright saturated greens
+
+❌ Excessive Material 3 styling
+
+❌ Clutter
+
+❌ Artificial engagement tactics
+
+❌ Features that encourage staying in the app longer without spiritual benefit
+
+---
+
+# FUTURE DIRECTION
+
+Niyyah should grow into a complete Islamic companion.
+
+Potential future modules:
+
+• AI Islamic Assistant
+
+• Guided Memorization
+
+• Tafsir
+
+• Islamic Courses
+
+• Ramadan Companion
+
+• Hajj & Umrah
+
+• Family Accounts
+
+• Shared Collections
+
+• Mosque Integration
+
+• Islamic Calendar
+
+• Charity Tracking
+
+• Personal Journal
+
+• Reflection Notes
+
+Every new feature must strengthen worship, not distract from it.
+
+---
+
+# FINAL DESIGN TEST
+
+Before shipping any screen, ask:
+
+Does this feel peaceful?
+
+Does this feel intentional?
+
+Does this feel premium?
+
+Does this feel timeless?
+
+Would this still look beautiful in five years?
+
+Would someone feel closer to Allah after using this?
+
+If any answer is "No", redesign the screen.
+
+---
+
+# THE NIYYAH PROMISE
+
+Niyyah is not designed to capture attention.
+
+It is designed to return attention to Allah.
+
+Every pixel.
+
+Every animation.
+
+Every sentence.
+
+Every interaction.
+
+Every feature.
+
+Every decision.
+
+Should quietly reinforce one purpose:
+
+**Live with intention. Worship with sincerity. Return to Allah.**
