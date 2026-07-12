@@ -1,0 +1,29 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Base Cube -->
+    <path
+        android:fillColor="#1F2937"
+        android:pathData="M12,2 L3,6 L12,10 L21,6 Z" />
+    <path
+        android:fillColor="#111827"
+        android:pathData="M3,6 L12,10 L12,20 L3,16 Z" />
+    <path
+        android:fillColor="#374151"
+        android:pathData="M21,6 L12,10 L12,20 L21,16 Z" />
+    
+    <!-- Gold Band (Kiswah) -->
+    <path
+        android:fillColor="#FCD34D"
+        android:pathData="M3,9 L12,13 L12,14.5 L3,10.5 Z" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M21,9 L12,13 L12,14.5 L21,10.5 Z" />
+    
+    <!-- Door (Gold) -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M9,15.5 L11,16.5 L11,19.5 L9,18.5 Z" />
+</vector>

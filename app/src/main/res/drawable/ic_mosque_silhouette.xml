@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SL-005 — mosque skyline silhouette for the Qibla screen background.
+     Central onion dome with spire, two minarets with balconies, two side domes.
+     Fill is white; tint at the call site controls the final color/alpha. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="120dp"
+    android:viewportWidth="360"
+    android:viewportHeight="120">
+
+    <!-- Base platform -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M0,112 L360,112 L360,120 L0,120 Z" />
+
+    <!-- Left minaret -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,112 L62,42 L60,42 L66,26 L72,42 L70,42 L70,112 Z
+            M57,58 L75,58 L75,62 L57,62 Z" />
+
+    <!-- Right minaret -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M290,112 L290,36 L288,36 L294,20 L300,36 L298,36 L298,112 Z
+            M285,52 L303,52 L303,56 L285,56 Z" />
+
+    <!-- Left side dome -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M92,112 L92,92
+            C92,80 100,74 110,70
+            C120,74 128,80 128,92
+            L128,112 Z
+            M109,70 L110,62 L111,70 Z" />
+
+    <!-- Right side dome -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M232,112 L232,92
+            C232,80 240,74 250,70
+            C260,74 268,80 268,92
+            L268,112 Z
+            M249,70 L250,62 L251,70 Z" />
+
+    <!-- Central hall -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M138,112 L138,78 L222,78 L222,112 Z" />
+
+    <!-- Central onion dome + crescent spire -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M142,78
+            C142,52 158,40 180,30
+            C202,40 218,52 218,78 Z
+            M179,30 L179,18 L181,18 L181,30 Z
+            M180,10
+            C183.3,10 186,12.7 186,16
+            C186,19.3 183.3,22 180,22
+            C181.8,20.6 182.8,18.4 182.8,16
+            C182.8,13.6 181.8,11.4 180,10 Z" />
+
+    <!-- Doorway arch (cutout drawn as background color is not possible in a
+         silhouette; suggest depth with a slim vertical gap instead) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M170,112 L170,96 C170,90 174,87 180,85 C186,87 190,90 190,96 L190,112 Z"
+        android:fillAlpha="0.35" />
+</vector>

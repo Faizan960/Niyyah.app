@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">SalahLock</string>
+    <string name="lock_active">SalahLock Active</string>
+    <string name="verify_prayer">Verify Prayer</string>
+    <string name="emergency_override">Emergency Override</string>
+    <string name="prayer_time">Prayer Time</string>
+</resources>

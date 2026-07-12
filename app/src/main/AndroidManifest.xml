@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ── PERMISSIONS ── -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Overlay: draw LockOverlayActivity over other apps -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- UsageStats: detect which app is in foreground -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- Exact Alarms: prayer time triggers -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <!-- Boot + Update: reschedule alarms -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Foreground Service -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <!-- Battery optimization exemption -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Camera: prayer mat verification (reserved for future ML integration) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!-- Microphone: voice verification (optional — app falls back to text if denied) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Location: prayer time calculation (coarse is sufficient) -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- Notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- WorkManager (internet not required but WorkManager needs this for its internal scheduler) -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Query all packages for the App Blacklist screen -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <application
+        android:name=".SalahLockApplication"
+        android:allowBackup="false"
+        android:icon="@mipmap/mylogo"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/mylogo"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SalahLock"
+        android:networkSecurityConfig="@xml/network_security_config"
+        tools:targetApi="36">
+
+        <!-- AdMob App ID (Sprint A.1) — value injected from build.gradle manifestPlaceholders.
+             Test ID by default; production ID supplied via local.properties. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}" />
+
+        <!-- ── WORKMANAGER ON-DEMAND INIT ── -->
+        <!-- SalahLockApplication implements Configuration.Provider, so the default
+             androidx.startup initializer must be removed (else lintVitalRelease fails). -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
+        <!-- ── MAIN ACTIVITY ── -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- ── LOCK OVERLAY ACTIVITY ── -->
+        <!-- Shown fullscreen when a blacklisted app is detected during prayer window -->
+        <activity
+            android:name=".ui.lock.LockOverlayActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout"
+            android:theme="@style/Theme.SalahLock.Overlay" />
+
+        <!-- ── CAMERA VERIFICATION ACTIVITY ── -->
+        <!-- Reserved for future ML verification integration — not active in current build -->
+        <activity
+            android:name=".ui.camera.CameraVerificationActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- ── USAGE STATS POLLING SERVICE ── -->
+        <!-- Active ONLY during prayer lock windows — not 24/7 -->
+        <service
+            android:name=".service.UsageStatsPollingService"
+            android:foregroundServiceType="specialUse"
+            android:exported="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="prayer_lock_monitoring" />
+        </service>
+
+        <!-- ── ALARM REFRESH WORKER (WorkManager) ── -->
+        <!-- Defined via WorkManager API; no manifest entry required for periodic work -->
+
+        <!-- ── PRAYER ALARM RECEIVER ── -->
+        <receiver
+            android:name=".receiver.PrayerAlarmReceiver"
+            android:exported="false" />
+
+        <!-- ── BOOT RECEIVER ── -->
+        <receiver
+            android:name=".receiver.BootReceiver"
+            android:exported="true">
+            <intent-filter android:priority="100">
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ── APP UPDATE RECEIVER ── -->
+        <receiver
+            android:name=".receiver.PackageReplacedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ── MISSED PRAYER REMINDER RECEIVER ── -->
+        <!-- Fires at prayer_time + lockDurationMin; shows notification only if prayer unverified -->
+        <receiver
+            android:name=".receiver.MissedPrayerReminderReceiver"
+            android:exported="false" />
+
+<!-- ── FILE PROVIDER — backup ZIP sharing via share sheet ── -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
+        </provider>
+
+    </application>
+</manifest>
