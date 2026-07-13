@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base app theme — Compose draws everything; keep window background matching Figma canvas #F7F6F3 -->
+    <style name="Theme.SalahLock" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#F7F6F3</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Lock overlay — dark, fullscreen -->
+    <style name="Theme.SalahLock.Overlay" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0B0F10</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
