@@ -66,7 +66,7 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
         }
         composable(NiyyahRoutes.KNOWLEDGE) { com.salahlock.app.ui.knowledge.KnowledgeScreen() }
         composable(NiyyahRoutes.HADITH) { com.salahlock.app.ui.hadith.HadithScreen() }
-        composable(NiyyahRoutes.AZKAR) { PlaceholderScreen("Azkar") }
+        composable(NiyyahRoutes.AZKAR) { com.salahlock.app.ui.azkar.AzkarScreen() }
         composable(NiyyahRoutes.QIBLA) { PlaceholderScreen("Qibla") }
         composable(NiyyahRoutes.COLLECTIONS) { PlaceholderScreen("Collections") }
         composable(NiyyahRoutes.BOOKMARKS) { PlaceholderScreen("Bookmarks") }
