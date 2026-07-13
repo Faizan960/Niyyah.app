@@ -58,7 +58,12 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
                 viewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
             )
         }
-        composable(NiyyahRoutes.QURAN) { PlaceholderScreen("Quran") }
+        composable(NiyyahRoutes.QURAN) {
+            com.salahlock.app.ui.quran.QuranScreen(
+                onOpenBookmarks = { navController.navigate(NiyyahRoutes.BOOKMARKS) },
+                onOpenCollections = { navController.navigate(NiyyahRoutes.COLLECTIONS) },
+            )
+        }
         composable(NiyyahRoutes.KNOWLEDGE) { PlaceholderScreen("Knowledge") }
         composable(NiyyahRoutes.HADITH) { PlaceholderScreen("Hadith") }
         composable(NiyyahRoutes.AZKAR) { PlaceholderScreen("Azkar") }
