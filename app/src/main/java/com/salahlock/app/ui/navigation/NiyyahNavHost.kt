@@ -48,7 +48,11 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
         modifier = modifier,
     ) {
         composable(NiyyahRoutes.HOME) { com.salahlock.app.ui.home.HomeScreen() }
-        composable(NiyyahRoutes.PRAYER) { PlaceholderScreen("Prayer") }
+        composable(NiyyahRoutes.PRAYER) {
+            com.salahlock.app.ui.prayers.PrayerScreen(
+                onOpenSettings = { navController.navigate(NiyyahRoutes.SETTINGS) },
+            )
+        }
         composable(NiyyahRoutes.SALAH_LOCK) { PlaceholderScreen("Salah Lock") }
         composable(NiyyahRoutes.QURAN) { PlaceholderScreen("Quran") }
         composable(NiyyahRoutes.KNOWLEDGE) { PlaceholderScreen("Knowledge") }

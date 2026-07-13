@@ -26,6 +26,9 @@ object NiyyahColors {
     val Gold = Color(0xFFD4A84F)
     val Green = Color(0xFF006C4F)
 
+    // Soft fill used for countdown pill / icon circles (Figma Prayer frame)
+    val SoftFill = Color(0xFFF0EDEC)
+
     // On-navy (hero card) text
     val OnNavy = Color(0xFFFFFFFF)
     val OnNavySecondary = Color(0xB3FFFFFF)   // white 70%
