@@ -70,7 +70,7 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
         composable(NiyyahRoutes.QIBLA) { com.salahlock.app.ui.qibla.QiblaScreen() }
         composable(NiyyahRoutes.COLLECTIONS) { com.salahlock.app.ui.collections.CollectionsScreen() }
         composable(NiyyahRoutes.BOOKMARKS) { com.salahlock.app.ui.bookmarks.BookmarksScreen() }
-        composable(NiyyahRoutes.MONTHLY_REFLECTION) { PlaceholderScreen("Monthly Reflection") }
+        composable(NiyyahRoutes.MONTHLY_REFLECTION) { com.salahlock.app.ui.reflection.ReflectionScreen() }
         composable(NiyyahRoutes.PROFILE) { PlaceholderScreen("Profile") }
         composable(NiyyahRoutes.SETTINGS) { PlaceholderScreen("Settings") }
     }
