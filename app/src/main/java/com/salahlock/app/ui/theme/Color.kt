@@ -24,6 +24,7 @@ object NiyyahColors {
     // Brand
     val Navy = Color(0xFF1E2D4C)
     val Gold = Color(0xFFD4A84F)
+    val Green = Color(0xFF006C4F)
 
     // On-navy (hero card) text
     val OnNavy = Color(0xFFFFFFFF)
