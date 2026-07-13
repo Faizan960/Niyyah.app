@@ -64,7 +64,7 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
                 onOpenCollections = { navController.navigate(NiyyahRoutes.COLLECTIONS) },
             )
         }
-        composable(NiyyahRoutes.KNOWLEDGE) { PlaceholderScreen("Knowledge") }
+        composable(NiyyahRoutes.KNOWLEDGE) { com.salahlock.app.ui.knowledge.KnowledgeScreen() }
         composable(NiyyahRoutes.HADITH) { PlaceholderScreen("Hadith") }
         composable(NiyyahRoutes.AZKAR) { PlaceholderScreen("Azkar") }
         composable(NiyyahRoutes.QIBLA) { PlaceholderScreen("Qibla") }
