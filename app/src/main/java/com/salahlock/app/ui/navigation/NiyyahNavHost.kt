@@ -78,6 +78,6 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
                 onOpenSettings = { navController.navigate(NiyyahRoutes.SETTINGS) },
             )
         }
-        composable(NiyyahRoutes.SETTINGS) { PlaceholderScreen("Settings") }
+        composable(NiyyahRoutes.SETTINGS) { com.salahlock.app.ui.settings.SettingsScreen() }
     }
 }
