@@ -18,6 +18,9 @@ interface HadithDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCategoryMappings(mappings: List<CategoryMappingEntity>)
 
+    @Query("DELETE FROM hadith_category_mapping")
+    suspend fun clearCategoryMappings()
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCollectionBooks(books: List<CollectionBookEntity>)
 

@@ -45,6 +45,8 @@ data class KnowledgeUiState(
     val searchResults: List<HadithSearchResult> = emptyList(),
     val isSearching: Boolean = false,
     val isSearchActive: Boolean = false,
+    /** Local hadith count per collection ("bukhari" → 7563); 0 = not synced yet. */
+    val collectionCounts: Map<String, Int> = emptyMap(),
 )
 
 enum class KnowledgeTab { HADITH, AZKAR }
@@ -73,6 +75,7 @@ class KnowledgeViewModel(application: Application) : AndroidViewModel(applicatio
             val syncResult = repository.syncHadithCollectionsIfNeeded()
             repository.syncAzkarIfNeeded()
             loadDailyHadith()
+            refreshCollectionCounts()
 
             val newStatus = when (syncResult) {
                 KnowledgeRepository.SyncResult.Success,
@@ -216,5 +219,26 @@ class KnowledgeViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun selectTab(tab: KnowledgeTab) {
         _uiState.value = _uiState.value.copy(selectedTab = tab)
+    }
+
+    fun refreshCollectionCounts() {
+        viewModelScope.launch {
+            val counts = repository.supportedCollections.associateWith { c ->
+                repository.getCollectionCountEng(c)
+            }
+            _uiState.value = _uiState.value.copy(collectionCounts = counts)
+        }
+    }
+
+    /** Toggle bookmark on any hadith (used by the Daily Hadith card). */
+    fun toggleHadithBookmark(hadith: HadithEntity) {
+        viewModelScope.launch {
+            repository.toggleHadithBookmark(hadith.id, !hadith.isBookmarked)
+            _uiState.value = _uiState.value.copy(
+                dailyHadith = _uiState.value.dailyHadith?.let {
+                    if (it.id == hadith.id) it.copy(isBookmarked = !hadith.isBookmarked) else it
+                },
+            )
+        }
     }
 }

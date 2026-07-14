@@ -25,6 +25,12 @@ object NiyyahRoutes {
     fun quranReader(surahNumber: Int, ayah: Int = 1) = "quran_reader/$surahNumber?ayah=$ayah"
     const val KNOWLEDGE = "knowledge"
     const val HADITH = "hadith"
+    const val HADITH_BOOKS = "hadith_books/{collection}?name={name}"
+    const val HADITH_READER = "hadith_reader?collection={collection}&book={book}&topic={topic}&hadithId={hadithId}"
+    fun hadithBooks(collection: String, name: String) = "hadith_books/$collection?name=$name"
+    fun hadithBookReader(collection: String, book: String) = "hadith_reader?collection=$collection&book=$book"
+    fun hadithTopicReader(topic: String) = "hadith_reader?topic=$topic"
+    fun hadithSingleReader(hadithId: String) = "hadith_reader?hadithId=$hadithId"
     const val AZKAR = "azkar"
     const val QIBLA = "qibla"
     const val COLLECTIONS = "collections"
@@ -113,7 +119,55 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
             )
         }
         composable(NiyyahRoutes.KNOWLEDGE) { com.salahlock.app.ui.knowledge.KnowledgeScreen() }
-        composable(NiyyahRoutes.HADITH) { com.salahlock.app.ui.hadith.HadithScreen() }
+        composable(NiyyahRoutes.HADITH) {
+            com.salahlock.app.ui.hadith.HadithScreen(
+                onOpenCollection = { collection, name ->
+                    navController.navigate(NiyyahRoutes.hadithBooks(collection, name))
+                },
+                onOpenTopic = { topic -> navController.navigate(NiyyahRoutes.hadithTopicReader(topic)) },
+                onOpenHadith = { id -> navController.navigate(NiyyahRoutes.hadithSingleReader(id)) },
+                onOpenBook = { collection, book ->
+                    navController.navigate(NiyyahRoutes.hadithBookReader(collection, book))
+                },
+            )
+        }
+        composable(
+            route = NiyyahRoutes.HADITH_BOOKS,
+            arguments = listOf(
+                androidx.navigation.navArgument("collection") { type = androidx.navigation.NavType.StringType },
+                androidx.navigation.navArgument("name") {
+                    type = androidx.navigation.NavType.StringType
+                    defaultValue = ""
+                },
+            ),
+        ) { entry ->
+            val collection = entry.arguments?.getString("collection") ?: "bukhari"
+            com.salahlock.app.ui.hadith.HadithBooksScreen(
+                collection = collection,
+                displayName = entry.arguments?.getString("name")?.ifBlank { null }
+                    ?: collection.replaceFirstChar { it.uppercase() },
+                onBack = { navController.popBackStack() },
+                onOpenBook = { c, book -> navController.navigate(NiyyahRoutes.hadithBookReader(c, book)) },
+            )
+        }
+        composable(
+            route = NiyyahRoutes.HADITH_READER,
+            arguments = listOf("collection", "book", "topic", "hadithId").map { name ->
+                androidx.navigation.navArgument(name) {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            },
+        ) { entry ->
+            com.salahlock.app.ui.hadith.HadithReaderScreen(
+                collection = entry.arguments?.getString("collection"),
+                bookNumber = entry.arguments?.getString("book"),
+                topic = entry.arguments?.getString("topic"),
+                hadithId = entry.arguments?.getString("hadithId"),
+                onBack = { navController.popBackStack() },
+            )
+        }
         composable(NiyyahRoutes.AZKAR) { com.salahlock.app.ui.azkar.AzkarScreen() }
         composable(NiyyahRoutes.QIBLA) { com.salahlock.app.ui.qibla.QiblaScreen() }
         composable(NiyyahRoutes.COLLECTIONS) { com.salahlock.app.ui.collections.CollectionsScreen() }

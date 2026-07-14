@@ -80,6 +80,22 @@ class KnowledgeRepository(private val context: Context) {
 
     enum class SyncResult { Success, PartialFailure, AlreadySynced }
 
+    /** All collections the app knows how to sync from the fawazahmed0 hadith API. */
+    val supportedCollections = listOf("bukhari", "muslim", "nasai", "abudawud", "tirmidhi", "ibnmajah")
+
+    /**
+     * On-demand sync for a single collection (used when the user opens one of
+     * the six books that isn't cached yet). Returns true when the collection
+     * is available locally afterwards.
+     */
+    suspend fun syncSingleCollectionIfNeeded(collection: String): Boolean =
+        withContext(Dispatchers.IO) {
+            if (hadithDao.getBookCountForCollection(collection) > 0) return@withContext true
+            val eng = syncCollection("eng-$collection", collection, "eng")
+            val ara = syncCollection("ara-$collection", collection, "ara")
+            eng && ara
+        }
+
     /** Returns true on success, false on any failure. */
     private suspend fun syncCollection(edition: String, collectionName: String, language: String): Boolean {
         return try {
@@ -138,7 +154,20 @@ class KnowledgeRepository(private val context: Context) {
     }
 
     private suspend fun seedHadithCategories() {
+        // Clear first — REPLACE with autoGenerate ids appends duplicates otherwise.
+        hadithDao.clearCategoryMappings()
         val mappings = listOf(
+            CategoryMappingEntity(0, "Fasting", "bukhari", "30"),
+            // Knowledge-library categories (BM-006): real Bukhari books per theme.
+            CategoryMappingEntity(0, "Theology", "bukhari", "2"),   // Belief
+            CategoryMappingEntity(0, "Theology", "bukhari", "97"),  // Oneness of Allah
+            CategoryMappingEntity(0, "History", "bukhari", "63"),   // Merits of the Ansar
+            CategoryMappingEntity(0, "History", "bukhari", "64"),   // Military Expeditions
+            CategoryMappingEntity(0, "Spirituality", "bukhari", "80"), // Invocations
+            CategoryMappingEntity(0, "Spirituality", "bukhari", "81"), // Softening of the Hearts
+            CategoryMappingEntity(0, "Jurisprudence", "bukhari", "8"),  // Prayers
+            CategoryMappingEntity(0, "Jurisprudence", "bukhari", "24"), // Zakat
+            CategoryMappingEntity(0, "Jurisprudence", "bukhari", "30"), // Fasting
             CategoryMappingEntity(0, "Salah", "bukhari", "8"),
             CategoryMappingEntity(0, "Salah", "bukhari", "9"),
             CategoryMappingEntity(0, "Salah", "bukhari", "10"),
@@ -206,6 +235,7 @@ class KnowledgeRepository(private val context: Context) {
     suspend fun getHadithCountByTopic(topic: String, lang: String) = hadithDao.getHadithCountByTopic(topic, lang)
     suspend fun getHadithCountByBook(collection: String, bookNumber: String, lang: String) = hadithDao.getHadithCountByBook(collection, bookNumber, lang)
     suspend fun getBooksForCollection(collection: String) = hadithDao.getBooksForCollection(collection)
+    suspend fun getCollectionCountEng(collection: String) = hadithDao.getCollectionCount(collection, "eng")
     suspend fun searchHadiths(query: String, lang: String) = hadithDao.searchHadiths(query, lang)
     
     /** Search hadiths by global number within a collection (e.g., "Bukhari 52" → collection="bukhari", number="52"). */

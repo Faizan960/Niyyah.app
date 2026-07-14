@@ -171,6 +171,10 @@ class HadithReaderViewModel(application: Application) : AndroidViewModel(applica
         if (readPositionKey.isNotEmpty() && index >= 0) {
             viewModelScope.launch {
                 userPrefs.saveHadithPosition(readPositionKey, index)
+                // Feed the "recently read" list from the hadith actually on screen.
+                _uiState.value.hadiths[index]?.let {
+                    repository.updateReadTimestamp(it.id, System.currentTimeMillis())
+                }
             }
         }
     }
