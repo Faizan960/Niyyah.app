@@ -14,6 +14,8 @@ import com.salahlock.app.ui.theme.NiyyahType
 
 /** Route constants for every Figma screen (BM-005 build order). */
 object NiyyahRoutes {
+    const val SPLASH = "splash"
+    const val ONBOARDING = "onboarding"
     const val HOME = "home"
     const val PRAYER = "prayer"
     const val SALAH_LOCK = "salah_lock"
@@ -44,9 +46,20 @@ fun PlaceholderScreen(name: String) {
 fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
     NavHost(
         navController = navController,
-        startDestination = NiyyahRoutes.HOME,
+        startDestination = NiyyahRoutes.SPLASH,
         modifier = modifier,
     ) {
+        composable(NiyyahRoutes.SPLASH) {
+            com.salahlock.app.ui.splash.SplashScreen(
+                onFinished = { onboardingDone ->
+                    val target = if (onboardingDone) NiyyahRoutes.HOME else NiyyahRoutes.ONBOARDING
+                    navController.navigate(target) {
+                        popUpTo(NiyyahRoutes.SPLASH) { inclusive = true }
+                    }
+                },
+            )
+        }
+        composable(NiyyahRoutes.ONBOARDING) { PlaceholderScreen("Onboarding") }
         composable(NiyyahRoutes.HOME) { com.salahlock.app.ui.home.HomeScreen() }
         composable(NiyyahRoutes.PRAYER) {
             com.salahlock.app.ui.prayers.PrayerScreen(
