@@ -59,7 +59,15 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
                 },
             )
         }
-        composable(NiyyahRoutes.ONBOARDING) { PlaceholderScreen("Onboarding") }
+        composable(NiyyahRoutes.ONBOARDING) {
+            com.salahlock.app.ui.onboarding.OnboardingScreen(
+                onDone = {
+                    navController.navigate(NiyyahRoutes.HOME) {
+                        popUpTo(NiyyahRoutes.ONBOARDING) { inclusive = true }
+                    }
+                },
+            )
+        }
         composable(NiyyahRoutes.HOME) { com.salahlock.app.ui.home.HomeScreen() }
         composable(NiyyahRoutes.PRAYER) {
             com.salahlock.app.ui.prayers.PrayerScreen(
