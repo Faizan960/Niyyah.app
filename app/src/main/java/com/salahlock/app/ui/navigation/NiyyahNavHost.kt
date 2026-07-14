@@ -32,6 +32,8 @@ object NiyyahRoutes {
     fun hadithTopicReader(topic: String) = "hadith_reader?topic=$topic"
     fun hadithSingleReader(hadithId: String) = "hadith_reader?hadithId=$hadithId"
     const val AZKAR = "azkar"
+    const val AZKAR_READER = "azkar_reader/{category}"
+    fun azkarReader(category: String) = "azkar_reader/${android.net.Uri.encode(category)}"
     const val QIBLA = "qibla"
     const val COLLECTIONS = "collections"
     const val BOOKMARKS = "bookmarks"
@@ -177,7 +179,23 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
                 onBack = { navController.popBackStack() },
             )
         }
-        composable(NiyyahRoutes.AZKAR) { com.salahlock.app.ui.azkar.AzkarScreen() }
+        composable(NiyyahRoutes.AZKAR) {
+            com.salahlock.app.ui.azkar.AzkarScreen(
+                onOpenCategory = { category -> navController.navigate(NiyyahRoutes.azkarReader(category)) },
+                onOpenFavorites = { navController.navigate(NiyyahRoutes.BOOKMARKS) },
+            )
+        }
+        composable(
+            route = NiyyahRoutes.AZKAR_READER,
+            arguments = listOf(
+                androidx.navigation.navArgument("category") { type = androidx.navigation.NavType.StringType },
+            ),
+        ) { entry ->
+            com.salahlock.app.ui.azkar.AzkarReaderScreen(
+                category = entry.arguments?.getString("category") ?: "Morning",
+                onBack = { navController.popBackStack() },
+            )
+        }
         composable(NiyyahRoutes.QIBLA) { com.salahlock.app.ui.qibla.QiblaScreen() }
         composable(NiyyahRoutes.COLLECTIONS) { com.salahlock.app.ui.collections.CollectionsScreen() }
         composable(NiyyahRoutes.BOOKMARKS) { com.salahlock.app.ui.bookmarks.BookmarksScreen() }

@@ -21,6 +21,9 @@ interface HadithDao {
     @Query("DELETE FROM hadith_category_mapping")
     suspend fun clearCategoryMappings()
 
+    @Query("SELECT * FROM hadith_category_mapping")
+    suspend fun getAllCategoryMappings(): List<CategoryMappingEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCollectionBooks(books: List<CollectionBookEntity>)
 

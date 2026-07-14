@@ -24,6 +24,7 @@ class AzkarReaderViewModel(application: Application) : AndroidViewModel(applicat
     fun loadCategory(category: String) {
         _uiState.value = _uiState.value.copy(category = category, isLoading = true)
         viewModelScope.launch {
+            repository.touchAzkarCategory(category)
             repository.getAzkarByCategory(category).collect { list ->
                 _uiState.value = _uiState.value.copy(azkarList = list, isLoading = false)
             }

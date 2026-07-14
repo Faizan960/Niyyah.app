@@ -29,4 +29,23 @@ interface AzkarDao {
     
     @Query("SELECT COUNT(*) FROM azkar_table")
     suspend fun getAzkarCount(): Int
+
+    @Query("SELECT category, COUNT(*) AS count FROM azkar_table GROUP BY category")
+    fun getCategoryCounts(): Flow<List<AzkarCategoryCount>>
+
+    /** Marks a category as recently read (drives recents/reflection stats). */
+    @Query("UPDATE azkar_table SET lastReadTimestamp = :timestamp WHERE category = :category")
+    suspend fun touchCategory(category: String, timestamp: Long)
+
+    /** Case-insensitive search across translation, transliteration and Arabic. */
+    @Query("""
+        SELECT * FROM azkar_table
+        WHERE translation LIKE '%' || :query || '%'
+           OR transliteration LIKE '%' || :query || '%'
+           OR arabic LIKE '%' || :query || '%'
+        ORDER BY category, id
+    """)
+    suspend fun searchAzkar(query: String): List<AzkarEntity>
 }
+
+data class AzkarCategoryCount(val category: String, val count: Int)

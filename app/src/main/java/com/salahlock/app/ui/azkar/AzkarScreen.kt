@@ -16,9 +16,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,11 +35,9 @@ import com.salahlock.app.ui.theme.NiyyahShapes
 import com.salahlock.app.ui.theme.NiyyahType
 
 /**
- * Azkar hub — Figma frame 1:365 (light).
- *
- * Category tiles and dua counts mirror the frame; the azkar data layer
- * (azkar.json via KnowledgeRepository) uses different category names, so
- * wiring counts/navigation is deferred until the reader screen exists.
+ * Azkar hub — Figma frame 1:365 (light), wired to azkar_table (BM-006).
+ * Tile labels map to real azkar.json categories: Prayer → "After Prayer",
+ * Health → "Anxiety".
  */
 private val TextBody = Color(0xFF45474E)
 private val HeartGold = Color(0xFFEEC064)
@@ -44,7 +45,12 @@ private val CircleFill = Color(0xFFF6F3F2)
 private val DividerColor = Color(0xFFE5E2E1)
 
 @Composable
-fun AzkarScreen() {
+fun AzkarScreen(
+    onOpenCategory: (category: String) -> Unit = {},
+    onOpenFavorites: () -> Unit = {},
+    viewModel: AzkarViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+) {
+    val state by viewModel.state.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -58,8 +64,15 @@ fun AzkarScreen() {
             verticalArrangement = Arrangement.spacedBy(40.dp),
         ) {
             TitleSection()
-            FavoritesSection()
-            CategoriesSection()
+            FavoritesSection(
+                state = state,
+                onOpenCategory = onOpenCategory,
+                onSeeAll = onOpenFavorites,
+            )
+            CategoriesSection(
+                counts = state.categoryCounts,
+                onOpenCategory = onOpenCategory,
+            )
         }
     }
 }
@@ -124,9 +137,13 @@ private fun TitleSection() {
     }
 }
 
-/** Favorites bento — node 1:380. */
+/** Favorites bento — node 1:380. Live from bookmarked azkar (BM-006). */
 @Composable
-private fun FavoritesSection() {
+private fun FavoritesSection(
+    state: AzkarHubState,
+    onOpenCategory: (category: String) -> Unit,
+    onSeeAll: () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -153,23 +170,41 @@ private fun FavoritesSection() {
                 text = "See all",
                 style = NiyyahType.LabelUppercase,
                 color = TextBody,
+                modifier = Modifier.clickable(onClick = onSeeAll),
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            FavoriteCard(
-                iconRes = R.drawable.ic_azkar_sun,
-                iconSize = 30.dp,
-                title = "Morning Supplications",
-                subtitle = "Start your day with remembrance",
-                count = "34 DUAS",
-            )
-            FavoriteCard(
-                iconRes = R.drawable.ic_azkar_moon,
-                iconSize = 25.dp,
-                title = "Sleep Supplications",
-                subtitle = "Peaceful rest through Dhikr",
-                count = "21 DUAS",
-            )
+            if (state.favoriteCategories.isEmpty()) {
+                // No favorites yet — the two frame defaults act as entry points.
+                FavoriteCard(
+                    iconRes = R.drawable.ic_azkar_sun,
+                    iconSize = 30.dp,
+                    title = "Morning Supplications",
+                    subtitle = "Start your day with remembrance",
+                    count = "${state.categoryCounts["Morning"] ?: 0} DUAS",
+                    onClick = { onOpenCategory("Morning") },
+                )
+                FavoriteCard(
+                    iconRes = R.drawable.ic_azkar_moon,
+                    iconSize = 25.dp,
+                    title = "Sleep Supplications",
+                    subtitle = "Peaceful rest through Dhikr",
+                    count = "${state.categoryCounts["Sleep"] ?: 0} DUAS",
+                    onClick = { onOpenCategory("Sleep") },
+                )
+            } else {
+                state.favoriteCategories.take(2).forEach { fav ->
+                    FavoriteCard(
+                        iconRes = if (fav.category == "Sleep" || fav.category == "Evening")
+                            R.drawable.ic_azkar_moon else R.drawable.ic_azkar_sun,
+                        iconSize = 28.dp,
+                        title = "${fav.category} Supplications",
+                        subtitle = "Your favorited remembrances",
+                        count = "${fav.favoriteCount} FAVORITED",
+                        onClick = { onOpenCategory(fav.category) },
+                    )
+                }
+            }
         }
     }
 }
@@ -182,12 +217,14 @@ private fun FavoriteCard(
     title: String,
     subtitle: String,
     count: String,
+    onClick: () -> Unit,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(NiyyahColors.Surface, NiyyahShapes.Card)
             .border(1.dp, NiyyahColors.Border, NiyyahShapes.Card)
+            .clickable(onClick = onClick)
             .padding(25.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -244,16 +281,22 @@ private fun FavoriteCard(
     }
 }
 
-/** All categories grid — node 1:423. Two columns, 16dp gaps. */
+/** Tile label → real azkar.json category. */
+private data class AzkarTile(val iconRes: Int, val label: String, val category: String)
+
+/** All categories grid — node 1:423. Two columns, live counts (BM-006). */
 @Composable
-private fun CategoriesSection() {
-    val categories = listOf(
-        Triple(R.drawable.ic_cat_morning, "Morning", "34 Duas"),
-        Triple(R.drawable.ic_cat_evening, "Evening", "28 Duas"),
-        Triple(R.drawable.ic_cat_prayer, "Prayer", "15 Duas"),
-        Triple(R.drawable.ic_cat_travel, "Travel", "12 Duas"),
-        Triple(R.drawable.ic_cat_food, "Food", "8 Duas"),
-        Triple(R.drawable.ic_cat_health, "Health", "19 Duas"),
+private fun CategoriesSection(
+    counts: Map<String, Int>,
+    onOpenCategory: (category: String) -> Unit,
+) {
+    val tiles = listOf(
+        AzkarTile(R.drawable.ic_cat_morning, "Morning", "Morning"),
+        AzkarTile(R.drawable.ic_cat_evening, "Evening", "Evening"),
+        AzkarTile(R.drawable.ic_cat_prayer, "Prayer", "After Prayer"),
+        AzkarTile(R.drawable.ic_cat_travel, "Travel", "Travel"),
+        AzkarTile(R.drawable.ic_cat_food, "Food", "Food"),
+        AzkarTile(R.drawable.ic_cat_health, "Health", "Anxiety"),
     )
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         Text(
@@ -262,13 +305,14 @@ private fun CategoriesSection() {
             color = NiyyahColors.TextPrimary,
         )
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            categories.chunked(2).forEach { rowItems ->
+            tiles.chunked(2).forEach { rowItems ->
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    rowItems.forEach { (iconRes, label, count) ->
+                    rowItems.forEach { tile ->
                         CategoryTile(
-                            iconRes = iconRes,
-                            label = label,
-                            count = count,
+                            iconRes = tile.iconRes,
+                            label = tile.label,
+                            count = "${counts[tile.category] ?: 0} Duas",
+                            onClick = { onOpenCategory(tile.category) },
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -280,11 +324,18 @@ private fun CategoriesSection() {
 
 /** Category tile — node 1:427. */
 @Composable
-private fun CategoryTile(iconRes: Int, label: String, count: String, modifier: Modifier = Modifier) {
+private fun CategoryTile(
+    iconRes: Int,
+    label: String,
+    count: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier
             .background(NiyyahColors.Surface, NiyyahShapes.Card)
             .border(1.dp, NiyyahColors.Border, NiyyahShapes.Card)
+            .clickable(onClick = onClick)
             .padding(25.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),

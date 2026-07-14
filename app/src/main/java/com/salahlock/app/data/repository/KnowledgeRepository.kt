@@ -226,6 +226,11 @@ class KnowledgeRepository(private val context: Context) {
     // --- Data Access Flows ---
     fun getAzkarByCategory(cat: String) = azkarDao.getAzkarByCategory(cat)
     fun getBookmarkedAzkar() = azkarDao.getBookmarkedAzkar()
+    fun getAzkarCategoryCounts() = azkarDao.getCategoryCounts()
+    suspend fun touchAzkarCategory(category: String) =
+        azkarDao.touchCategory(category, System.currentTimeMillis())
+    suspend fun searchAzkar(query: String) = azkarDao.searchAzkar(query)
+    suspend fun getAllCategoryMappings() = hadithDao.getAllCategoryMappings()
     fun getBookmarkedHadiths() = hadithDao.getBookmarkedHadiths()
     fun getRecentHadiths() = hadithDao.getRecentHadiths()
     
