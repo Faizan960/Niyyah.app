@@ -118,7 +118,16 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
                 onBack = { navController.popBackStack() },
             )
         }
-        composable(NiyyahRoutes.KNOWLEDGE) { com.salahlock.app.ui.knowledge.KnowledgeScreen() }
+        composable(NiyyahRoutes.KNOWLEDGE) {
+            com.salahlock.app.ui.knowledge.KnowledgeScreen(
+                onOpenTopic = { topic -> navController.navigate(NiyyahRoutes.hadithTopicReader(topic)) },
+                onOpenHadith = { id -> navController.navigate(NiyyahRoutes.hadithSingleReader(id)) },
+                onOpenBook = { collection, book ->
+                    navController.navigate(NiyyahRoutes.hadithBookReader(collection, book))
+                },
+                onViewAll = { navController.navigate(NiyyahRoutes.HADITH) },
+            )
+        }
         composable(NiyyahRoutes.HADITH) {
             com.salahlock.app.ui.hadith.HadithScreen(
                 onOpenCollection = { collection, name ->

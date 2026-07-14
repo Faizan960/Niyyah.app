@@ -8,8 +8,10 @@ import com.salahlock.app.data.db.entity.AzkarEntity
 import com.salahlock.app.data.db.entity.HadithEntity
 import com.salahlock.app.data.db.entity.formattedReference
 import com.salahlock.app.data.db.entity.globalNumber
+import com.salahlock.app.data.preferences.UserPreferences
 import com.salahlock.app.data.repository.KnowledgeRepository
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,6 +49,17 @@ data class KnowledgeUiState(
     val isSearchActive: Boolean = false,
     /** Local hadith count per collection ("bukhari" → 7563); 0 = not synced yet. */
     val collectionCounts: Map<String, Int> = emptyMap(),
+    /** In-progress books for the Knowledge "Continue Reading" rail. */
+    val recentBooks: List<RecentBook> = emptyList(),
+)
+
+/** A hadith book the user has been reading, with resume progress. */
+data class RecentBook(
+    val collection: String,
+    val bookNumber: String,
+    val title: String,
+    val author: String,
+    val progress: Float,
 )
 
 enum class KnowledgeTab { HADITH, AZKAR }
@@ -116,8 +129,44 @@ class KnowledgeViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             repository.getRecentHadiths().collect { recent ->
                 _uiState.value = _uiState.value.copy(recentHadiths = recent)
+                buildRecentBooks(recent)
             }
         }
+    }
+
+    /** Distinct in-progress books from the recent hadith stream, with resume %. */
+    private suspend fun buildRecentBooks(recent: List<HadithEntity>) {
+        val userPrefs = UserPreferences(getApplication())
+        val books = recent
+            .map { it.collection to it.bookNumber }
+            .distinct()
+            .take(6)
+            .mapNotNull { (collection, bookNumber) ->
+                val title = repository.getBookTitle(collection, bookNumber) ?: return@mapNotNull null
+                val count = repository.getHadithCountByBook(collection, bookNumber, "eng")
+                if (count == 0) return@mapNotNull null
+                val position = userPrefs
+                    .getHadithPosition("book_${collection}_${bookNumber}_eng")
+                    .first()
+                RecentBook(
+                    collection = collection,
+                    bookNumber = bookNumber,
+                    title = title,
+                    author = sampleAuthor(collection),
+                    progress = (position.toFloat() / count).coerceIn(0f, 1f),
+                )
+            }
+        _uiState.value = _uiState.value.copy(recentBooks = books)
+    }
+
+    private fun sampleAuthor(collection: String): String = when (collection.lowercase()) {
+        "bukhari" -> "Imam Bukhari"
+        "muslim" -> "Imam Muslim"
+        "nasai" -> "Imam Nasa'i"
+        "abudawud" -> "Abu Dawud"
+        "tirmidhi" -> "Imam Tirmidhi"
+        "ibnmajah" -> "Ibn Majah"
+        else -> collection.replaceFirstChar { it.uppercase() }
     }
 
     private fun observeSearch() {
