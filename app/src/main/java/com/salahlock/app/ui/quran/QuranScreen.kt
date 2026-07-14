@@ -23,6 +23,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -36,11 +38,9 @@ import com.salahlock.app.ui.theme.NiyyahShapes
 import com.salahlock.app.ui.theme.NiyyahType
 
 /**
- * Quran hub — Figma frame 1:269 (light).
- *
- * NOTE: the app has no Quran data layer yet (backend ships Hadith + Azkar only).
- * Content below is placeholder mirroring the Figma frame; wire to a Quran
- * repository when one exists.
+ * Quran hub — Figma frame 1:269 (light), wired to [QuranViewModel] (BM-006):
+ * continue-reading, recents, and library counts are live; search opens the
+ * surah list.
  */
 private val TextMuted = Color(0xFFC5C6CE)
 private val ChipFill = Color(0xFFF2F0EC)
@@ -49,7 +49,11 @@ private val ChipFill = Color(0xFFF2F0EC)
 fun QuranScreen(
     onOpenBookmarks: () -> Unit = {},
     onOpenCollections: () -> Unit = {},
+    onOpenSurahList: () -> Unit = {},
+    onOpenReader: (surahNumber: Int, ayah: Int) -> Unit = { _, _ -> },
+    viewModel: QuranViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
 ) {
+    val hub by viewModel.hub.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -70,7 +74,8 @@ fun QuranScreen(
                 modifier = Modifier
                     .size(40.dp)
                     .background(NiyyahColors.Surface, CircleShape)
-                    .border(1.dp, NiyyahColors.Border, CircleShape),
+                    .border(1.dp, NiyyahColors.Border, CircleShape)
+                    .clickable { onOpenSurahList() },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -88,16 +93,31 @@ fun QuranScreen(
                 .padding(start = 24.dp, end = 24.dp, bottom = 168.dp),
             verticalArrangement = Arrangement.spacedBy(40.dp),
         ) {
-            ContinueReadingSection()
-            RecentlyReadSection()
-            LibrarySection(onOpenBookmarks, onOpenCollections)
+            ContinueReadingSection(
+                continueReading = hub.continueReading,
+                onClick = {
+                    val c = hub.continueReading
+                    if (c != null) onOpenReader(c.surahNumber, c.lastAyah) else onOpenReader(1, 1)
+                },
+            )
+            RecentlyReadSection(recents = hub.recents, onOpenReader = onOpenReader, onBrowseAll = onOpenSurahList)
+            LibrarySection(
+                bookmarkCount = hub.bookmarkCount,
+                collectionCount = hub.collectionCount,
+                onOpenBookmarks = onOpenBookmarks,
+                onOpenCollections = onOpenCollections,
+            )
         }
     }
 }
 
-/** Continue reading — node 1:295. */
+/** Continue reading — node 1:295, live from quran_progress. */
 @Composable
-private fun ContinueReadingSection() {
+private fun ContinueReadingSection(continueReading: ContinueReading?, onClick: () -> Unit) {
+    val surahName = continueReading?.surahName ?: "Al-Fatihah"
+    val juz = continueReading?.juz ?: 1
+    val ayahLine = continueReading?.let { "Ayah ${it.lastAyah} of ${it.ayahCount}" } ?: "Begin from Ayah 1"
+    val progress = continueReading?.overallProgress ?: 0f
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
             text = "CONTINUE READING",
@@ -110,6 +130,7 @@ private fun ContinueReadingSection() {
                 .heightIn(min = 220.dp)
                 .background(NiyyahColors.Surface, RoundedCornerShape(16.dp))
                 .border(1.dp, NiyyahColors.Border, RoundedCornerShape(16.dp))
+                .clickable { onClick() }
                 .padding(25.dp),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -124,7 +145,7 @@ private fun ContinueReadingSection() {
                             .padding(horizontal = 12.dp, vertical = 4.dp),
                     ) {
                         Text(
-                            text = "Juz 1",
+                            text = "Juz $juz",
                             style = NiyyahType.Badge,
                             color = Color(0xFF666666),
                         )
@@ -137,12 +158,12 @@ private fun ContinueReadingSection() {
                     )
                 }
                 Text(
-                    text = "Al-Fatihah",
+                    text = surahName,
                     style = NiyyahType.Quote.copy(fontSize = 28.sp, lineHeight = 36.sp),
                     color = NiyyahColors.TextPrimary,
                     modifier = Modifier.padding(top = 4.dp),
                 )
-                Text(text = "Ayah 4 - 7", style = NiyyahType.Body, color = TextMuted)
+                Text(text = ayahLine, style = NiyyahType.Body, color = TextMuted)
             }
             Column(
                 modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
@@ -153,7 +174,11 @@ private fun ContinueReadingSection() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(text = "Progress", style = NiyyahType.Badge, color = TextMuted)
-                    Text(text = "14%", style = NiyyahType.Badge, color = TextMuted)
+                    Text(
+                        text = "${(progress * 100).toInt()}%",
+                        style = NiyyahType.Badge,
+                        color = TextMuted,
+                    )
                 }
                 Box(
                     modifier = Modifier
@@ -163,7 +188,7 @@ private fun ContinueReadingSection() {
                 ) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth(0.14f)
+                            .fillMaxWidth(progress.coerceIn(0f, 1f))
                             .height(6.dp)
                             .background(NiyyahColors.TextPrimary, NiyyahShapes.Pill),
                     )
@@ -173,40 +198,72 @@ private fun ContinueReadingSection() {
     }
 }
 
-/** Recently read — node 1:318. */
+/** Recently read — node 1:318, live from quran_progress. */
 @Composable
-private fun RecentlyReadSection() {
-    val recents = listOf("Al-Baqarah" to "Page 2", "Yasin" to "Page 440", "Al-Mulk" to "Page 562")
+private fun RecentlyReadSection(
+    recents: List<RecentSurah>,
+    onOpenReader: (surahNumber: Int, ayah: Int) -> Unit,
+    onBrowseAll: () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
             text = "RECENTLY READ",
             style = NiyyahType.LabelUppercaseWide,
             color = NiyyahColors.TextSecondary,
         )
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            recents.forEach { (surah, page) ->
-                Column(
-                    modifier = Modifier
-                        .width(200.dp)
-                        .background(NiyyahColors.Surface, NiyyahShapes.Chip)
-                        .border(1.dp, NiyyahColors.Border, NiyyahShapes.Chip)
-                        .padding(21.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(text = surah, style = NiyyahType.Quote.copy(lineHeight = 32.sp), color = NiyyahColors.TextPrimary)
-                    Text(text = page, style = NiyyahType.Badge, color = TextMuted)
+        if (recents.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .width(200.dp)
+                    .background(NiyyahColors.Surface, NiyyahShapes.Chip)
+                    .border(1.dp, NiyyahColors.Border, NiyyahShapes.Chip)
+                    .clickable { onBrowseAll() }
+                    .padding(21.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = "Browse Surahs",
+                    style = NiyyahType.Quote.copy(lineHeight = 32.sp),
+                    color = NiyyahColors.TextPrimary,
+                )
+                Text(text = "114 chapters", style = NiyyahType.Badge, color = TextMuted)
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                recents.forEach { recent ->
+                    Column(
+                        modifier = Modifier
+                            .width(200.dp)
+                            .background(NiyyahColors.Surface, NiyyahShapes.Chip)
+                            .border(1.dp, NiyyahColors.Border, NiyyahShapes.Chip)
+                            .clickable { onOpenReader(recent.surahNumber, recent.lastAyah) }
+                            .padding(21.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(
+                            text = recent.surahName,
+                            style = NiyyahType.Quote.copy(lineHeight = 32.sp),
+                            color = NiyyahColors.TextPrimary,
+                        )
+                        Text(text = "Ayah ${recent.lastAyah}", style = NiyyahType.Badge, color = TextMuted)
+                    }
                 }
             }
         }
     }
 }
 
-/** Your library bento — node 1:337. */
+/** Your library bento — node 1:337, live counts. */
 @Composable
-private fun LibrarySection(onOpenBookmarks: () -> Unit, onOpenCollections: () -> Unit) {
+private fun LibrarySection(
+    bookmarkCount: Int,
+    collectionCount: Int,
+    onOpenBookmarks: () -> Unit,
+    onOpenCollections: () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
             text = "YOUR LIBRARY",
@@ -216,7 +273,7 @@ private fun LibrarySection(onOpenBookmarks: () -> Unit, onOpenCollections: () ->
         LibraryCard(
             title = "Bookmarks",
             subtitle = "Verses you've saved",
-            chipText = "12 Saved",
+            chipText = "$bookmarkCount Saved",
             chipOnWhite = true,
             iconRes = R.drawable.ic_bookmark_check,
             iconTint = Color(0xFF8C7D76),
@@ -228,7 +285,7 @@ private fun LibrarySection(onOpenBookmarks: () -> Unit, onOpenCollections: () ->
         LibraryCard(
             title = "Collections",
             subtitle = "Organized by topic",
-            chipText = "3 Folders",
+            chipText = "$collectionCount Folders",
             chipOnWhite = false,
             iconRes = R.drawable.ic_folder,
             iconTint = Color(0xFF7D927C),

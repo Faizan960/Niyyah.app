@@ -25,6 +25,9 @@ import com.salahlock.app.data.db.dao.HadithDao
 import com.salahlock.app.data.db.dao.AzkarDao
 import com.salahlock.app.data.db.dao.LocalMasjidDao
 import com.salahlock.app.data.db.entity.LocalMasjidEntity
+import com.salahlock.app.data.db.dao.QuranDao
+import com.salahlock.app.data.db.entity.QuranBookmarkEntity
+import com.salahlock.app.data.db.entity.QuranProgressEntity
 
 @Database(
     entities = [
@@ -39,8 +42,10 @@ import com.salahlock.app.data.db.entity.LocalMasjidEntity
         AzkarEntity::class,
         MasjidEntity::class,
         LocalMasjidEntity::class,
+        QuranBookmarkEntity::class,
+        QuranProgressEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -54,6 +59,7 @@ abstract class AppDatabase : RoomDatabase() {
     // SL-021: masjidDao() removed with the dead nearby-masjid feature. MasjidEntity
     // stays in the entities list — dropping it would be a schema change (migration).
     abstract fun localMasjidDao(): LocalMasjidDao
+    abstract fun quranDao(): QuranDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -230,6 +236,40 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Migration 6 → 7: Adds quran_bookmarks and quran_progress tables
+         * (BM-006 Quran module). User data untouched.
+         */
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS quran_bookmarks (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        surahNumber INTEGER NOT NULL,
+                        ayahNumber INTEGER,
+                        collectionName TEXT NOT NULL DEFAULT '',
+                        createdAtMs INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_quran_bookmarks_surahNumber_ayahNumber " +
+                        "ON quran_bookmarks (surahNumber, ayahNumber)"
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS quran_progress (
+                        surahNumber INTEGER PRIMARY KEY NOT NULL,
+                        lastAyah INTEGER NOT NULL DEFAULT 1,
+                        maxAyah INTEGER NOT NULL DEFAULT 1,
+                        timestampMs INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase =
             INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -237,7 +277,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "salahlock_db",
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .build().also { INSTANCE = it }
             }
     }

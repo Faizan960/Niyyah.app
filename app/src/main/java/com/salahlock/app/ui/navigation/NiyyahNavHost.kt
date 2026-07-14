@@ -20,6 +20,9 @@ object NiyyahRoutes {
     const val PRAYER = "prayer"
     const val SALAH_LOCK = "salah_lock"
     const val QURAN = "quran"
+    const val QURAN_SURAHS = "quran_surahs"
+    const val QURAN_READER = "quran_reader/{surahNumber}?ayah={ayah}"
+    fun quranReader(surahNumber: Int, ayah: Int = 1) = "quran_reader/$surahNumber?ayah=$ayah"
     const val KNOWLEDGE = "knowledge"
     const val HADITH = "hadith"
     const val AZKAR = "azkar"
@@ -83,6 +86,30 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
             com.salahlock.app.ui.quran.QuranScreen(
                 onOpenBookmarks = { navController.navigate(NiyyahRoutes.BOOKMARKS) },
                 onOpenCollections = { navController.navigate(NiyyahRoutes.COLLECTIONS) },
+                onOpenSurahList = { navController.navigate(NiyyahRoutes.QURAN_SURAHS) },
+                onOpenReader = { surah, ayah -> navController.navigate(NiyyahRoutes.quranReader(surah, ayah)) },
+            )
+        }
+        composable(NiyyahRoutes.QURAN_SURAHS) {
+            com.salahlock.app.ui.quran.QuranSurahListScreen(
+                onBack = { navController.popBackStack() },
+                onOpenSurah = { surah -> navController.navigate(NiyyahRoutes.quranReader(surah)) },
+            )
+        }
+        composable(
+            route = NiyyahRoutes.QURAN_READER,
+            arguments = listOf(
+                androidx.navigation.navArgument("surahNumber") { type = androidx.navigation.NavType.IntType },
+                androidx.navigation.navArgument("ayah") {
+                    type = androidx.navigation.NavType.IntType
+                    defaultValue = 1
+                },
+            ),
+        ) { entry ->
+            com.salahlock.app.ui.quran.QuranReaderScreen(
+                surahNumber = entry.arguments?.getInt("surahNumber") ?: 1,
+                startAyah = entry.arguments?.getInt("ayah") ?: 1,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(NiyyahRoutes.KNOWLEDGE) { com.salahlock.app.ui.knowledge.KnowledgeScreen() }
