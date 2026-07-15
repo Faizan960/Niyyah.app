@@ -25,6 +25,7 @@ class UserPreferences(private val context: Context) {
         val KEY_LOCK_DURATION_MIN = intPreferencesKey("lock_duration_min") // 15/30/45/60
         val KEY_FAJR_GENTLE_MODE = booleanPreferencesKey("fajr_gentle_mode")
         val KEY_NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
+        val KEY_EMAIL_NEWSLETTER = booleanPreferencesKey("email_newsletter_enabled")
         val KEY_ADHAN_ENABLED = booleanPreferencesKey("adhan_enabled")
         // Prayer sync guard — prevents redundant API calls
         val KEY_LAST_PRAYER_SYNC_MS = longPreferencesKey("last_prayer_sync_ms")
@@ -103,6 +104,18 @@ class UserPreferences(private val context: Context) {
 
     val adhanEnabled: Flow<Boolean> = context.dataStore.data
         .map { it[KEY_ADHAN_ENABLED] ?: true }
+
+    /** Master switch for announcement/reminder notifications (Settings). */
+    val notificationsEnabled: Flow<Boolean> = context.dataStore.data
+        .map { it[KEY_NOTIFICATIONS_ENABLED] ?: true }
+
+    /** Email newsletter opt-in (Settings). Off by default — never pre-consented. */
+    val emailNewsletterEnabled: Flow<Boolean> = context.dataStore.data
+        .map { it[KEY_EMAIL_NEWSLETTER] ?: false }
+
+    suspend fun setEmailNewsletterEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_EMAIL_NEWSLETTER] = enabled }
+    }
 
     /** Lock engine is paused until this epoch-millis. 0 (or past) = not paused. */
     val pauseUntil: Flow<Long> = context.dataStore.data

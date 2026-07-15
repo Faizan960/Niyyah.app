@@ -253,6 +253,10 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
                 onOpenReflection = { navController.navigate(NiyyahRoutes.MONTHLY_REFLECTION) },
             )
         }
-        composable(NiyyahRoutes.SETTINGS) { com.salahlock.app.ui.settings.SettingsScreen() }
+        composable(NiyyahRoutes.SETTINGS) {
+            com.salahlock.app.ui.settings.SettingsScreen(
+                onOpenProfile = { navController.navigate(NiyyahRoutes.PROFILE) },
+            )
+        }
     }
 }
