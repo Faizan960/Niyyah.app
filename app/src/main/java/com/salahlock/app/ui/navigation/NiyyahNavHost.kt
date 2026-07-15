@@ -1,16 +1,10 @@
 package com.salahlock.app.ui.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.salahlock.app.ui.theme.NiyyahColors
-import com.salahlock.app.ui.theme.NiyyahType
 
 /** Route constants for every Figma screen (BM-005 build order). */
 object NiyyahRoutes {
@@ -44,17 +38,6 @@ object NiyyahRoutes {
     const val MONTHLY_REFLECTION = "monthly_reflection"
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
-}
-
-/** Placeholder shown for screens not yet rebuilt from Figma. Replaced screen-by-screen. */
-@Composable
-fun PlaceholderScreen(name: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text = name, style = NiyyahType.Quote, color = NiyyahColors.TextSecondary)
-    }
 }
 
 @Composable
