@@ -85,7 +85,6 @@ class CollectionDetailViewModel(
 
 private val TextBody = Color(0xFF45474E)
 private val TextFaded = Color(0x9945474E)
-private val ChipFill = Color(0xFFF2F0EC)
 private val ChipText = Color(0xFF666666)
 
 /**
@@ -214,7 +213,7 @@ private fun CollectionItemCard(item: BookmarkItem, onOpen: () -> Unit, onRemove:
         ) {
             Box(
                 modifier = Modifier
-                    .background(ChipFill, NiyyahShapes.Pill)
+                    .background(NiyyahColors.SoftFill, NiyyahShapes.Pill)
                     .padding(horizontal = 12.dp, vertical = 4.dp),
             ) {
                 Text(text = item.type.label, style = NiyyahType.Badge, color = ChipText)

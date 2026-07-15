@@ -41,7 +41,6 @@ import com.salahlock.app.ui.theme.NiyyahType
  */
 private val TextBody = Color(0xFF45474E)
 private val HeartGold = Color(0xFFEEC064)
-private val CircleFill = Color(0xFFF6F3F2)
 private val DividerColor = Color(0xFFE5E2E1)
 
 @Composable
@@ -344,7 +343,7 @@ private fun CategoryTile(
             modifier = Modifier
                 .padding(bottom = 8.dp)
                 .size(48.dp)
-                .background(CircleFill, CircleShape),
+                .background(NiyyahColors.SoftFill, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

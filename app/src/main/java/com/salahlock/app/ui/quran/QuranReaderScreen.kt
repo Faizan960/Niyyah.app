@@ -41,7 +41,6 @@ import com.salahlock.app.ui.theme.NiyyahShapes
 import com.salahlock.app.ui.theme.NiyyahType
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-private val ChipFill = Color(0xFFF2F0EC)
 
 /**
  * Surah reader — Arabic (Uthmani) + Saheeh International translation.
@@ -180,7 +179,7 @@ private fun AyahCard(
             Box(
                 modifier = Modifier
                     .size(32.dp)
-                    .background(ChipFill, CircleShape),
+                    .background(NiyyahColors.SoftFill, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(

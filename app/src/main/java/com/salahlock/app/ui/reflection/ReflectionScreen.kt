@@ -399,7 +399,7 @@ private fun ChartChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .background(
-                if (selected) NiyyahColors.TextPrimary else Color(0xFFF2F0EC),
+                if (selected) NiyyahColors.TextPrimary else NiyyahColors.SoftFill,
                 NiyyahShapeChip,
             )
             .clickable { onClick() }

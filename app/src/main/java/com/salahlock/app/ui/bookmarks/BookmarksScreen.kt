@@ -63,7 +63,6 @@ import com.salahlock.app.ui.theme.NiyyahType
  */
 private val TextBody = Color(0xFF45474E)
 private val TextFaded = Color(0x9945474E)
-private val ChipFill = Color(0xFFF2F0EC)
 private val ChipText = Color(0xFF666666)
 private val SearchBorder = Color(0xFF6B7280)
 private val InputRadius = RoundedCornerShape(8.dp)
@@ -347,7 +346,7 @@ private fun SegmentedTabs(selected: BookmarkType?, onSelect: (BookmarkType?) -> 
 private fun SegmentPill(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .background(if (selected) NiyyahColors.Navy else ChipFill, NiyyahShapes.Pill)
+            .background(if (selected) NiyyahColors.Navy else NiyyahColors.SoftFill, NiyyahShapes.Pill)
             .clickable { onClick() }
             .padding(horizontal = 24.dp, vertical = 8.dp),
     ) {
@@ -390,7 +389,7 @@ private fun BookmarkCard(
         ) {
             Box(
                 modifier = Modifier
-                    .background(ChipFill, NiyyahShapes.Pill)
+                    .background(NiyyahColors.SoftFill, NiyyahShapes.Pill)
                     .padding(horizontal = 12.dp, vertical = 4.dp),
             ) {
                 Text(text = item.type.label, style = NiyyahType.Badge, color = ChipText)

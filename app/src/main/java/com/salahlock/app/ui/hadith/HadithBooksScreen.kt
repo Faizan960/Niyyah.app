@@ -222,7 +222,7 @@ fun HadithBooksScreen(
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
-                                .background(Color(0xFFF2F0EC), NiyyahShapes.Pill),
+                                .background(NiyyahColors.SoftFill, NiyyahShapes.Pill),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(

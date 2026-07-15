@@ -512,7 +512,7 @@ private fun ThemesSection(onOpenTopic: (topic: String) -> Unit) {
             themes.forEach { (label, topic) ->
                 Box(
                     modifier = Modifier
-                        .background(Color(0xFFF2F0EC), NiyyahShapes.Chip)
+                        .background(NiyyahColors.SoftFill, NiyyahShapes.Chip)
                         .clickable { onOpenTopic(topic) }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) {

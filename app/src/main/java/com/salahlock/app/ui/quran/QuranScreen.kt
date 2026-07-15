@@ -43,7 +43,6 @@ import com.salahlock.app.ui.theme.NiyyahType
  * surah list.
  */
 private val TextMuted = Color(0xFFC5C6CE)
-private val ChipFill = Color(0xFFF2F0EC)
 
 @Composable
 fun QuranScreen(
@@ -141,7 +140,7 @@ private fun ContinueReadingSection(continueReading: ContinueReading?, onClick: (
                 ) {
                     Box(
                         modifier = Modifier
-                            .background(ChipFill, NiyyahShapes.Chip)
+                            .background(NiyyahColors.SoftFill, NiyyahShapes.Chip)
                             .padding(horizontal = 12.dp, vertical = 4.dp),
                     ) {
                         Text(
@@ -184,7 +183,7 @@ private fun ContinueReadingSection(continueReading: ContinueReading?, onClick: (
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(6.dp)
-                        .background(ChipFill, NiyyahShapes.Pill),
+                        .background(NiyyahColors.SoftFill, NiyyahShapes.Pill),
                 ) {
                     Box(
                         modifier = Modifier
@@ -346,7 +345,7 @@ private fun LibraryCard(
             Box(
                 modifier = Modifier
                     .background(
-                        if (chipOnWhite) NiyyahColors.Surface else ChipFill,
+                        if (chipOnWhite) NiyyahColors.Surface else NiyyahColors.SoftFill,
                         NiyyahShapes.Pill,
                     )
                     .border(1.dp, NiyyahColors.Border, NiyyahShapes.Pill)

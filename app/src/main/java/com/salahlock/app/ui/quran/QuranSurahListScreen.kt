@@ -39,7 +39,6 @@ import com.salahlock.app.ui.theme.NiyyahColors
 import com.salahlock.app.ui.theme.NiyyahShapes
 import com.salahlock.app.ui.theme.NiyyahType
 
-private val ChipFill = Color(0xFFF2F0EC)
 
 /**
  * All 114 surahs with live search (English name, Arabic name, transliteration,
@@ -164,7 +163,7 @@ private fun FilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .background(
-                if (selected) NiyyahColors.TextPrimary else ChipFill,
+                if (selected) NiyyahColors.TextPrimary else NiyyahColors.SoftFill,
                 NiyyahShapes.Pill,
             )
             .clickable(onClick = onClick)
@@ -193,7 +192,7 @@ private fun SurahRow(surah: Surah, onClick: () -> Unit) {
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .background(ChipFill, CircleShape),
+                .background(NiyyahColors.SoftFill, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Text(

@@ -47,8 +47,6 @@ import com.salahlock.app.ui.theme.NiyyahType
  */
 private val TextBody = Color(0xFF45474E)
 private val ChipBorder = Color(0xFFC5C6CE)
-private val ChipFill = Color(0xFFF6F3F2)
-private val TrackFill = Color(0xFFE5E2E1)
 private val ProgressGold = Color(0xFFEEC064)
 
 @Composable
@@ -245,7 +243,7 @@ private fun SearchAndFilterSection(
 private fun TopicChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .background(if (selected) NiyyahColors.Navy else ChipFill, NiyyahShapes.Chip)
+            .background(if (selected) NiyyahColors.Navy else NiyyahColors.SoftFill, NiyyahShapes.Chip)
             .then(if (selected) Modifier else Modifier.border(1.dp, ChipBorder, NiyyahShapes.Chip))
             .clickable(onClick = onClick)
             .padding(horizontal = 21.dp, vertical = 9.dp),
@@ -409,7 +407,7 @@ private fun BookCard(coverRes: Int, title: String, author: String, progress: Flo
                     .fillMaxWidth()
                     .height(6.dp)
                     .clip(NiyyahShapes.Pill)
-                    .background(TrackFill),
+                    .background(NiyyahColors.SoftFill),
             ) {
                 Box(
                     modifier = Modifier

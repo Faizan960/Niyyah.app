@@ -58,7 +58,6 @@ import com.salahlock.app.ui.theme.NiyyahType
  */
 private val TextBody = Color(0xFF45474E)
 private val CardRadius = RoundedCornerShape(8.dp)
-private val NotesFill = Color(0xFFF6F3F2)
 private val SearchBorder = Color(0xFF6B7280)
 
 @Composable
@@ -212,7 +211,7 @@ private fun SavedBentoGrid(counts: Map<BookmarkType, Int>, onOpen: (BookmarkType
             )
             SavedCard(
                 R.drawable.ic_saved_notes, 16.dp, "Saved\nNotes",
-                "${count(BookmarkType.AZKAR)} Reflections", NotesFill,
+                "${count(BookmarkType.AZKAR)} Reflections", NiyyahColors.SoftFill,
                 Modifier.weight(1f).clickable { onOpen(BookmarkType.AZKAR) },
             )
         }

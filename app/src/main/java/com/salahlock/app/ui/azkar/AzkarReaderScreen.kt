@@ -43,7 +43,6 @@ import com.salahlock.app.ui.theme.NiyyahType
 
 private val TextBody = Color(0xFF45474E)
 private val HeartGold = Color(0xFFEEC064)
-private val ChipFill = Color(0xFFF2F0EC)
 
 /**
  * Azkar category reader — tap the counter to count each dhikr, heart to

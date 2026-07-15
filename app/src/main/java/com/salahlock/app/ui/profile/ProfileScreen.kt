@@ -61,8 +61,6 @@ import kotlinx.coroutines.launch
  */
 private val TextBody = Color(0xFF45474E)
 private val CardRadius = RoundedCornerShape(12.dp)
-private val ChipFill = Color(0xFFF2F0EC)
-private val CircleFill = Color(0xFFF6F3F2)
 private val RingGold = Color(0xFFEEC064)
 private val MintFill = Color(0x338BF7CB)
 private val GoldFill = Color(0x33EEC064)
@@ -228,7 +226,7 @@ private fun IdentitySection(uiState: ProfileUiState, onSignIn: () -> Unit) {
             ).forEach { label ->
                 Box(
                     modifier = Modifier
-                        .background(ChipFill, RoundedCornerShape(12.dp))
+                        .background(NiyyahColors.SoftFill, RoundedCornerShape(12.dp))
                         .padding(horizontal = 12.dp, vertical = 4.dp),
                 ) {
                     Text(text = label, style = NiyyahType.Badge, color = Color(0xFF666666))
@@ -321,7 +319,7 @@ private fun StatColumn(
                 .padding(top = 8.dp)
                 .height(8.dp)
                 .clip(RoundedCornerShape(50))
-                .background(CircleFill),
+                .background(NiyyahColors.SoftFill),
         ) {
             Box(
                 modifier = Modifier
@@ -548,7 +546,7 @@ private fun QuickLinkRow(iconRes: Int, title: String, subtitle: String, onClick:
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Box(
-            modifier = Modifier.size(40.dp).background(CircleFill, CircleShape),
+            modifier = Modifier.size(40.dp).background(NiyyahColors.SoftFill, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
