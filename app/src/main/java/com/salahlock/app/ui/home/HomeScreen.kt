@@ -1,6 +1,5 @@
 package com.salahlock.app.ui.home
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,13 +37,13 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.salahlock.app.R
 import com.salahlock.app.data.model.PrayerName
+import com.salahlock.app.ui.components.ProfileAvatar
 import com.salahlock.app.ui.theme.NiyyahColors
 import com.salahlock.app.ui.theme.NiyyahShapes
 import com.salahlock.app.ui.theme.NiyyahType
@@ -69,7 +68,7 @@ fun HomeScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
-        HomeHeader(onOpenProfile = onOpenProfile)
+        HomeHeader(photoUrl = uiState.userPhotoUrl, onOpenProfile = onOpenProfile)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -91,7 +90,7 @@ fun HomeScreen(
  * at the trailing edge and opens the Profile screen.
  */
 @Composable
-private fun HomeHeader(onOpenProfile: () -> Unit) {
+private fun HomeHeader(photoUrl: String?, onOpenProfile: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -110,10 +109,9 @@ private fun HomeHeader(onOpenProfile: () -> Unit) {
                 .border(1.dp, NiyyahColors.Border, CircleShape)
                 .padding(1.dp),
         ) {
-            Image(
-                painter = painterResource(R.drawable.img_user_profile),
+            ProfileAvatar(
+                photoUrl = photoUrl,
                 contentDescription = "Profile",
-                contentScale = ContentScale.Crop,
                 modifier = Modifier.matchParentSize().clip(CircleShape),
             )
         }

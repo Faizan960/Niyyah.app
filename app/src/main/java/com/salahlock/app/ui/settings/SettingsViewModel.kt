@@ -21,6 +21,7 @@ data class SettingsUiState(
     val isSignedIn: Boolean = false,
     val userName: String = "",
     val userEmail: String = "",
+    val userPhotoUrl: String? = null,
 
     // Appearance
     val darkMode: Boolean = false,
@@ -68,9 +69,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         identity.isSignedIn,
         identity.displayName,
         identity.email,
+        identity.photoUrl,
         transient,
     ) { values: Array<Any?> ->
-        val base = values[9] as SettingsUiState
+        val base = values[10] as SettingsUiState
         base.copy(
             darkMode = (values[0] as ThemePreference).let {
                 it == ThemePreference.DARK || it == ThemePreference.AMOLED
@@ -83,6 +85,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             isSignedIn = values[6] as Boolean,
             userName = values[7] as String,
             userEmail = values[8] as String,
+            userPhotoUrl = values[9] as String?,
             hasLocationPermission = PermissionHelper.hasLocationPermission(app),
             hasNotificationPermission = PermissionHelper.hasNotificationPermission(app),
         )

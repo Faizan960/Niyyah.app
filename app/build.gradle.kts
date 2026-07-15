@@ -176,6 +176,10 @@ dependencies {
     implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
+    // Coil — loads the signed-in user's Google profile photo (BM-008.1). Compose-native,
+    // small footprint; the only remote-image need in the app.
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
     // AdMob — single daily interstitial (Sprint A.1). No mediation, no analytics.
     implementation("com.google.android.gms:play-services-ads:24.5.0")
 }

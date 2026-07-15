@@ -1,6 +1,5 @@
 package com.salahlock.app.ui.prayers
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,7 +29,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,6 +37,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.salahlock.app.R
 import com.salahlock.app.data.model.PrayerName
 import com.salahlock.app.data.model.PrayerTime
+import com.salahlock.app.ui.components.ProfileAvatar
 import com.salahlock.app.ui.home.HomeUiState
 import com.salahlock.app.ui.home.HomeViewModel
 import com.salahlock.app.ui.theme.NiyyahColors
@@ -64,7 +63,7 @@ fun PrayerScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
-        PrayerHeader()
+        PrayerHeader(photoUrl = uiState.userPhotoUrl)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -80,7 +79,7 @@ fun PrayerScreen(
 
 /** Header — node 1:117. Same bar as Home but with a 32dp avatar. */
 @Composable
-private fun PrayerHeader() {
+private fun PrayerHeader(photoUrl: String?) {
     Box(modifier = Modifier.fillMaxWidth().background(NiyyahColors.HeaderBackground)) {
         Row(
             modifier = Modifier
@@ -98,10 +97,9 @@ private fun PrayerHeader() {
             )
             Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
             Box(modifier = Modifier.size(32.dp).clip(CircleShape)) {
-                Image(
-                    painter = painterResource(R.drawable.img_user_profile),
+                ProfileAvatar(
+                    photoUrl = photoUrl,
                     contentDescription = "Profile",
-                    contentScale = ContentScale.Crop,
                     modifier = Modifier.matchParentSize(),
                 )
             }

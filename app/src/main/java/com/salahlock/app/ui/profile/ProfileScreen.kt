@@ -20,11 +20,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,8 +44,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.salahlock.app.R
+import com.salahlock.app.auth.GoogleAuthClient
+import com.salahlock.app.auth.GoogleAuthConfig
+import com.salahlock.app.auth.GoogleAuthResult
+import com.salahlock.app.ui.components.ProfileAvatar
 import com.salahlock.app.ui.theme.NiyyahColors
 import com.salahlock.app.ui.theme.NiyyahType
+import kotlinx.coroutines.launch
 
 /**
  * Profile — Figma frame 1:613 (light).
@@ -67,6 +76,32 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val authClient = remember(context) { GoogleAuthClient(context) }
+
+    fun startGoogleSignIn() {
+        if (!GoogleAuthConfig.isConfigured) {
+            viewModel.startSignIn() // surfaces NOT_CONFIGURED
+            return
+        }
+        viewModel.startSignIn() // LOADING
+        scope.launch {
+            when (val result = authClient.signIn()) {
+                is GoogleAuthResult.Success -> viewModel.onSignInSuccess(
+                    displayName = result.identity.displayName,
+                    email = result.identity.email,
+                    photoUrl = result.identity.photoUrl,
+                    googleId = result.identity.googleId,
+                )
+                GoogleAuthResult.Cancelled -> viewModel.clearSignInError()
+                GoogleAuthResult.NoCredential ->
+                    viewModel.onSignInError("No Google account found on this device.")
+                is GoogleAuthResult.Error -> viewModel.onSignInError(result.message)
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -79,7 +114,7 @@ fun ProfileScreen(
                 .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 128.dp),
             verticalArrangement = Arrangement.spacedBy(40.dp),
         ) {
-            IdentitySection(uiState)
+            IdentitySection(uiState, onSignIn = ::startGoogleSignIn)
             StatisticsCard(uiState)
             MilestonesSection(uiState, onOpenReflection)
             ReflectionPreviewCard(uiState, onOpenReflection)
@@ -124,9 +159,14 @@ private fun ProfileHeader(onOpenSettings: () -> Unit) {
     }
 }
 
-/** Avatar + name — node 1:659. Identity and chips are live. */
+/**
+ * Avatar + name — node 1:659. Fully live (BM-008.1): real Google photo/name/email
+ * when signed in; when signed out the avatar becomes the Google sign-in trigger
+ * (the design's Settings account row points here) with loading and error states.
+ */
 @Composable
-private fun IdentitySection(uiState: ProfileUiState) {
+private fun IdentitySection(uiState: ProfileUiState, onSignIn: () -> Unit) {
+    val isLoading = uiState.signInState == SignInState.LOADING
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -137,14 +177,23 @@ private fun IdentitySection(uiState: ProfileUiState) {
                 .size(128.dp)
                 .border(1.dp, Color(0x4DC5C6CE), CircleShape)
                 .padding(1.dp)
-                .clip(CircleShape),
+                .clip(CircleShape)
+                .then(if (uiState.isSignedIn || isLoading) Modifier else Modifier.clickable { onSignIn() }),
+            contentAlignment = Alignment.Center,
         ) {
-            Image(
-                painter = painterResource(R.drawable.img_profile_avatar),
+            ProfileAvatar(
+                photoUrl = uiState.userPhotoUrl,
                 contentDescription = "Profile photo",
-                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize().background(Color(0x66000000)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp)
+                }
+            }
         }
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -156,9 +205,17 @@ private fun IdentitySection(uiState: ProfileUiState) {
                 color = NiyyahColors.TextPrimary,
             )
             Text(
-                text = "Journeying towards inner peace",
+                text = when {
+                    uiState.isSignedIn && uiState.userEmail.isNotBlank() -> uiState.userEmail
+                    uiState.signInState == SignInState.ERROR ->
+                        uiState.signInError ?: "Sign-in failed. Tap your photo to try again."
+                    uiState.signInState == SignInState.NOT_CONFIGURED ->
+                        "Google sign-in is not configured."
+                    else -> "Tap your photo to sign in with Google"
+                },
                 style = NiyyahType.Body,
-                color = TextBody,
+                color = if (uiState.signInState == SignInState.ERROR) Color(0xFFE5484D) else TextBody,
+                textAlign = TextAlign.Center,
             )
         }
         Row(

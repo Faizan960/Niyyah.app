@@ -4,7 +4,6 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -46,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.salahlock.app.R
+import com.salahlock.app.ui.components.ProfileAvatar
 import com.salahlock.app.ui.theme.NiyyahColors
 import com.salahlock.app.ui.theme.NiyyahShapes
 import com.salahlock.app.ui.theme.NiyyahType
@@ -137,6 +136,7 @@ fun SettingsScreen(
                 AccountRow(
                     name = uiState.userName.ifBlank { "Guest" },
                     detail = if (uiState.isSignedIn) uiState.userEmail else "Sign in from Profile",
+                    photoUrl = uiState.userPhotoUrl,
                     onClick = onOpenProfile,
                 )
                 RowDividerLine()
@@ -440,7 +440,7 @@ private fun RowDividerLine() {
 
 /** Account row — node 1:1520. Live identity. */
 @Composable
-private fun AccountRow(name: String, detail: String, onClick: () -> Unit) {
+private fun AccountRow(name: String, detail: String, photoUrl: String?, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -449,10 +449,9 @@ private fun AccountRow(name: String, detail: String, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Image(
-            painter = painterResource(R.drawable.img_profile_avatar),
+        ProfileAvatar(
+            photoUrl = photoUrl,
             contentDescription = null,
-            contentScale = ContentScale.Crop,
             modifier = Modifier.size(48.dp).clip(CircleShape),
         )
         Column(modifier = Modifier.weight(1f)) {
