@@ -23,6 +23,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,9 +46,9 @@ import com.salahlock.app.ui.theme.NiyyahType
 /**
  * Profile — Figma frame 1:613 (light).
  *
- * NOTE: identity, stats and milestones are placeholder mirroring the frame
- * (no profile/reading data layer); quick links navigate to the real
- * Collections and Bookmarks screens.
+ * BM-006.7: identity, statistics, milestones and the reflection preview are
+ * live from [ProfileViewModel] (prayer records, Quran progress, bookmarks,
+ * collections, achievements, spiritual rank, monthly report).
  */
 private val TextBody = Color(0xFF45474E)
 private val CardRadius = RoundedCornerShape(12.dp)
@@ -61,7 +63,10 @@ fun ProfileScreen(
     onOpenCollections: () -> Unit = {},
     onOpenBookmarks: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    onOpenReflection: () -> Unit = {},
+    viewModel: ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -74,11 +79,11 @@ fun ProfileScreen(
                 .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 128.dp),
             verticalArrangement = Arrangement.spacedBy(40.dp),
         ) {
-            IdentitySection()
-            StatisticsCard()
-            MilestonesSection()
-            ReflectionPreviewCard()
-            QuickLinks(onOpenCollections, onOpenBookmarks)
+            IdentitySection(uiState)
+            StatisticsCard(uiState)
+            MilestonesSection(uiState, onOpenReflection)
+            ReflectionPreviewCard(uiState, onOpenReflection)
+            QuickLinks(uiState, onOpenCollections, onOpenBookmarks)
         }
     }
 }
@@ -119,9 +124,9 @@ private fun ProfileHeader(onOpenSettings: () -> Unit) {
     }
 }
 
-/** Avatar + name — node 1:659. */
+/** Avatar + name — node 1:659. Identity and chips are live. */
 @Composable
-private fun IdentitySection() {
+private fun IdentitySection(uiState: ProfileUiState) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -146,7 +151,7 @@ private fun IdentitySection() {
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = "Aisha Rahman",
+                text = uiState.userName.ifBlank { "As-salamu alaykum" },
                 style = NiyyahType.Quote.copy(fontSize = 28.sp, lineHeight = 36.sp),
                 color = NiyyahColors.TextPrimary,
             )
@@ -160,7 +165,10 @@ private fun IdentitySection() {
             modifier = Modifier.padding(top = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            listOf("Member since '23", "Student of Knowledge").forEach { label ->
+            listOfNotNull(
+                uiState.memberSince.ifBlank { null },
+                uiState.spiritualRank.ifBlank { null },
+            ).forEach { label ->
                 Box(
                     modifier = Modifier
                         .background(ChipFill, RoundedCornerShape(12.dp))
@@ -173,9 +181,9 @@ private fun IdentitySection() {
     }
 }
 
-/** Personal statistics — node 1:673. */
+/** Personal statistics — node 1:673. Live weekly consistency + Quran progress. */
 @Composable
-private fun StatisticsCard() {
+private fun StatisticsCard(uiState: ProfileUiState) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -201,17 +209,17 @@ private fun StatisticsCard() {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             StatColumn(
                 label = "PRAYER\nCONSISTENCY",
-                bigText = "92%",
+                bigText = "${uiState.weeklyConsistencyPercent}%",
                 sideText = "this week",
-                progress = 0.92f,
+                progress = uiState.weeklyConsistencyPercent / 100f,
                 barColor = NiyyahColors.Navy,
                 modifier = Modifier.weight(1f),
             )
             StatColumn(
                 label = "READING\nPROGRESS",
-                bigText = "Juz\n14",
-                sideText = "Al-\nHijr",
-                progress = 0.45f,
+                bigText = if (uiState.readingJuz > 0) "Juz\n${uiState.readingJuz}" else "—",
+                sideText = uiState.readingSurahName.ifBlank { "Begin reading" },
+                progress = uiState.readingProgressFraction,
                 barColor = RingGold,
                 modifier = Modifier.weight(1f),
             )
@@ -269,9 +277,10 @@ private fun StatColumn(
     }
 }
 
-/** Milestones bento — node 1:699. */
+/** Milestones bento — node 1:699. Tiles show real unlocked achievements. */
 @Composable
-private fun MilestonesSection() {
+private fun MilestonesSection(uiState: ProfileUiState, onOpenReflection: () -> Unit) {
+    val achievements = uiState.unlockedAchievements
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
             text = "Milestones",
@@ -282,15 +291,15 @@ private fun MilestonesSection() {
             MilestoneTile(
                 circleColor = MintFill,
                 iconRes = R.drawable.ic_streak_calendar,
-                title = "30 Day Streak",
-                subtitle = "Fajr prayers",
+                title = achievements.getOrNull(0)?.title ?: "First Steps",
+                subtitle = achievements.getOrNull(0)?.description ?: "Your journey begins",
                 modifier = Modifier.weight(1f),
             )
             MilestoneTile(
                 circleColor = GoldFill,
                 iconRes = R.drawable.ic_khatam_book,
-                title = "Khatam",
-                subtitle = "Completed 1x",
+                title = achievements.getOrNull(1)?.title ?: "In Progress",
+                subtitle = achievements.getOrNull(1)?.description ?: "Keep your rhythm",
                 modifier = Modifier.weight(1f),
             )
         }
@@ -298,7 +307,8 @@ private fun MilestonesSection() {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(342.dp),
+                .height(342.dp)
+                .clickable { onOpenReflection() },
             contentAlignment = Alignment.Center,
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -365,9 +375,9 @@ private fun MilestoneTile(
     }
 }
 
-/** Monthly reflection preview — node 1:726. */
+/** Monthly reflection preview — node 1:726. Live from the current report. */
 @Composable
-private fun ReflectionPreviewCard() {
+private fun ReflectionPreviewCard(uiState: ProfileUiState, onOpenReflection: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -387,17 +397,19 @@ private fun ReflectionPreviewCard() {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = "Patience in Stillness",
+                    text = uiState.reflectionHeadline.ifBlank { "Your Monthly Reflection" },
                     style = NiyyahType.Quote.copy(lineHeight = 32.sp),
                     color = NiyyahColors.TextPrimary,
                 )
                 Text(
-                    text = "In the quiet moments before dawn, the heart finds its truest voice. This month's",
+                    text = uiState.reflectionBody.ifBlank {
+                        "A gentle look back at your month of worship awaits."
+                    }.let { if (it.length > 96) it.take(96).trimEnd() + "…" else it },
                     style = NiyyahType.Body,
                     color = TextBody,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
-                Column {
+                Column(modifier = Modifier.clickable { onOpenReflection() }) {
                     Text(
                         text = "READ FULL ENTRY",
                         style = NiyyahType.LabelUppercase.copy(letterSpacing = 1.4.sp),
@@ -425,12 +437,12 @@ private fun ReflectionPreviewCard() {
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    text = "NOV",
+                    text = uiState.reflectionMonthLabel.ifBlank { "—" },
                     style = NiyyahType.Badge.copy(letterSpacing = 1.2.sp, lineHeight = 12.sp),
                     color = Color.White,
                 )
                 Text(
-                    text = "12",
+                    text = uiState.reflectionDayLabel,
                     style = NiyyahType.Quote.copy(lineHeight = 24.sp),
                     color = Color.White,
                     modifier = Modifier.padding(top = 4.dp),
@@ -440,9 +452,13 @@ private fun ReflectionPreviewCard() {
     }
 }
 
-/** Quick links — node 1:742. Navigate to the real Collections / Bookmarks. */
+/** Quick links — node 1:742. Live counts; navigate to Collections / Bookmarks. */
 @Composable
-private fun QuickLinks(onOpenCollections: () -> Unit, onOpenBookmarks: () -> Unit) {
+private fun QuickLinks(
+    uiState: ProfileUiState,
+    onOpenCollections: () -> Unit,
+    onOpenBookmarks: () -> Unit,
+) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(bottom = 40.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -450,13 +466,13 @@ private fun QuickLinks(onOpenCollections: () -> Unit, onOpenBookmarks: () -> Uni
         QuickLinkRow(
             iconRes = R.drawable.ic_quicklink_collections,
             title = "My Collections",
-            subtitle = "Saved articles and lectures",
+            subtitle = "${uiState.collectionsCount} collections curated",
             onClick = onOpenCollections,
         )
         QuickLinkRow(
             iconRes = R.drawable.ic_bookmark_outline,
             title = "Bookmarks",
-            subtitle = "Quick access to verses",
+            subtitle = "${uiState.bookmarksCount} saved items",
             onClick = onOpenBookmarks,
         )
     }
