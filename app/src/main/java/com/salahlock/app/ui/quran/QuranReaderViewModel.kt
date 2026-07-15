@@ -25,13 +25,13 @@ class QuranReaderViewModel(application: Application) : AndroidViewModel(applicat
 
     private val surahNumber = MutableStateFlow(0)
 
-    @kotlinx.coroutines.ExperimentalCoroutinesApi
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val surahBookmarked: StateFlow<Boolean> = surahNumber
         .flatMapLatest { n -> if (n == 0) flowOf(false) else repo.isSurahBookmarked(n) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     /** Set of bookmarked ayah numbers within the open surah. */
-    @kotlinx.coroutines.ExperimentalCoroutinesApi
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val bookmarkedAyahs: StateFlow<Set<Int>> = surahNumber
         .flatMapLatest { n ->
             repo.getAllBookmarks().map { list ->

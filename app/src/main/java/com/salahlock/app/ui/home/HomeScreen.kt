@@ -76,7 +76,7 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(40.dp),
         ) {
             GreetingSection()
-            IntentionCard()
+            IntentionCard(uiState.dailyIntention)
             PrayerHeroCard(uiState)
             PrayerTimeline(uiState)
         }
@@ -148,9 +148,9 @@ private fun GreetingSection() {
     }
 }
 
-/** Today's Intention — node 1:38. White card, 24dp radius, 25dp padding. */
+/** Today's Intention — node 1:38. White card, 24dp radius, 25dp padding. Live (BM-008.2). */
 @Composable
-private fun IntentionCard() {
+private fun IntentionCard(intention: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -172,7 +172,7 @@ private fun IntentionCard() {
                 color = NiyyahColors.TextSecondary,
             )
             Text(
-                text = "\"To approach every task today with patience and seeking only His pleasure.\"",
+                text = "\"$intention\"",
                 style = NiyyahType.Quote,
                 color = NiyyahColors.TextPrimary,
             )

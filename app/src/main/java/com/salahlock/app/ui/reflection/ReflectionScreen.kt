@@ -197,7 +197,7 @@ private fun RankAndProgress(uiState: ReflectionUiState) {
                             modifier = Modifier.size(11.dp),
                         )
                         Text(
-                            text = "Previous: ${report.previousRank!!.transliteration}",
+                            text = "Previous: ${report.previousRank.transliteration}",
                             style = NiyyahType.Badge,
                             color = Color(0xFF007354),
                         )
@@ -211,7 +211,7 @@ private fun RankAndProgress(uiState: ReflectionUiState) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    report!!.newAchievements.forEach { achievement ->
+                    report.newAchievements.forEach { achievement ->
                         Text(
                             text = "${achievement.emoji} ${achievement.title}",
                             style = NiyyahType.Badge,
