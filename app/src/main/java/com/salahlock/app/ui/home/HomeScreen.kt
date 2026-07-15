@@ -3,6 +3,7 @@ package com.salahlock.app.ui.home
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -57,7 +58,10 @@ import java.util.Locale
 
 /** Home — Figma frame 1:2 (light). Every measurement is taken from that frame. */
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
+fun HomeScreen(
+    viewModel: HomeViewModel = viewModel(),
+    onOpenProfile: () -> Unit = {},
+) {
     val uiState by viewModel.uiState.collectAsState()
 
     Column(
@@ -65,7 +69,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
-        HomeHeader()
+        HomeHeader(onOpenProfile = onOpenProfile)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -80,39 +84,38 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
     }
 }
 
-/** Header — node 1:22. #FCF9F8 bar, 24dp sides, 16dp vertical. */
+/**
+ * Header — node 1:22. #FCF9F8 bar, 24dp sides, 16dp vertical.
+ * BM-007: the left hamburger was removed (it opened nothing); the wordmark is now
+ * centred in the bar and the profile avatar — the single Profile entry point — sits
+ * at the trailing edge and opens the Profile screen.
+ */
 @Composable
-private fun HomeHeader() {
-    Box(modifier = Modifier.fillMaxWidth().background(NiyyahColors.HeaderBackground)) {
-        Row(
+private fun HomeHeader(onOpenProfile: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(NiyyahColors.HeaderBackground)
+            .statusBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+                .align(Alignment.CenterEnd)
+                .size(40.dp)
+                .clip(CircleShape)
+                .clickable { onOpenProfile() }
+                .border(1.dp, NiyyahColors.Border, CircleShape)
+                .padding(1.dp),
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_home_menu),
-                contentDescription = "Menu",
-                tint = NiyyahColors.TextPrimary,
-                modifier = Modifier.width(18.dp).height(12.dp),
+            Image(
+                painter = painterResource(R.drawable.img_user_profile),
+                contentDescription = "Profile",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.matchParentSize().clip(CircleShape),
             )
-            Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .border(1.dp, NiyyahColors.Border, CircleShape)
-                    .padding(1.dp)
-                    .clip(CircleShape),
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_user_profile),
-                    contentDescription = "Profile",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.matchParentSize(),
-                )
-            }
         }
     }
 }

@@ -10,6 +10,8 @@ import androidx.navigation.compose.composable
 object NiyyahRoutes {
     const val SPLASH = "splash"
     const val ONBOARDING = "onboarding"
+    /** The tab shell (HorizontalPager over Home/Prayer/Quran/Knowledge). */
+    const val MAIN = "main"
     const val HOME = "home"
     const val PRAYER = "prayer"
     const val SALAH_LOCK = "salah_lock"
@@ -50,7 +52,7 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
         composable(NiyyahRoutes.SPLASH) {
             com.salahlock.app.ui.splash.SplashScreen(
                 onFinished = { onboardingDone ->
-                    val target = if (onboardingDone) NiyyahRoutes.HOME else NiyyahRoutes.ONBOARDING
+                    val target = if (onboardingDone) NiyyahRoutes.MAIN else NiyyahRoutes.ONBOARDING
                     navController.navigate(target) {
                         popUpTo(NiyyahRoutes.SPLASH) { inclusive = true }
                     }
@@ -60,29 +62,18 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
         composable(NiyyahRoutes.ONBOARDING) {
             com.salahlock.app.ui.onboarding.OnboardingScreen(
                 onDone = {
-                    navController.navigate(NiyyahRoutes.HOME) {
+                    navController.navigate(NiyyahRoutes.MAIN) {
                         popUpTo(NiyyahRoutes.ONBOARDING) { inclusive = true }
                     }
                 },
             )
         }
-        composable(NiyyahRoutes.HOME) { com.salahlock.app.ui.home.HomeScreen() }
-        composable(NiyyahRoutes.PRAYER) {
-            com.salahlock.app.ui.prayers.PrayerScreen(
-                onOpenSettings = { navController.navigate(NiyyahRoutes.SETTINGS) },
-            )
-        }
+        // Tab shell — Home / Prayer / Quran / Knowledge live inside the pager (MainShell),
+        // not as separate NavHost destinations, so swipe keeps them all mounted.
+        composable(NiyyahRoutes.MAIN) { MainShell(navController = navController) }
         composable(NiyyahRoutes.SALAH_LOCK) {
             com.salahlock.app.ui.lock.SalahLockScreen(
                 viewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
-            )
-        }
-        composable(NiyyahRoutes.QURAN) {
-            com.salahlock.app.ui.quran.QuranScreen(
-                onOpenBookmarks = { navController.navigate(NiyyahRoutes.bookmarks("QURAN")) },
-                onOpenCollections = { navController.navigate(NiyyahRoutes.COLLECTIONS) },
-                onOpenSurahList = { navController.navigate(NiyyahRoutes.QURAN_SURAHS) },
-                onOpenReader = { surah, ayah -> navController.navigate(NiyyahRoutes.quranReader(surah, ayah)) },
             )
         }
         composable(NiyyahRoutes.QURAN_SURAHS) {
@@ -105,16 +96,6 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
                 surahNumber = entry.arguments?.getInt("surahNumber") ?: 1,
                 startAyah = entry.arguments?.getInt("ayah") ?: 1,
                 onBack = { navController.popBackStack() },
-            )
-        }
-        composable(NiyyahRoutes.KNOWLEDGE) {
-            com.salahlock.app.ui.knowledge.KnowledgeScreen(
-                onOpenTopic = { topic -> navController.navigate(NiyyahRoutes.hadithTopicReader(topic)) },
-                onOpenHadith = { id -> navController.navigate(NiyyahRoutes.hadithSingleReader(id)) },
-                onOpenBook = { collection, book ->
-                    navController.navigate(NiyyahRoutes.hadithBookReader(collection, book))
-                },
-                onViewAll = { navController.navigate(NiyyahRoutes.HADITH) },
             )
         }
         composable(NiyyahRoutes.HADITH) {
