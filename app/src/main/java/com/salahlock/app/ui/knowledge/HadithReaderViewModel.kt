@@ -180,8 +180,13 @@ class HadithReaderViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun toggleBookmark(id: String, isBookmarked: Boolean) {
+        // Topic mode = Knowledge module reader; book/single mode = Hadith module.
+        val source = if (currentMode is LoadMode.Topic)
+            com.salahlock.app.data.repository.KnowledgeRepository.BOOKMARK_SOURCE_KNOWLEDGE
+        else
+            com.salahlock.app.data.repository.KnowledgeRepository.BOOKMARK_SOURCE_HADITH
         viewModelScope.launch {
-            repository.toggleHadithBookmark(id, isBookmarked)
+            repository.toggleHadithBookmark(id, isBookmarked, source)
             val updatedMap = _uiState.value.hadiths.mapValues { (_, hadith) ->
                 if (hadith.id == id) hadith.copy(isBookmarked = isBookmarked) else hadith
             }

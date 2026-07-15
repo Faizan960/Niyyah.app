@@ -71,6 +71,22 @@ class SalahLockApplication : Application(), Configuration.Provider {
     /** Singleton — prevents Hadith sync from re-running on every Knowledge screen visit. */
     val knowledgeRepository by lazy { KnowledgeRepository(this) }
 
+    val quranRepository by lazy {
+        com.salahlock.app.data.repository.QuranRepository.getInstance(this)
+    }
+
+    /** BM-006.5: unified bookmark aggregation across Quran/Hadith/Knowledge/Azkar. */
+    val bookmarksRepository by lazy {
+        com.salahlock.app.data.repository.BookmarksRepository(
+            quranRepository, knowledgeRepository, database.collectionsDao(),
+        )
+    }
+
+    /** BM-006.6: user-created collections referencing existing bookmarks. */
+    val collectionsRepository by lazy {
+        com.salahlock.app.data.repository.CollectionsRepository(database.collectionsDao())
+    }
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setMinimumLoggingLevel(Log.INFO)

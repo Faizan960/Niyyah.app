@@ -39,6 +39,9 @@ interface HadithDao {
     @Query("UPDATE hadith_table SET isBookmarked = :isBookmarked WHERE id = :id")
     suspend fun updateBookmarkStatus(id: String, isBookmarked: Boolean)
 
+    @Query("UPDATE hadith_table SET isBookmarked = :isBookmarked, bookmarkSource = :source WHERE id = :id")
+    suspend fun updateBookmarkStatus(id: String, isBookmarked: Boolean, source: String)
+
     @Query("UPDATE hadith_table SET lastReadTimestamp = :timestamp WHERE id = :id")
     suspend fun updateReadTimestamp(id: String, timestamp: Long)
 

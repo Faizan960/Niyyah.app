@@ -28,6 +28,9 @@ import com.salahlock.app.data.db.entity.LocalMasjidEntity
 import com.salahlock.app.data.db.dao.QuranDao
 import com.salahlock.app.data.db.entity.QuranBookmarkEntity
 import com.salahlock.app.data.db.entity.QuranProgressEntity
+import com.salahlock.app.data.db.dao.CollectionsDao
+import com.salahlock.app.data.db.entity.UserCollectionEntity
+import com.salahlock.app.data.db.entity.CollectionItemEntity
 
 @Database(
     entities = [
@@ -44,8 +47,10 @@ import com.salahlock.app.data.db.entity.QuranProgressEntity
         LocalMasjidEntity::class,
         QuranBookmarkEntity::class,
         QuranProgressEntity::class,
+        UserCollectionEntity::class,
+        CollectionItemEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -60,6 +65,7 @@ abstract class AppDatabase : RoomDatabase() {
     // stays in the entities list — dropping it would be a schema change (migration).
     abstract fun localMasjidDao(): LocalMasjidDao
     abstract fun quranDao(): QuranDao
+    abstract fun collectionsDao(): CollectionsDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -270,6 +276,46 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Migration 7 → 8 (BM-006.5/6 Bookmarks + Collections):
+         * - Adds `bookmarkSource TEXT NOT NULL DEFAULT 'hadith'` to hadith_table so
+         *   bookmarks made from the Knowledge topic reader are distinguishable.
+         * - Adds user_collections + collection_items (user-created libraries that
+         *   reference existing bookmarks — no bookmark data is duplicated).
+         * User data untouched.
+         */
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE hadith_table ADD COLUMN bookmarkSource TEXT NOT NULL DEFAULT 'hadith'"
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS user_collections (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        createdAtMs INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS collection_items (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        collectionId INTEGER NOT NULL,
+                        contentType TEXT NOT NULL,
+                        contentKey TEXT NOT NULL,
+                        addedAtMs INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_collection_items_collectionId_contentType_contentKey " +
+                        "ON collection_items (collectionId, contentType, contentKey)"
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase =
             INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -277,7 +323,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "salahlock_db",
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                     .build().also { INSTANCE = it }
             }
     }

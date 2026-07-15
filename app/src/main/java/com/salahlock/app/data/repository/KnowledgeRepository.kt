@@ -261,7 +261,15 @@ class KnowledgeRepository(private val context: Context) {
 
     suspend fun updateAzkarProgress(id: Int, count: Int) = azkarDao.updateProgress(id, count)
     suspend fun toggleAzkarBookmark(id: Int, bookmarked: Boolean) = azkarDao.updateBookmarkStatus(id, bookmarked)
-    suspend fun toggleHadithBookmark(id: String, bookmarked: Boolean) = hadithDao.updateBookmarkStatus(id, bookmarked)
+    suspend fun toggleHadithBookmark(id: String, bookmarked: Boolean, source: String = BOOKMARK_SOURCE_HADITH) =
+        hadithDao.updateBookmarkStatus(id, bookmarked, source)
     suspend fun updateReadTimestamp(id: String, timestamp: Long) = hadithDao.updateReadTimestamp(id, timestamp)
     suspend fun resetAzkarProgress() = azkarDao.resetAllProgress()
+
+    companion object {
+        /** Bookmark made from the Hadith module (collection/book reader). */
+        const val BOOKMARK_SOURCE_HADITH = "hadith"
+        /** Bookmark made from the Knowledge module (topic reader). */
+        const val BOOKMARK_SOURCE_KNOWLEDGE = "knowledge"
+    }
 }

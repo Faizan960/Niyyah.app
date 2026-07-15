@@ -1,7 +1,10 @@
 package com.salahlock.app.ui.bookmarks
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,19 +19,37 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.salahlock.app.R
+import com.salahlock.app.data.model.BookmarkItem
+import com.salahlock.app.data.model.BookmarkType
+import com.salahlock.app.data.repository.CollectionSummary
 import com.salahlock.app.ui.theme.NiyyahColors
 import com.salahlock.app.ui.theme.NiyyahShapes
 import com.salahlock.app.ui.theme.NiyyahType
@@ -36,9 +57,9 @@ import com.salahlock.app.ui.theme.NiyyahType
 /**
  * Bookmarks — Figma frame 1:1181 (light).
  *
- * NOTE: no bookmarks aggregation layer exists yet (hadith bookmarks live in
- * Room; Quran/Knowledge/Azkar have no data layers). List content is
- * placeholder mirroring the frame.
+ * BM-006.5: fully wired to [BookmarksViewModel]. Live bookmarks across
+ * Quran/Hadith/Knowledge/Azkar, search, type tabs, sort toggle, remove,
+ * open, and long-press add-to-collection.
  */
 private val TextBody = Color(0xFF45474E)
 private val TextFaded = Color(0x9945474E)
@@ -48,7 +69,21 @@ private val SearchBorder = Color(0xFF6B7280)
 private val InputRadius = RoundedCornerShape(8.dp)
 
 @Composable
-fun BookmarksScreen() {
+fun BookmarksScreen(
+    initialFilter: BookmarkType? = null,
+    onOpenQuran: (surah: Int, ayah: Int) -> Unit = { _, _ -> },
+    onOpenHadith: (hadithId: String) -> Unit = {},
+    onOpenAzkar: (category: String) -> Unit = {},
+    viewModel: BookmarksViewModel = viewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    var appliedInitialFilter by remember { mutableStateOf(false) }
+    if (!appliedInitialFilter && initialFilter != null) {
+        appliedInitialFilter = true
+        viewModel.setFilter(initialFilter)
+    }
+    var collectionSheetItem by remember { mutableStateOf<BookmarkItem?>(null) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -66,45 +101,74 @@ fun BookmarksScreen() {
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
                 TitleSection()
-                SearchAndFilterBar()
+                SearchAndFilterBar(
+                    query = uiState.query,
+                    onQueryChange = viewModel::setQuery,
+                    sortNewestFirst = uiState.sortNewestFirst,
+                    onToggleSort = viewModel::toggleSort,
+                    onFilterSelected = viewModel::setFilter,
+                )
             }
-            SegmentedTabs()
+            SegmentedTabs(selected = uiState.filter, onSelect = viewModel::setFilter)
             Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                BookmarkCard(
-                    tag = "Quran",
-                    metaIcon = R.drawable.ic_meta_quran,
-                    metaText = "Al-Baqarah 2:286",
-                    title = "لَا يُكَلِّفُ ٱللَّهُ نَفْسًا إِلَّا وُسْعَهَا",
-                    titleIsArabic = true,
-                    body = "\"Allah does not burden a soul beyond that it can bear...\"",
-                )
-                BookmarkCard(
-                    tag = "Knowledge",
-                    metaIcon = R.drawable.ic_meta_knowledge,
-                    metaText = "Purification of the Heart",
-                    title = "The Disease of Envy (Hasad)",
-                    body = "Understanding the spiritual sickness of envy, its roots in dissatisfaction with…",
-                )
-                BookmarkCard(
-                    tag = "Hadith",
-                    metaIcon = R.drawable.ic_meta_hadith,
-                    metaText = "Sahih al-Bukhari 1",
-                    title = "The Reward of Deeds…",
-                    body = "\"Actions are according to intentions, and everyone will get what was intended...\"",
-                )
-                BookmarkCard(
-                    tag = "Azkar",
-                    metaIcon = R.drawable.ic_meta_azkar,
-                    metaText = "Morning Remembrance",
-                    title = "Protection Supplication",
-                    body = "\"In the name of Allah, with whose name nothing on earth or in the heavens can…",
-                )
+                when {
+                    uiState.isLoading -> StateMessage("Gathering your bookmarks…")
+                    uiState.isEmpty -> StateMessage(
+                        "Nothing saved yet.\nBookmark a verse, hadith or dhikr while reading, and it will rest here.",
+                    )
+                    uiState.items.isEmpty() -> StateMessage("No bookmarks match your search.")
+                    else -> uiState.items.forEach { item ->
+                        BookmarkCard(
+                            item = item,
+                            onOpen = {
+                                when (item.type) {
+                                    BookmarkType.QURAN ->
+                                        item.surah?.let { onOpenQuran(it, item.ayah ?: 1) }
+                                    BookmarkType.HADITH, BookmarkType.KNOWLEDGE ->
+                                        item.hadithId?.let(onOpenHadith)
+                                    BookmarkType.AZKAR ->
+                                        item.azkarCategory?.let(onOpenAzkar)
+                                }
+                            },
+                            onRemove = { viewModel.remove(item) },
+                            onLongPress = { collectionSheetItem = item },
+                        )
+                    }
+                }
             }
         }
     }
+
+    collectionSheetItem?.let { item ->
+        AddToCollectionDialog(
+            item = item,
+            collections = uiState.collections,
+            onAdd = { collectionId ->
+                viewModel.addToCollection(collectionId, item)
+                collectionSheetItem = null
+            },
+            onCreateAndAdd = { name ->
+                viewModel.createCollectionAndAdd(name, item)
+                collectionSheetItem = null
+            },
+            onDismiss = { collectionSheetItem = null },
+        )
+    }
+}
+
+/** Loading / empty / no-results message in the list area. */
+@Composable
+private fun StateMessage(text: String) {
+    Text(
+        text = text,
+        style = NiyyahType.Body,
+        color = TextBody,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
+    )
 }
 
 /** Header — node 1:1182. */
@@ -162,7 +226,13 @@ private fun TitleSection() {
 
 /** Search + sort/filter — node 1:1197. */
 @Composable
-private fun SearchAndFilterBar() {
+private fun SearchAndFilterBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    sortNewestFirst: Boolean,
+    onToggleSort: () -> Unit,
+    onFilterSelected: (BookmarkType?) -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(
             modifier = Modifier
@@ -179,25 +249,65 @@ private fun SearchAndFilterBar() {
                 tint = SearchBorder,
                 modifier = Modifier.size(18.dp),
             )
-            Text(
-                text = "Search bookmarks...",
-                style = NiyyahType.LabelUppercase.copy(letterSpacing = 0.7.sp),
-                color = SearchBorder,
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                textStyle = NiyyahType.Body.copy(color = NiyyahColors.TextPrimary),
+                cursorBrush = SolidColor(NiyyahColors.TextPrimary),
+                keyboardOptions = KeyboardOptions.Default,
+                modifier = Modifier.weight(1f),
+                decorationBox = { innerTextField ->
+                    Box {
+                        if (query.isEmpty()) {
+                            Text(
+                                text = "Search bookmarks...",
+                                style = NiyyahType.LabelUppercase.copy(letterSpacing = 0.7.sp),
+                                color = SearchBorder,
+                            )
+                        }
+                        innerTextField()
+                    }
+                },
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterButton(iconRes = R.drawable.ic_sort_arrows, label = "Sort")
-            FilterButton(iconRes = R.drawable.ic_filter_lines, label = "Filter")
+            FilterButton(
+                iconRes = R.drawable.ic_sort_arrows,
+                label = if (sortNewestFirst) "Sort" else "Sort ↑",
+                onClick = onToggleSort,
+            )
+            Box {
+                var menuOpen by remember { mutableStateOf(false) }
+                FilterButton(
+                    iconRes = R.drawable.ic_filter_lines,
+                    label = "Filter",
+                    onClick = { menuOpen = true },
+                )
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text("All", style = NiyyahType.Body) },
+                        onClick = { onFilterSelected(null); menuOpen = false },
+                    )
+                    BookmarkType.entries.forEach { type ->
+                        DropdownMenuItem(
+                            text = { Text(type.label, style = NiyyahType.Body) },
+                            onClick = { onFilterSelected(type); menuOpen = false },
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun FilterButton(iconRes: Int, label: String) {
+private fun FilterButton(iconRes: Int, label: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .background(NiyyahColors.Surface, InputRadius)
             .border(1.dp, NiyyahColors.Border, InputRadius)
+            .clickable { onClick() }
             .padding(horizontal = 17.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -218,7 +328,7 @@ private fun FilterButton(iconRes: Int, label: String) {
 
 /** Segmented tabs — node 1:1215. Full-bleed horizontal scroll. */
 @Composable
-private fun SegmentedTabs() {
+private fun SegmentedTabs(selected: BookmarkType?, onSelect: (BookmarkType?) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -226,19 +336,19 @@ private fun SegmentedTabs() {
             .padding(horizontal = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        SegmentPill("All", selected = true)
-        SegmentPill("Quran", selected = false)
-        SegmentPill("Hadith", selected = false)
-        SegmentPill("Knowledge", selected = false)
-        SegmentPill("Azkar", selected = false)
+        SegmentPill("All", selected = selected == null) { onSelect(null) }
+        BookmarkType.entries.forEach { type ->
+            SegmentPill(type.label, selected = selected == type) { onSelect(type) }
+        }
     }
 }
 
 @Composable
-private fun SegmentPill(label: String, selected: Boolean) {
+private fun SegmentPill(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .background(if (selected) NiyyahColors.Navy else ChipFill, NiyyahShapes.Pill)
+            .clickable { onClick() }
             .padding(horizontal = 24.dp, vertical = 8.dp),
     ) {
         Text(
@@ -249,21 +359,28 @@ private fun SegmentPill(label: String, selected: Boolean) {
     }
 }
 
-/** Bookmark card — node 1:1228. */
+private fun metaIconFor(type: BookmarkType): Int = when (type) {
+    BookmarkType.QURAN -> R.drawable.ic_meta_quran
+    BookmarkType.HADITH -> R.drawable.ic_meta_hadith
+    BookmarkType.KNOWLEDGE -> R.drawable.ic_meta_knowledge
+    BookmarkType.AZKAR -> R.drawable.ic_meta_azkar
+}
+
+/** Bookmark card — node 1:1228. Tap opens; bookmark icon removes; long-press collects. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BookmarkCard(
-    tag: String,
-    metaIcon: Int,
-    metaText: String,
-    title: String,
-    body: String,
-    titleIsArabic: Boolean = false,
+    item: BookmarkItem,
+    onOpen: () -> Unit,
+    onRemove: () -> Unit,
+    onLongPress: () -> Unit,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(NiyyahColors.Surface, NiyyahShapes.Chip)
             .border(1.dp, NiyyahColors.Border, NiyyahShapes.Chip)
+            .combinedClickable(onClick = onOpen, onLongClick = onLongPress)
             .padding(25.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -276,24 +393,24 @@ private fun BookmarkCard(
                     .background(ChipFill, NiyyahShapes.Pill)
                     .padding(horizontal = 12.dp, vertical = 4.dp),
             ) {
-                Text(text = tag, style = NiyyahType.Badge, color = ChipText)
+                Text(text = item.type.label, style = NiyyahType.Badge, color = ChipText)
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Icon(
-                    painter = painterResource(metaIcon),
+                    painter = painterResource(metaIconFor(item.type)),
                     contentDescription = null,
                     tint = TextFaded,
                     modifier = Modifier.size(12.dp),
                 )
-                Text(text = metaText, style = NiyyahType.Badge, color = TextFaded)
+                Text(text = item.meta, style = NiyyahType.Badge, color = TextFaded)
             }
         }
-        if (titleIsArabic) {
+        if (item.titleIsArabic) {
             Text(
-                text = title,
+                text = item.title,
                 style = NiyyahType.Quote.copy(
                     fontFamily = FontFamily.Serif,
                     lineHeight = 48.sp,
@@ -304,20 +421,104 @@ private fun BookmarkCard(
             )
         } else {
             Text(
-                text = title,
+                text = item.title,
                 style = NiyyahType.Quote.copy(lineHeight = 32.sp),
                 color = NiyyahColors.TextPrimary,
             )
         }
-        Text(text = body, style = NiyyahType.Body, color = TextBody)
+        Text(text = item.body, style = NiyyahType.Body, color = TextBody)
         Icon(
             painter = painterResource(R.drawable.ic_bookmark_filled),
-            contentDescription = "Bookmarked",
+            contentDescription = "Remove bookmark",
             tint = NiyyahColors.TextPrimary,
             modifier = Modifier
+                .clickable { onRemove() }
                 .padding(start = 8.dp, top = 8.dp, bottom = 7.dp)
                 .width(14.dp)
                 .height(18.dp),
         )
+    }
+}
+
+/** Long-press action: add this bookmark to a collection (or create one). */
+@Composable
+private fun AddToCollectionDialog(
+    item: BookmarkItem,
+    collections: List<CollectionSummary>,
+    onAdd: (Long) -> Unit,
+    onCreateAndAdd: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var newName by remember { mutableStateOf("") }
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = NiyyahColors.Surface,
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = "Add to Collection",
+                    style = NiyyahType.Quote.copy(lineHeight = 32.sp),
+                    color = NiyyahColors.TextPrimary,
+                )
+                Text(text = item.meta, style = NiyyahType.Badge, color = TextBody)
+                if (collections.isEmpty()) {
+                    Text(
+                        text = "No collections yet — create your first below.",
+                        style = NiyyahType.Body,
+                        color = TextBody,
+                    )
+                } else {
+                    collections.forEach { collection ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onAdd(collection.id) }
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = collection.name,
+                                style = NiyyahType.Body,
+                                color = NiyyahColors.TextPrimary,
+                            )
+                            Text(
+                                text = "${collection.itemCount} Items",
+                                style = NiyyahType.Badge,
+                                color = TextBody,
+                            )
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = { newName = it },
+                    singleLine = true,
+                    placeholder = { Text("New collection name", style = NiyyahType.Body) },
+                    textStyle = NiyyahType.Body,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel", style = NiyyahType.LabelUppercase, color = TextBody)
+                    }
+                    TextButton(
+                        onClick = { if (newName.isNotBlank()) onCreateAndAdd(newName) },
+                    ) {
+                        Text(
+                            "Create & Add",
+                            style = NiyyahType.LabelUppercase,
+                            color = NiyyahColors.Navy,
+                        )
+                    }
+                }
+            }
+        }
     }
 }
