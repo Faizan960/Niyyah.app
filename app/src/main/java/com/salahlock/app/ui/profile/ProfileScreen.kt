@@ -126,7 +126,7 @@ fun ProfileScreen(
 /** Header — node 1:648. Hamburger / NIYYAH / settings gear. */
 @Composable
 private fun ProfileHeader(onOpenSettings: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().background(Color(0xCCFCF9F8))) {
+    Column(modifier = Modifier.fillMaxWidth().background(NiyyahColors.HeaderBackground)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -154,7 +154,7 @@ private fun ProfileHeader(onOpenSettings: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(Color(0x4DC5C6CE)),
+                .background(NiyyahColors.Hairline),
         )
     }
 }
@@ -175,7 +175,7 @@ private fun IdentitySection(uiState: ProfileUiState, onSignIn: () -> Unit) {
         Box(
             modifier = Modifier
                 .size(128.dp)
-                .border(1.dp, Color(0x4DC5C6CE), CircleShape)
+                .border(1.dp, NiyyahColors.Hairline, CircleShape)
                 .padding(1.dp)
                 .clip(CircleShape)
                 .then(if (uiState.isSignedIn || isLoading) Modifier else Modifier.clickable { onSignIn() }),

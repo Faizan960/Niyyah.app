@@ -97,7 +97,7 @@ fun KnowledgeScreen(
 /** Header — node 1:801. 64dp bar, hamburger / NIYYAH / bell, hairline bottom border. */
 @Composable
 private fun KnowledgeHeader() {
-    Column(modifier = Modifier.fillMaxWidth().background(Color(0xCCFCF9F8))) {
+    Column(modifier = Modifier.fillMaxWidth().background(NiyyahColors.HeaderBackground)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,7 +125,7 @@ private fun KnowledgeHeader() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(Color(0x4DC5C6CE)),
+                .background(NiyyahColors.Hairline),
         )
     }
 }

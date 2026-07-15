@@ -225,9 +225,9 @@ class BackupRepository(
             )
         }
 
-        val manifest = json.decodeFromString<BackupManifest>(manifestJson!!)
-        val metadata = json.decodeFromString<BackupMetadata>(metadataJson!!)
-        val entry    = json.decodeFromString<BackupJsonEntry>(backupJson!!)
+        val manifest = json.decodeFromString<BackupManifest>(manifestJson)
+        val metadata = json.decodeFromString<BackupMetadata>(metadataJson)
+        val entry    = json.decodeFromString<BackupJsonEntry>(backupJson)
 
         // "SalahLock" is the on-disk format identifier — kept for compatibility with
         // backups created before the Niyyah rebrand. Only the message is user-facing.

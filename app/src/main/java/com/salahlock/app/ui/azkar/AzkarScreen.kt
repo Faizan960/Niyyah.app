@@ -80,7 +80,7 @@ fun AzkarScreen(
 /** Header — node 1:366. Hamburger / NIYYAH / bell over a hairline border. */
 @Composable
 private fun AzkarHeader() {
-    Column(modifier = Modifier.fillMaxWidth().background(Color(0xCCFCF9F8))) {
+    Column(modifier = Modifier.fillMaxWidth().background(NiyyahColors.HeaderBackground)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -108,7 +108,7 @@ private fun AzkarHeader() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(Color(0x4DC5C6CE)),
+                .background(NiyyahColors.Hairline),
         )
     }
 }

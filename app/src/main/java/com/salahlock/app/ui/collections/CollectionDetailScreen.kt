@@ -156,7 +156,7 @@ private fun StateText(text: String) {
 /** Back-arrow header, matching the reader screens' chrome. */
 @Composable
 private fun DetailHeader(title: String, onBack: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().background(Color(0xCCFCF9F8))) {
+    Column(modifier = Modifier.fillMaxWidth().background(NiyyahColors.HeaderBackground)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -185,7 +185,7 @@ private fun DetailHeader(title: String, onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(Color(0x4DC5C6CE)),
+                .background(NiyyahColors.Hairline),
         )
     }
 }

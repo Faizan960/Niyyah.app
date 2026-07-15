@@ -61,7 +61,6 @@ import java.util.Locale
  * with the same row styling as the frame.
  */
 private val TextBody = Color(0xFF45474E)
-private val GroupBorder = Color(0x4DC5C6CE)
 private val RowDivider = Color(0x33C5C6CE)
 private val ToggleOff = Color(0xFFE5E2E1)
 private val LogoutRed = Color(0xFFBA1A1A)
@@ -373,7 +372,7 @@ private fun appVersionName(context: android.content.Context): String = runCatchi
 /** Header — node 1:1502. */
 @Composable
 private fun SettingsHeader() {
-    Column(modifier = Modifier.fillMaxWidth().background(Color(0xCCFCF9F8))) {
+    Column(modifier = Modifier.fillMaxWidth().background(NiyyahColors.HeaderBackground)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -401,7 +400,7 @@ private fun SettingsHeader() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(GroupBorder),
+                .background(NiyyahColors.Hairline),
         )
     }
 }
@@ -421,7 +420,7 @@ private fun SettingsGroup(label: String, content: @Composable () -> Unit) {
                 .fillMaxWidth()
                 .clip(NiyyahShapes.Card)
                 .background(NiyyahColors.Surface)
-                .border(1.dp, GroupBorder, NiyyahShapes.Card),
+                .border(1.dp, NiyyahColors.Hairline, NiyyahShapes.Card),
         ) {
             content()
         }

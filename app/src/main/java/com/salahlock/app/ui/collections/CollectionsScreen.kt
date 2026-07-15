@@ -127,7 +127,7 @@ fun CollectionsScreen(
 /** Header — node 1:910. Hamburger / NIYYAH / bell. */
 @Composable
 private fun CollectionsHeader() {
-    Column(modifier = Modifier.fillMaxWidth().background(Color(0xCCFCF9F8))) {
+    Column(modifier = Modifier.fillMaxWidth().background(NiyyahColors.HeaderBackground)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -155,7 +155,7 @@ private fun CollectionsHeader() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(Color(0x4DC5C6CE)),
+                .background(NiyyahColors.Hairline),
         )
     }
 }
@@ -182,7 +182,7 @@ private fun PageHeader() {
                 .fillMaxWidth()
                 .padding(top = 17.dp)
                 .height(1.dp)
-                .background(Color(0x4DC5C6CE)),
+                .background(NiyyahColors.Hairline),
         )
     }
 }
@@ -296,7 +296,7 @@ private fun LibrariesSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(Color(0x4DC5C6CE)),
+                    .background(NiyyahColors.Hairline),
             )
         }
         // Live collection search — same input styling as the Bookmarks search bar.

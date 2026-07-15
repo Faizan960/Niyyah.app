@@ -42,7 +42,6 @@ import com.salahlock.app.ui.theme.NiyyahType
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 private val ChipFill = Color(0xFFF2F0EC)
-private val CardBorder = Color(0x4DC5C6CE)
 
 /**
  * Surah reader — Arabic (Uthmani) + Saheeh International translation.
@@ -169,7 +168,7 @@ private fun AyahCard(
         modifier = Modifier
             .fillMaxWidth()
             .background(NiyyahColors.Surface, NiyyahShapes.Card)
-            .border(1.dp, CardBorder, NiyyahShapes.Card)
+            .border(1.dp, NiyyahColors.Hairline, NiyyahShapes.Card)
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

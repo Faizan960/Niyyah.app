@@ -43,7 +43,6 @@ import com.salahlock.app.ui.theme.NiyyahType
 
 private val TextBody = Color(0xFF45474E)
 private val HeartGold = Color(0xFFEEC064)
-private val CardBorder = Color(0x4DC5C6CE)
 private val ChipFill = Color(0xFFF2F0EC)
 
 /**
@@ -122,7 +121,7 @@ private fun AzkarCard(
         modifier = Modifier
             .fillMaxWidth()
             .background(NiyyahColors.Surface, NiyyahShapes.Card)
-            .border(1.dp, CardBorder, NiyyahShapes.Card)
+            .border(1.dp, NiyyahColors.Hairline, NiyyahShapes.Card)
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

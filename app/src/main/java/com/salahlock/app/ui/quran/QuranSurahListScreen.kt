@@ -40,7 +40,6 @@ import com.salahlock.app.ui.theme.NiyyahShapes
 import com.salahlock.app.ui.theme.NiyyahType
 
 private val ChipFill = Color(0xFFF2F0EC)
-private val CardBorder = Color(0x4DC5C6CE)
 
 /**
  * All 114 surahs with live search (English name, Arabic name, transliteration,
@@ -185,7 +184,7 @@ private fun SurahRow(surah: Surah, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .background(NiyyahColors.Surface, NiyyahShapes.Chip)
-            .border(1.dp, CardBorder, NiyyahShapes.Chip)
+            .border(1.dp, NiyyahColors.Hairline, NiyyahShapes.Chip)
             .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,

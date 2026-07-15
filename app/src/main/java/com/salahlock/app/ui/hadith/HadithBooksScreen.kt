@@ -213,7 +213,7 @@ fun HadithBooksScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(NiyyahColors.Surface, NiyyahShapes.Chip)
-                            .border(1.dp, Color(0x4DC5C6CE), NiyyahShapes.Chip)
+                            .border(1.dp, NiyyahColors.Hairline, NiyyahShapes.Chip)
                             .clickable { onOpenBook(collection, book.bookNumber) }
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,

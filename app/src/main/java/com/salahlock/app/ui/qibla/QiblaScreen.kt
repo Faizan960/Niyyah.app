@@ -87,7 +87,7 @@ fun QiblaScreen(viewModel: QiblaViewModel = viewModel()) {
 /** Header — node 1:1110. Hamburger / QIBLA / bell. */
 @Composable
 private fun QiblaHeader() {
-    Column(modifier = Modifier.fillMaxWidth().background(Color(0xCCFCF9F8))) {
+    Column(modifier = Modifier.fillMaxWidth().background(NiyyahColors.HeaderBackground)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -115,7 +115,7 @@ private fun QiblaHeader() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(Color(0x4DC5C6CE)),
+                .background(NiyyahColors.Hairline),
         )
     }
 }

@@ -93,7 +93,7 @@ fun ReflectionScreen(viewModel: ReflectionViewModel = viewModel()) {
 /** Header — node 1:1354. */
 @Composable
 private fun ReflectionHeader() {
-    Column(modifier = Modifier.fillMaxWidth().background(Color(0xCCFCF9F8))) {
+    Column(modifier = Modifier.fillMaxWidth().background(NiyyahColors.HeaderBackground)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -121,7 +121,7 @@ private fun ReflectionHeader() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(Color(0x4DC5C6CE)),
+                .background(NiyyahColors.Hairline),
         )
     }
 }
@@ -419,6 +419,9 @@ private fun ChartChip(label: String, selected: Boolean, onClick: () -> Unit) {
  */
 @Composable
 private fun JourneyChart(series: List<Int>, labels: List<String>, modifier: Modifier = Modifier) {
+    // Hoisted out of the (non-composable) DrawScope so the theme-aware tokens resolve.
+    val lineColor = NiyyahColors.Navy
+    val dotColor = NiyyahColors.TextPrimary
     Column(modifier = modifier) {
         Canvas(
             modifier = Modifier
@@ -439,14 +442,14 @@ private fun JourneyChart(series: List<Int>, labels: List<String>, modifier: Modi
             }
             drawPath(
                 path = path,
-                color = NiyyahColors.Navy,
+                color = lineColor,
                 style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round),
             )
             // Dots only when sparse enough to stay calm (weekly / short months).
             if (series.size <= 8) {
                 for (i in series.indices) {
                     drawCircle(
-                        color = NiyyahColors.TextPrimary,
+                        color = dotColor,
                         radius = 3.dp.toPx(),
                         center = pointAt(i),
                     )

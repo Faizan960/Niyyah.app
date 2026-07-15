@@ -68,7 +68,6 @@ private val DotInactive = Color(0xFFD9D9D9)
 private val GoldOutline = Color(0xFFD4A84F)
 private val GoldText = Color(0xFFB08A3C)
 private val LavenderCircle = Color(0xFFE8EAF6)
-private val CardBorder = Color(0x4DC5C6CE)
 
 @Composable
 fun OnboardingScreen(onDone: () -> Unit) {
@@ -732,7 +731,7 @@ private fun ModeCard(
             .background(NiyyahColors.Surface)
             .border(
                 width = if (selected) 1.5.dp else 1.dp,
-                color = if (selected) NiyyahColors.Navy else CardBorder,
+                color = if (selected) NiyyahColors.Navy else NiyyahColors.Hairline,
                 shape = RoundedCornerShape(20.dp),
             )
             .clickable(onClick = onClick)

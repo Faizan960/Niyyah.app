@@ -118,7 +118,7 @@ fun HadithScreen(
 /** Header — node 1:494. Same bar as Knowledge: hamburger / NIYYAH / bell. */
 @Composable
 private fun HadithHeader() {
-    Column(modifier = Modifier.fillMaxWidth().background(Color(0xCCFCF9F8))) {
+    Column(modifier = Modifier.fillMaxWidth().background(NiyyahColors.HeaderBackground)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -146,7 +146,7 @@ private fun HadithHeader() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(Color(0x4DC5C6CE)),
+                .background(NiyyahColors.Hairline),
         )
     }
 }
@@ -359,7 +359,7 @@ private fun DailyHadithSection(dailyHadith: HadithEntity?, onToggleBookmark: () 
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .background(Color(0x4DC5C6CE)),
+                        .background(NiyyahColors.Hairline),
                 )
                 Row(
                     modifier = Modifier

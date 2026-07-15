@@ -1,40 +1,42 @@
 package com.salahlock.app.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.CompositionLocalProvider
 
+// Material schemes are built from the raw palette instances (non-composable
+// context), mirroring the theme-aware NiyyahColors tokens so Material surfaces,
+// dialogs and menus follow the same light/dark values as the custom UI.
 private val LightColorScheme = lightColorScheme(
-    primary = NiyyahColors.Navy,
-    onPrimary = NiyyahColors.OnNavy,
-    secondary = NiyyahColors.Gold,
-    onSecondary = NiyyahColors.TextPrimary,
-    background = NiyyahColors.Background,
-    onBackground = NiyyahColors.TextPrimary,
-    surface = NiyyahColors.Surface,
-    onSurface = NiyyahColors.TextPrimary,
-    surfaceVariant = NiyyahColors.SurfaceElevated,
-    onSurfaceVariant = NiyyahColors.TextSecondary,
-    outline = NiyyahColors.Border,
+    primary = LightNiyyahColors.Navy,
+    onPrimary = LightNiyyahColors.OnNavy,
+    secondary = LightNiyyahColors.Gold,
+    onSecondary = LightNiyyahColors.TextPrimary,
+    background = LightNiyyahColors.Background,
+    onBackground = LightNiyyahColors.TextPrimary,
+    surface = LightNiyyahColors.Surface,
+    onSurface = LightNiyyahColors.TextPrimary,
+    surfaceVariant = LightNiyyahColors.SurfaceElevated,
+    onSurfaceVariant = LightNiyyahColors.TextSecondary,
+    outline = LightNiyyahColors.Border,
 )
 
 /** Dark palette from the Master Spec (CLAUDE.md § Color Palette → Dark Mode). */
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF18A67A),
-    onPrimary = Color(0xFFF5F5F5),
-    secondary = NiyyahColors.Gold,
-    onSecondary = Color(0xFF0B0F10),
-    background = Color(0xFF0B0F10),
-    onBackground = Color(0xFFF5F5F5),
-    surface = Color(0xFF151B1C),
-    onSurface = Color(0xFFF5F5F5),
-    surfaceVariant = Color(0xFF232E31),
-    onSurfaceVariant = Color(0xFFA7A7A7),
-    outline = Color(0xFF2A3335),
+    primary = DarkNiyyahColors.Green,
+    onPrimary = DarkNiyyahColors.TextPrimary,
+    secondary = DarkNiyyahColors.Gold,
+    onSecondary = DarkNiyyahColors.Background,
+    background = DarkNiyyahColors.Background,
+    onBackground = DarkNiyyahColors.TextPrimary,
+    surface = DarkNiyyahColors.Surface,
+    onSurface = DarkNiyyahColors.TextPrimary,
+    surfaceVariant = DarkNiyyahColors.SurfaceElevated,
+    onSurfaceVariant = DarkNiyyahColors.TextSecondary,
+    outline = DarkNiyyahColors.Border,
 )
 
 private val NiyyahMaterialTypography = Typography(
@@ -56,12 +58,12 @@ private val NiyyahMaterialTypography = Typography(
  */
 @Composable
 fun NiyyahTheme(darkTheme: Boolean = false, content: @Composable () -> Unit) {
-    // isSystemInDarkTheme() intentionally not the default: the BM-005 frames
-    // are light-only, so dark applies only when the user explicitly opts in.
-    isSystemInDarkTheme()
-    MaterialTheme(
-        colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
-        typography = NiyyahMaterialTypography,
-        content = content,
-    )
+    val palette = if (darkTheme) DarkNiyyahColors else LightNiyyahColors
+    CompositionLocalProvider(LocalNiyyahColors provides palette) {
+        MaterialTheme(
+            colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
+            typography = NiyyahMaterialTypography,
+            content = content,
+        )
+    }
 }

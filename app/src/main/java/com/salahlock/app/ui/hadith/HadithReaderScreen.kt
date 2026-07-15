@@ -47,7 +47,6 @@ import com.salahlock.app.ui.theme.NiyyahType
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 private val TextBody = Color(0xFF45474E)
-private val CardBorder = Color(0x4DC5C6CE)
 
 /**
  * Hadith reader — book, topic, or single-hadith mode over the paged
@@ -152,7 +151,7 @@ fun HadithReaderScreen(
                                 .fillMaxWidth()
                                 .height(120.dp)
                                 .background(NiyyahColors.Surface, NiyyahShapes.Chip)
-                                .border(1.dp, CardBorder, NiyyahShapes.Chip),
+                                .border(1.dp, NiyyahColors.Hairline, NiyyahShapes.Chip),
                             contentAlignment = Alignment.Center,
                         ) {
                             CircularProgressIndicator(
@@ -181,7 +180,7 @@ private fun HadithCard(hadith: HadithEntity, onToggleBookmark: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .background(NiyyahColors.Surface, NiyyahShapes.Card)
-            .border(1.dp, CardBorder, NiyyahShapes.Card)
+            .border(1.dp, NiyyahColors.Hairline, NiyyahShapes.Card)
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
