@@ -60,7 +60,6 @@ import java.util.Locale
  * group (Backup/Restore) and About row were added — required functionality
  * with the same row styling as the frame.
  */
-private val TextBody = Color(0xFF45474E)
 private val RowDivider = Color(0x33C5C6CE)
 private val ToggleOff = Color(0xFFE5E2E1)
 private val LogoutRed = Color(0xFFBA1A1A)
@@ -227,7 +226,7 @@ fun SettingsScreen(
                         Text(
                             text = if (uiState.hasLocationPermission) "While Using" else "Not allowed",
                             style = NiyyahType.Badge,
-                            color = TextBody,
+                            color = NiyyahColors.TextBody,
                         )
                     },
                 )
@@ -385,14 +384,14 @@ private fun SettingsHeader() {
             Icon(
                 painter = painterResource(R.drawable.ic_home_menu),
                 contentDescription = "Menu",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(18.dp).height(12.dp),
             )
             Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
             Icon(
                 painter = painterResource(R.drawable.ic_bell),
                 contentDescription = "Notifications",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(16.dp).height(20.dp),
             )
         }
@@ -412,7 +411,7 @@ private fun SettingsGroup(label: String, content: @Composable () -> Unit) {
         Text(
             text = label,
             style = NiyyahType.LabelUppercase,
-            color = TextBody,
+            color = NiyyahColors.TextBody,
             modifier = Modifier.padding(start = 16.dp),
         )
         Column(
@@ -459,7 +458,7 @@ private fun AccountRow(name: String, detail: String, photoUrl: String?, onClick:
                 style = NiyyahType.Body.copy(fontSize = 18.sp, lineHeight = 28.sp),
                 color = NiyyahColors.TextPrimary,
             )
-            Text(text = detail, style = NiyyahType.Body, color = TextBody)
+            Text(text = detail, style = NiyyahType.Body, color = NiyyahColors.TextBody)
         }
         Chevron()
     }
@@ -498,7 +497,7 @@ private fun SettingsRow(
                 Text(
                     text = subLabel,
                     style = NiyyahType.Badge,
-                    color = TextBody,
+                    color = NiyyahColors.TextBody,
                     modifier = Modifier.padding(top = 5.dp),
                 )
             }
@@ -512,7 +511,7 @@ private fun Chevron() {
     Icon(
         painter = painterResource(R.drawable.ic_chevron_right),
         contentDescription = null,
-        tint = TextBody,
+        tint = NiyyahColors.TextBody,
         modifier = Modifier.width(8.dp).height(12.dp),
     )
 }
@@ -522,7 +521,7 @@ private fun ExternalLink() {
     Icon(
         painter = painterResource(R.drawable.ic_external_link),
         contentDescription = null,
-        tint = TextBody,
+        tint = NiyyahColors.TextBody,
         modifier = Modifier.size(18.dp),
     )
 }
@@ -563,7 +562,7 @@ private fun InfoDialog(title: String, body: String, onDismiss: () -> Unit) {
                     style = NiyyahType.Quote.copy(lineHeight = 32.sp),
                     color = NiyyahColors.TextPrimary,
                 )
-                Text(text = body, style = NiyyahType.Body, color = TextBody)
+                Text(text = body, style = NiyyahType.Body, color = NiyyahColors.TextBody)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) {
                         Text("Close", style = NiyyahType.LabelUppercase, color = NiyyahColors.Navy)
@@ -618,7 +617,7 @@ private fun ChoiceDialog(
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", style = NiyyahType.LabelUppercase, color = TextBody)
+                        Text("Cancel", style = NiyyahType.LabelUppercase, color = NiyyahColors.TextBody)
                     }
                 }
             }
@@ -646,10 +645,10 @@ private fun ConfirmDialog(
                     style = NiyyahType.Quote.copy(lineHeight = 32.sp),
                     color = NiyyahColors.TextPrimary,
                 )
-                Text(text = body, style = NiyyahType.Body, color = TextBody)
+                Text(text = body, style = NiyyahType.Body, color = NiyyahColors.TextBody)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", style = NiyyahType.LabelUppercase, color = TextBody)
+                        Text("Cancel", style = NiyyahType.LabelUppercase, color = NiyyahColors.TextBody)
                     }
                     TextButton(onClick = onConfirm) {
                         Text(confirmLabel, style = NiyyahType.LabelUppercase, color = confirmColor)

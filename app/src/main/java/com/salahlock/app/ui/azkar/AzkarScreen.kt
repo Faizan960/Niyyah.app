@@ -39,7 +39,6 @@ import com.salahlock.app.ui.theme.NiyyahType
  * Tile labels map to real azkar.json categories: Prayer → "After Prayer",
  * Health → "Anxiety".
  */
-private val TextBody = Color(0xFF45474E)
 private val HeartGold = Color(0xFFEEC064)
 private val DividerColor = Color(0xFFE5E2E1)
 
@@ -92,14 +91,14 @@ private fun AzkarHeader() {
             Icon(
                 painter = painterResource(R.drawable.ic_home_menu),
                 contentDescription = "Menu",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(18.dp).height(12.dp),
             )
             Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
             Icon(
                 painter = painterResource(R.drawable.ic_bell),
                 contentDescription = "Notifications",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(16.dp).height(20.dp),
             )
         }
@@ -129,7 +128,7 @@ private fun TitleSection() {
         Text(
             text = "Find peace in remembrance. Daily supplications for every moment.",
             style = NiyyahType.Body.copy(fontSize = 18.sp, lineHeight = 28.sp),
-            color = TextBody,
+            color = NiyyahColors.TextBody,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 34.dp),
         )
@@ -168,7 +167,7 @@ private fun FavoritesSection(
             Text(
                 text = "See all",
                 style = NiyyahType.LabelUppercase,
-                color = TextBody,
+                color = NiyyahColors.TextBody,
                 modifier = Modifier.clickable(onClick = onSeeAll),
             )
         }
@@ -250,7 +249,7 @@ private fun FavoriteCard(
                 style = NiyyahType.Quote.copy(lineHeight = 32.sp),
                 color = NiyyahColors.TextPrimary,
             )
-            Text(text = subtitle, style = NiyyahType.Body, color = TextBody)
+            Text(text = subtitle, style = NiyyahType.Body, color = NiyyahColors.TextBody)
         }
         Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
             Box(
@@ -267,12 +266,12 @@ private fun FavoriteCard(
                 Text(
                     text = count,
                     style = NiyyahType.Badge.copy(letterSpacing = 0.6.sp),
-                    color = TextBody,
+                    color = NiyyahColors.TextBody,
                 )
                 Icon(
                     painter = painterResource(R.drawable.ic_arrow_right),
                     contentDescription = null,
-                    tint = TextBody,
+                    tint = NiyyahColors.TextBody,
                     modifier = Modifier.size(16.dp),
                 )
             }
@@ -362,7 +361,7 @@ private fun CategoryTile(
         Text(
             text = count,
             style = NiyyahType.Badge,
-            color = TextBody,
+            color = NiyyahColors.TextBody,
             textAlign = TextAlign.Center,
         )
     }

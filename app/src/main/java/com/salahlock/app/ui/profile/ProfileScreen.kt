@@ -59,7 +59,6 @@ import kotlinx.coroutines.launch
  * live from [ProfileViewModel] (prayer records, Quran progress, bookmarks,
  * collections, achievements, spiritual rank, monthly report).
  */
-private val TextBody = Color(0xFF45474E)
 private val CardRadius = RoundedCornerShape(12.dp)
 private val RingGold = Color(0xFFEEC064)
 private val MintFill = Color(0x338BF7CB)
@@ -137,14 +136,14 @@ private fun ProfileHeader(onOpenSettings: () -> Unit) {
             Icon(
                 painter = painterResource(R.drawable.ic_home_menu),
                 contentDescription = "Menu",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(18.dp).height(12.dp),
             )
             Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
             Icon(
                 painter = painterResource(R.drawable.ic_settings_outline),
                 contentDescription = "Settings",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.size(20.dp).clickable { onOpenSettings() },
             )
         }
@@ -212,7 +211,7 @@ private fun IdentitySection(uiState: ProfileUiState, onSignIn: () -> Unit) {
                     else -> "Tap your photo to sign in with Google"
                 },
                 style = NiyyahType.Body,
-                color = if (uiState.signInState == SignInState.ERROR) Color(0xFFE5484D) else TextBody,
+                color = if (uiState.signInState == SignInState.ERROR) Color(0xFFE5484D) else NiyyahColors.TextBody,
                 textAlign = TextAlign.Center,
             )
         }
@@ -295,7 +294,7 @@ private fun StatColumn(
         Text(
             text = label,
             style = NiyyahType.LabelUppercase.copy(letterSpacing = 1.4.sp),
-            color = TextBody,
+            color = NiyyahColors.TextBody,
         )
         Row(
             verticalAlignment = Alignment.Bottom,
@@ -309,7 +308,7 @@ private fun StatColumn(
             Text(
                 text = sideText,
                 style = NiyyahType.Body,
-                color = TextBody,
+                color = NiyyahColors.TextBody,
                 modifier = Modifier.padding(bottom = 4.dp),
             )
         }
@@ -383,10 +382,10 @@ private fun MilestonesSection(uiState: ProfileUiState, onOpenReflection: () -> U
                 Icon(
                     painter = painterResource(R.drawable.ic_plus_small),
                     contentDescription = null,
-                    tint = TextBody,
+                    tint = NiyyahColors.TextBody,
                     modifier = Modifier.size(14.dp),
                 )
-                Text(text = "Set new goal", style = NiyyahType.Badge, color = TextBody)
+                Text(text = "Set new goal", style = NiyyahType.Badge, color = NiyyahColors.TextBody)
             }
         }
     }
@@ -426,7 +425,7 @@ private fun MilestoneTile(
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp),
         )
-        Text(text = subtitle, style = NiyyahType.Badge, color = TextBody, textAlign = TextAlign.Center)
+        Text(text = subtitle, style = NiyyahType.Badge, color = NiyyahColors.TextBody, textAlign = TextAlign.Center)
     }
 }
 
@@ -461,7 +460,7 @@ private fun ReflectionPreviewCard(uiState: ProfileUiState, onOpenReflection: () 
                         "A gentle look back at your month of worship awaits."
                     }.let { if (it.length > 96) it.take(96).trimEnd() + "…" else it },
                     style = NiyyahType.Body,
-                    color = TextBody,
+                    color = NiyyahColors.TextBody,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
                 Column(modifier = Modifier.clickable { onOpenReflection() }) {
@@ -562,12 +561,12 @@ private fun QuickLinkRow(iconRes: Int, title: String, subtitle: String, onClick:
                 style = NiyyahType.LabelUppercase.copy(letterSpacing = 0.7.sp),
                 color = NiyyahColors.TextPrimary,
             )
-            Text(text = subtitle, style = NiyyahType.Badge, color = TextBody)
+            Text(text = subtitle, style = NiyyahType.Badge, color = NiyyahColors.TextBody)
         }
         Icon(
             painter = painterResource(R.drawable.ic_chevron_right),
             contentDescription = null,
-            tint = TextBody,
+            tint = NiyyahColors.TextBody,
             modifier = Modifier.width(8.dp).height(12.dp),
         )
     }

@@ -46,7 +46,6 @@ import com.salahlock.app.ui.theme.NiyyahShapes
 import com.salahlock.app.ui.theme.NiyyahType
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-private val TextBody = Color(0xFF45474E)
 
 /**
  * Hadith reader — book, topic, or single-hadith mode over the paged
@@ -192,7 +191,7 @@ private fun HadithCard(hadith: HadithEntity, onToggleBookmark: () -> Unit) {
             Text(
                 text = hadith.formattedReference.uppercase(),
                 style = NiyyahType.LabelUppercase,
-                color = TextBody,
+                color = NiyyahColors.TextBody,
             )
             Icon(
                 painter = painterResource(
@@ -222,7 +221,7 @@ private fun HadithCard(hadith: HadithEntity, onToggleBookmark: () -> Unit) {
         Text(
             text = hadith.translationText,
             style = NiyyahType.Body.copy(fontSize = 16.sp, lineHeight = 26.sp),
-            color = TextBody,
+            color = NiyyahColors.TextBody,
         )
         Row(
             modifier = Modifier

@@ -61,7 +61,6 @@ import com.salahlock.app.ui.theme.NiyyahType
  * Quran/Hadith/Knowledge/Azkar, search, type tabs, sort toggle, remove,
  * open, and long-press add-to-collection.
  */
-private val TextBody = Color(0xFF45474E)
 private val TextFaded = Color(0x9945474E)
 private val ChipText = Color(0xFF666666)
 private val SearchBorder = Color(0xFF6B7280)
@@ -164,7 +163,7 @@ private fun StateMessage(text: String) {
     Text(
         text = text,
         style = NiyyahType.Body,
-        color = TextBody,
+        color = NiyyahColors.TextBody,
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
     )
@@ -186,14 +185,14 @@ private fun BookmarksHeader() {
             Icon(
                 painter = painterResource(R.drawable.ic_home_menu),
                 contentDescription = "Menu",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(18.dp).height(12.dp),
             )
             Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
             Icon(
                 painter = painterResource(R.drawable.ic_bell),
                 contentDescription = "Notifications",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(16.dp).height(20.dp),
             )
         }
@@ -218,7 +217,7 @@ private fun TitleSection() {
         Text(
             text = "Your saved reflections, knowledge, and daily prayers.",
             style = NiyyahType.Body.copy(fontSize = 18.sp, lineHeight = 28.sp),
-            color = TextBody,
+            color = NiyyahColors.TextBody,
         )
     }
 }
@@ -425,7 +424,7 @@ private fun BookmarkCard(
                 color = NiyyahColors.TextPrimary,
             )
         }
-        Text(text = item.body, style = NiyyahType.Body, color = TextBody)
+        Text(text = item.body, style = NiyyahType.Body, color = NiyyahColors.TextBody)
         Icon(
             painter = painterResource(R.drawable.ic_bookmark_filled),
             contentDescription = "Remove bookmark",
@@ -463,12 +462,12 @@ private fun AddToCollectionDialog(
                     style = NiyyahType.Quote.copy(lineHeight = 32.sp),
                     color = NiyyahColors.TextPrimary,
                 )
-                Text(text = item.meta, style = NiyyahType.Badge, color = TextBody)
+                Text(text = item.meta, style = NiyyahType.Badge, color = NiyyahColors.TextBody)
                 if (collections.isEmpty()) {
                     Text(
                         text = "No collections yet — create your first below.",
                         style = NiyyahType.Body,
-                        color = TextBody,
+                        color = NiyyahColors.TextBody,
                     )
                 } else {
                     collections.forEach { collection ->
@@ -487,7 +486,7 @@ private fun AddToCollectionDialog(
                             Text(
                                 text = "${collection.itemCount} Items",
                                 style = NiyyahType.Badge,
-                                color = TextBody,
+                                color = NiyyahColors.TextBody,
                             )
                         }
                     }
@@ -505,7 +504,7 @@ private fun AddToCollectionDialog(
                     horizontalArrangement = Arrangement.End,
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", style = NiyyahType.LabelUppercase, color = TextBody)
+                        Text("Cancel", style = NiyyahType.LabelUppercase, color = NiyyahColors.TextBody)
                     }
                     TextButton(
                         onClick = { if (newName.isNotBlank()) onCreateAndAdd(newName) },

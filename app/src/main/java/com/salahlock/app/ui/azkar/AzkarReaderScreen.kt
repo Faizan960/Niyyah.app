@@ -41,7 +41,6 @@ import com.salahlock.app.ui.theme.NiyyahColors
 import com.salahlock.app.ui.theme.NiyyahShapes
 import com.salahlock.app.ui.theme.NiyyahType
 
-private val TextBody = Color(0xFF45474E)
 private val HeartGold = Color(0xFFEEC064)
 
 /**
@@ -132,7 +131,7 @@ private fun AzkarCard(
             Text(
                 text = azkar.reference.uppercase(),
                 style = NiyyahType.LabelUppercase.copy(fontSize = 11.sp),
-                color = TextBody,
+                color = NiyyahColors.TextBody,
             )
             Icon(
                 painter = painterResource(R.drawable.ic_heart_filled),
@@ -165,7 +164,7 @@ private fun AzkarCard(
         Text(
             text = azkar.translation,
             style = NiyyahType.Body,
-            color = TextBody,
+            color = NiyyahColors.TextBody,
         )
         // Counter
         Row(
@@ -176,7 +175,7 @@ private fun AzkarCard(
             Text(
                 text = if (done) "COMPLETED" else "${azkar.completedCount} OF ${azkar.targetCount}",
                 style = NiyyahType.Badge.copy(letterSpacing = 0.6.sp),
-                color = if (done) NiyyahColors.Green else TextBody,
+                color = if (done) NiyyahColors.Green else NiyyahColors.TextBody,
             )
             Box(
                 modifier = Modifier

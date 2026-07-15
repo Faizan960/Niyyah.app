@@ -56,7 +56,6 @@ import com.salahlock.app.ui.theme.NiyyahType
  * live per-module bookmark counts; Your Libraries lists real user
  * collections with create ("New"), rename/delete (long-press) and search.
  */
-private val TextBody = Color(0xFF45474E)
 private val CardRadius = RoundedCornerShape(8.dp)
 private val SearchBorder = Color(0xFF6B7280)
 
@@ -139,14 +138,14 @@ private fun CollectionsHeader() {
             Icon(
                 painter = painterResource(R.drawable.ic_home_menu),
                 contentDescription = "Menu",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(18.dp).height(12.dp),
             )
             Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
             Icon(
                 painter = painterResource(R.drawable.ic_bell),
                 contentDescription = "Notifications",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(16.dp).height(20.dp),
             )
         }
@@ -174,7 +173,7 @@ private fun PageHeader() {
         Text(
             text = "Your sanctuary of curated wisdom.",
             style = NiyyahType.Body,
-            color = TextBody,
+            color = NiyyahColors.TextBody,
         )
         Box(
             modifier = Modifier
@@ -246,7 +245,7 @@ private fun SavedCard(
             color = NiyyahColors.TextPrimary,
             modifier = Modifier.padding(bottom = 8.dp),
         )
-        Text(text = count, style = NiyyahType.Badge, color = TextBody)
+        Text(text = count, style = NiyyahType.Badge, color = NiyyahColors.TextBody)
     }
 }
 
@@ -340,14 +339,14 @@ private fun LibrariesSection(
                 hasNoCollections -> Text(
                     text = "No libraries yet.\nTap New to gather your first collection of wisdom.",
                     style = NiyyahType.Body,
-                    color = TextBody,
+                    color = NiyyahColors.TextBody,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
                 )
                 collections.isEmpty() -> Text(
                     text = "No collections match your search.",
                     style = NiyyahType.Body,
-                    color = TextBody,
+                    color = NiyyahColors.TextBody,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
                 )
@@ -407,7 +406,7 @@ private fun LibraryRow(
             Text(
                 text = category,
                 style = NiyyahType.Badge.copy(letterSpacing = 1.2.sp),
-                color = TextBody,
+                color = NiyyahColors.TextBody,
                 modifier = Modifier.padding(bottom = 8.dp),
             )
             Text(
@@ -416,7 +415,7 @@ private fun LibraryRow(
                 color = NiyyahColors.TextPrimary,
                 modifier = Modifier.padding(bottom = 8.dp),
             )
-            Text(text = count, style = NiyyahType.Badge, color = TextBody)
+            Text(text = count, style = NiyyahType.Badge, color = NiyyahColors.TextBody)
         }
     }
 }
@@ -452,7 +451,7 @@ internal fun NameDialog(
                 )
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", style = NiyyahType.LabelUppercase, color = TextBody)
+                        Text("Cancel", style = NiyyahType.LabelUppercase, color = NiyyahColors.TextBody)
                     }
                     TextButton(onClick = { if (name.isNotBlank()) onConfirm(name) }) {
                         Text(confirmLabel, style = NiyyahType.LabelUppercase, color = NiyyahColors.Navy)
@@ -499,7 +498,7 @@ private fun EditCollectionDialog(
                     }
                     Row {
                         TextButton(onClick = onDismiss) {
-                            Text("Cancel", style = NiyyahType.LabelUppercase, color = TextBody)
+                            Text("Cancel", style = NiyyahType.LabelUppercase, color = NiyyahColors.TextBody)
                         }
                         TextButton(onClick = { if (name.isNotBlank()) onRename(name) }) {
                             Text("Save", style = NiyyahType.LabelUppercase, color = NiyyahColors.Navy)

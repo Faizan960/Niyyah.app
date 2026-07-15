@@ -49,7 +49,6 @@ import java.util.Locale
  * qibla indicator) rotates with -azimuth, the needle stays fixed, matching
  * the frame's static pose at azimuth 0.
  */
-private val TextBody = Color(0xFF45474E)
 private val TickStone = Color(0xFFCEC0BB)
 
 @Composable
@@ -100,14 +99,14 @@ private fun QiblaHeader() {
             Icon(
                 painter = painterResource(R.drawable.ic_home_menu),
                 contentDescription = "Menu",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(18.dp).height(12.dp),
             )
             Text(text = "QIBLA", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
             Icon(
                 painter = painterResource(R.drawable.ic_bell),
                 contentDescription = "Notifications",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(16.dp).height(20.dp),
             )
         }
@@ -130,7 +129,7 @@ private fun LocationContext(uiState: QiblaUiState) {
         Text(
             text = "CURRENT LOCATION",
             style = NiyyahType.Badge.copy(letterSpacing = 1.2.sp),
-            color = TextBody,
+            color = NiyyahColors.TextBody,
         )
         Text(
             text = uiState.cityName.ifBlank { "Locating..." },
@@ -307,13 +306,13 @@ private fun MetadataCard(
         Icon(
             painter = painterResource(iconRes),
             contentDescription = null,
-            tint = TextBody,
+            tint = NiyyahColors.TextBody,
             modifier = Modifier.padding(bottom = 8.dp).size(18.dp),
         )
         Text(
             text = label,
             style = NiyyahType.Badge,
-            color = TextBody,
+            color = NiyyahColors.TextBody,
             modifier = Modifier.padding(bottom = 4.dp),
         )
         value()

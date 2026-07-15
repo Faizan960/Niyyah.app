@@ -21,6 +21,8 @@ data class NiyyahPalette(
     val SurfaceElevated: Color,
     val TextPrimary: Color,
     val TextSecondary: Color,
+    /** Body / secondary label text — slightly stronger than [TextSecondary]. */
+    val TextBody: Color,
     val Border: Color,
     val Navy: Color,
     val Gold: Color,
@@ -46,6 +48,7 @@ val LightNiyyahColors = NiyyahPalette(
     SurfaceElevated = Color(0xFFFCFBF9),
     TextPrimary = Color(0xFF071836),
     TextSecondary = Color(0xFF75777E),
+    TextBody = Color(0xFF45474E),
     Border = Color(0xFFE7E2DA),
     Navy = Color(0xFF1E2D4C),
     Gold = Color(0xFFD4A84F),
@@ -74,6 +77,7 @@ val DarkNiyyahColors = NiyyahPalette(
     SurfaceElevated = Color(0xFF232E31),
     TextPrimary = Color(0xFFF5F5F5),
     TextSecondary = Color(0xFFA7A7A7),
+    TextBody = Color(0xFFB9BABF),
     Border = Color(0xFF2A3335),
     Navy = Color(0xFF1E2D4C),
     Gold = Color(0xFFD4A84F),
@@ -107,6 +111,7 @@ object NiyyahColors {
     val SurfaceElevated: Color @Composable @ReadOnlyComposable get() = LocalNiyyahColors.current.SurfaceElevated
     val TextPrimary: Color @Composable @ReadOnlyComposable get() = LocalNiyyahColors.current.TextPrimary
     val TextSecondary: Color @Composable @ReadOnlyComposable get() = LocalNiyyahColors.current.TextSecondary
+    val TextBody: Color @Composable @ReadOnlyComposable get() = LocalNiyyahColors.current.TextBody
     val Border: Color @Composable @ReadOnlyComposable get() = LocalNiyyahColors.current.Border
     val Navy: Color @Composable @ReadOnlyComposable get() = LocalNiyyahColors.current.Navy
     val Gold: Color @Composable @ReadOnlyComposable get() = LocalNiyyahColors.current.Gold

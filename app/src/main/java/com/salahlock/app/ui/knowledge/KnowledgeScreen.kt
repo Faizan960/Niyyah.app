@@ -45,7 +45,6 @@ import com.salahlock.app.ui.theme.NiyyahType
  * search runs over the hadith library, category chips open curated topic
  * collections, and the Continue Reading rail resumes real books in progress.
  */
-private val TextBody = Color(0xFF45474E)
 private val ChipBorder = Color(0xFFC5C6CE)
 private val ProgressGold = Color(0xFFEEC064)
 
@@ -108,14 +107,14 @@ private fun KnowledgeHeader() {
             Icon(
                 painter = painterResource(R.drawable.ic_home_menu),
                 contentDescription = "Menu",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(18.dp).height(12.dp),
             )
             Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
             Icon(
                 painter = painterResource(R.drawable.ic_bell),
                 contentDescription = "Notifications",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(16.dp).height(20.dp),
             )
         }
@@ -224,7 +223,7 @@ private fun SearchAndFilterSection(
                             Text(
                                 text = result.bookTitle,
                                 style = NiyyahType.LabelUppercase.copy(fontSize = 11.sp),
-                                color = TextBody,
+                                color = NiyyahColors.TextBody,
                             )
                             Text(
                                 text = result.matchHighlight,
@@ -251,7 +250,7 @@ private fun TopicChip(label: String, selected: Boolean, onClick: () -> Unit) {
         Text(
             text = label,
             style = NiyyahType.Body,
-            color = if (selected) Color.White else TextBody,
+            color = if (selected) Color.White else NiyyahColors.TextBody,
             textAlign = TextAlign.Center,
         )
     }
@@ -301,7 +300,7 @@ private fun FeaturedCollectionCard(onExplore: () -> Unit) {
             Text(
                 text = "Explore foundational texts that shaped intellectual discourse during the classical period, featuring works from Andalusia to Baghdad.",
                 style = NiyyahType.Body,
-                color = TextBody,
+                color = NiyyahColors.TextBody,
                 modifier = Modifier.padding(bottom = 32.dp),
             )
             Box(
@@ -345,7 +344,7 @@ private fun ContinueReadingSection(
             Text(
                 text = "Open a book from the Hadith library to begin your reading journey.",
                 style = NiyyahType.Body,
-                color = TextBody,
+                color = NiyyahColors.TextBody,
                 modifier = Modifier.padding(horizontal = 24.dp),
             )
         } else {
@@ -400,7 +399,7 @@ private fun BookCard(coverRes: Int, title: String, author: String, progress: Flo
                     style = NiyyahType.Body.copy(lineHeight = 22.sp),
                     color = NiyyahColors.TextPrimary,
                 )
-                Text(text = author, style = NiyyahType.Body, color = TextBody)
+                Text(text = author, style = NiyyahType.Body, color = NiyyahColors.TextBody)
             }
             Box(
                 modifier = Modifier

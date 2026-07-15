@@ -83,7 +83,6 @@ class CollectionDetailViewModel(
     }
 }
 
-private val TextBody = Color(0xFF45474E)
 private val TextFaded = Color(0x9945474E)
 private val ChipText = Color(0xFF666666)
 
@@ -146,7 +145,7 @@ private fun StateText(text: String) {
     Text(
         text = text,
         style = NiyyahType.Body,
-        color = TextBody,
+        color = NiyyahColors.TextBody,
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
     )
@@ -168,7 +167,7 @@ private fun DetailHeader(title: String, onBack: () -> Unit) {
             Icon(
                 painter = painterResource(R.drawable.ic_chevron_right),
                 contentDescription = "Back",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier
                     .clickable { onBack() }
                     .size(16.dp)
@@ -246,7 +245,7 @@ private fun CollectionItemCard(item: BookmarkItem, onOpen: () -> Unit, onRemove:
                 color = NiyyahColors.TextPrimary,
             )
         }
-        Text(text = item.body, style = NiyyahType.Body, color = TextBody)
+        Text(text = item.body, style = NiyyahType.Body, color = NiyyahColors.TextBody)
         Icon(
             painter = painterResource(R.drawable.ic_bookmark_filled),
             contentDescription = "Remove from collection",

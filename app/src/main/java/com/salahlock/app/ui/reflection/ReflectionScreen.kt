@@ -55,7 +55,6 @@ import com.salahlock.app.ui.theme.NiyyahType
  * achievements, and a Journey Flow chart drawn from real daily/weekly
  * completion. Export Report writes a PNG via the existing exporter.
  */
-private val TextBody = Color(0xFF45474E)
 private val CardRadius = RoundedCornerShape(12.dp)
 private val RingTrack = Color(0xFFE5E2E1)
 private val RingGold = Color(0xFFEEC064)
@@ -106,14 +105,14 @@ private fun ReflectionHeader() {
             Icon(
                 painter = painterResource(R.drawable.ic_home_menu),
                 contentDescription = "Menu",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(18.dp).height(12.dp),
             )
             Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
             Icon(
                 painter = painterResource(R.drawable.ic_bell),
                 contentDescription = "Notifications",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(16.dp).height(20.dp),
             )
         }
@@ -143,7 +142,7 @@ private fun IntroSection() {
         Text(
             text = "A moment to pause, review your spiritual journey, and set intentions for the days ahead. Your progress is a beautiful testament to your dedication.",
             style = NiyyahType.Body.copy(fontSize = 18.sp, lineHeight = 28.sp),
-            color = TextBody,
+            color = NiyyahColors.TextBody,
             textAlign = TextAlign.Center,
         )
     }
@@ -167,7 +166,7 @@ private fun RankAndProgress(uiState: ReflectionUiState) {
             Text(
                 text = "SPIRITUAL RANK",
                 style = NiyyahType.LabelUppercase.copy(letterSpacing = 1.4.sp),
-                color = TextBody,
+                color = NiyyahColors.TextBody,
             )
             Column(
                 modifier = Modifier.padding(top = 16.dp),
@@ -215,7 +214,7 @@ private fun RankAndProgress(uiState: ReflectionUiState) {
                         Text(
                             text = "${achievement.emoji} ${achievement.title}",
                             style = NiyyahType.Badge,
-                            color = TextBody,
+                            color = NiyyahColors.TextBody,
                         )
                     }
                 }
@@ -270,12 +269,12 @@ private fun StatCard(
             Text(
                 text = label,
                 style = NiyyahType.LabelUppercase.copy(letterSpacing = 1.4.sp),
-                color = TextBody,
+                color = NiyyahColors.TextBody,
             )
             Icon(
                 painter = painterResource(iconRes),
                 contentDescription = null,
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.size(20.dp),
             )
         }
@@ -319,7 +318,7 @@ private fun StatCard(
                     style = NiyyahType.Body,
                     color = Color(0xFF1C1B1B),
                 )
-                Text(text = statSub, style = NiyyahType.Badge, color = TextBody)
+                Text(text = statSub, style = NiyyahType.Badge, color = NiyyahColors.TextBody)
             }
         }
     }
@@ -384,7 +383,7 @@ private fun JourneyFlowCard(daily: List<Int>, weekly: List<Int>) {
         Text(
             text = "\"Small, consistent deeds are most beloved.\"",
             style = NiyyahType.Body.copy(fontStyle = FontStyle.Italic),
-            color = TextBody,
+            color = NiyyahColors.TextBody,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         )
@@ -503,7 +502,7 @@ private fun VerseAndExport(report: MonthlyReport?, onExport: () -> Unit) {
             Text(
                 text = reference.uppercase(),
                 style = NiyyahType.Badge.copy(letterSpacing = 1.2.sp),
-                color = TextBody,
+                color = NiyyahColors.TextBody,
                 textAlign = TextAlign.Center,
             )
         }

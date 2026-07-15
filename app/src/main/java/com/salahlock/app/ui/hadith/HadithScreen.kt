@@ -54,7 +54,6 @@ import com.salahlock.app.ui.theme.NiyyahType
  * sample while syncing). "The Six Books" list mirrors the frame; only
  * Bukhari + Muslim exist in the local DB today.
  */
-private val TextBody = Color(0xFF45474E)
 private val TextMutedLocal = Color(0xFFC5C6CE)
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -131,14 +130,14 @@ private fun HadithHeader() {
             Icon(
                 painter = painterResource(R.drawable.ic_home_menu),
                 contentDescription = "Menu",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(18.dp).height(12.dp),
             )
             Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
             Icon(
                 painter = painterResource(R.drawable.ic_bell),
                 contentDescription = "Notifications",
-                tint = TextBody,
+                tint = NiyyahColors.TextBody,
                 modifier = Modifier.width(16.dp).height(20.dp),
             )
         }
@@ -230,7 +229,7 @@ private fun SearchResults(
                     Text(
                         text = "${result.hadith.formattedReference.uppercase()} · ${result.bookTitle}",
                         style = NiyyahType.LabelUppercase.copy(fontSize = 11.sp),
-                        color = TextBody,
+                        color = NiyyahColors.TextBody,
                     )
                     Text(
                         text = result.matchHighlight,
@@ -271,7 +270,7 @@ private fun ContinueReadingSection(recent: HadithEntity, onOpen: (HadithEntity) 
                 Text(
                     text = "Book ${recent.bookNumber} · Hadith ${recent.globalNumber}",
                     style = NiyyahType.Body,
-                    color = TextBody,
+                    color = NiyyahColors.TextBody,
                 )
             }
             Icon(
@@ -322,7 +321,7 @@ private fun DailyHadithSection(dailyHadith: HadithEntity?, onToggleBookmark: () 
                 Text(
                     text = reference,
                     style = NiyyahType.LabelUppercase,
-                    color = TextBody,
+                    color = NiyyahColors.TextBody,
                 )
                 Icon(
                     painter = painterResource(
@@ -352,7 +351,7 @@ private fun DailyHadithSection(dailyHadith: HadithEntity?, onToggleBookmark: () 
             Text(
                 text = translation,
                 style = NiyyahType.Body.copy(fontSize = 18.sp, lineHeight = 28.sp),
-                color = TextBody,
+                color = NiyyahColors.TextBody,
             )
             Column(modifier = Modifier.fillMaxWidth()) {
                 Box(
@@ -472,7 +471,7 @@ private fun SixBooksSection(
                         Text(
                             text = "$countText • ${book.author}",
                             style = NiyyahType.Body,
-                            color = TextBody,
+                            color = NiyyahColors.TextBody,
                         )
                     }
                     Icon(
