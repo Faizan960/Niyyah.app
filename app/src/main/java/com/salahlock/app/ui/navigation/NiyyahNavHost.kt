@@ -36,7 +36,11 @@ object NiyyahRoutes {
     fun azkarReader(category: String) = "azkar_reader/${android.net.Uri.encode(category)}"
     const val QIBLA = "qibla"
     const val COLLECTIONS = "collections"
-    const val BOOKMARKS = "bookmarks"
+    const val COLLECTION_DETAIL = "collection/{collectionId}"
+    fun collectionDetail(collectionId: Long) = "collection/$collectionId"
+    const val BOOKMARKS = "bookmarks?filter={filter}"
+    fun bookmarks(filter: String? = null) =
+        if (filter == null) "bookmarks" else "bookmarks?filter=$filter"
     const val MONTHLY_REFLECTION = "monthly_reflection"
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
@@ -92,7 +96,7 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
         }
         composable(NiyyahRoutes.QURAN) {
             com.salahlock.app.ui.quran.QuranScreen(
-                onOpenBookmarks = { navController.navigate(NiyyahRoutes.BOOKMARKS) },
+                onOpenBookmarks = { navController.navigate(NiyyahRoutes.bookmarks("QURAN")) },
                 onOpenCollections = { navController.navigate(NiyyahRoutes.COLLECTIONS) },
                 onOpenSurahList = { navController.navigate(NiyyahRoutes.QURAN_SURAHS) },
                 onOpenReader = { surah, ayah -> navController.navigate(NiyyahRoutes.quranReader(surah, ayah)) },
@@ -182,7 +186,7 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
         composable(NiyyahRoutes.AZKAR) {
             com.salahlock.app.ui.azkar.AzkarScreen(
                 onOpenCategory = { category -> navController.navigate(NiyyahRoutes.azkarReader(category)) },
-                onOpenFavorites = { navController.navigate(NiyyahRoutes.BOOKMARKS) },
+                onOpenFavorites = { navController.navigate(NiyyahRoutes.bookmarks("AZKAR")) },
             )
         }
         composable(
@@ -197,13 +201,54 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
             )
         }
         composable(NiyyahRoutes.QIBLA) { com.salahlock.app.ui.qibla.QiblaScreen() }
-        composable(NiyyahRoutes.COLLECTIONS) { com.salahlock.app.ui.collections.CollectionsScreen() }
-        composable(NiyyahRoutes.BOOKMARKS) { com.salahlock.app.ui.bookmarks.BookmarksScreen() }
+        composable(NiyyahRoutes.COLLECTIONS) {
+            com.salahlock.app.ui.collections.CollectionsScreen(
+                onOpenBookmarks = { filter ->
+                    navController.navigate(NiyyahRoutes.bookmarks(filter?.name))
+                },
+                onOpenCollection = { id ->
+                    navController.navigate(NiyyahRoutes.collectionDetail(id))
+                },
+            )
+        }
+        composable(
+            route = NiyyahRoutes.COLLECTION_DETAIL,
+            arguments = listOf(
+                androidx.navigation.navArgument("collectionId") { type = androidx.navigation.NavType.LongType },
+            ),
+        ) { entry ->
+            com.salahlock.app.ui.collections.CollectionDetailScreen(
+                collectionId = entry.arguments?.getLong("collectionId") ?: 0L,
+                onBack = { navController.popBackStack() },
+                onOpenQuran = { surah, ayah -> navController.navigate(NiyyahRoutes.quranReader(surah, ayah)) },
+                onOpenHadith = { id -> navController.navigate(NiyyahRoutes.hadithSingleReader(id)) },
+                onOpenAzkar = { category -> navController.navigate(NiyyahRoutes.azkarReader(category)) },
+            )
+        }
+        composable(
+            route = NiyyahRoutes.BOOKMARKS,
+            arguments = listOf(
+                androidx.navigation.navArgument("filter") {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { entry ->
+            com.salahlock.app.ui.bookmarks.BookmarksScreen(
+                initialFilter = com.salahlock.app.data.model.BookmarkType.fromName(
+                    entry.arguments?.getString("filter"),
+                ),
+                onOpenQuran = { surah, ayah -> navController.navigate(NiyyahRoutes.quranReader(surah, ayah)) },
+                onOpenHadith = { id -> navController.navigate(NiyyahRoutes.hadithSingleReader(id)) },
+                onOpenAzkar = { category -> navController.navigate(NiyyahRoutes.azkarReader(category)) },
+            )
+        }
         composable(NiyyahRoutes.MONTHLY_REFLECTION) { com.salahlock.app.ui.reflection.ReflectionScreen() }
         composable(NiyyahRoutes.PROFILE) {
             com.salahlock.app.ui.profile.ProfileScreen(
                 onOpenCollections = { navController.navigate(NiyyahRoutes.COLLECTIONS) },
-                onOpenBookmarks = { navController.navigate(NiyyahRoutes.BOOKMARKS) },
+                onOpenBookmarks = { navController.navigate(NiyyahRoutes.bookmarks()) },
                 onOpenSettings = { navController.navigate(NiyyahRoutes.SETTINGS) },
             )
         }
