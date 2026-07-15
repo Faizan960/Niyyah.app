@@ -56,6 +56,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val app = application as SalahLockApplication
     private val prefs = app.userPreferences
     private val identity = app.userIdentity
+    private val authClient = com.salahlock.app.auth.GoogleAuthClient(app)
 
     private val transient = MutableStateFlow(SettingsUiState())
 
@@ -142,7 +143,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     // ── Account ───────────────────────────────────────────────────────────────
 
     fun logOut() {
+        // Clear the local identity immediately so the UI flips to signed-out
+        // without waiting on the Credential Manager round-trip…
         identity.clearIdentity()
         transient.update { it.copy(operationMessage = "Signed out. Your data stays on this device.") }
+        // …then revoke the Credential Manager selection so the next sign-in shows
+        // the account picker instead of silently restoring the same account.
+        viewModelScope.launch { authClient.signOut() }
     }
 }

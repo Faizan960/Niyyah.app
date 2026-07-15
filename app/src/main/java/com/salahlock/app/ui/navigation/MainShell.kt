@@ -1,10 +1,13 @@
 package com.salahlock.app.ui.navigation
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,19 +40,31 @@ fun MainShell(navController: NavHostController) {
     val pagerState = rememberPagerState(pageCount = { TAB_PAGES })
     val scope = rememberCoroutineScope()
 
+    // Ease-out settle instead of the default bouncy spring (spec: "animations
+    // should disappear, not bounce", ≤400ms). A 0.3 positional threshold means a
+    // short drag springs back instead of accidentally flipping the page.
+    val settleSpec = tween<Float>(durationMillis = 320, easing = FastOutSlowInEasing)
+    val fling = PagerDefaults.flingBehavior(
+        state = pagerState,
+        snapAnimationSpec = settleSpec,
+        snapPositionalThreshold = 0.3f,
+    )
+
     Box(modifier = Modifier.fillMaxSize()) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
             beyondViewportPageCount = 1,
+            flingBehavior = fling,
             key = { it },
         ) { page ->
             when (page) {
                 0 -> HomeScreen(
-                    onOpenProfile = { navController.navigate(NiyyahRoutes.PROFILE) },
+                    onOpenProfile = { navController.navigateReorder(NiyyahRoutes.PROFILE) },
+                    onOpenQibla = { navController.navigate(NiyyahRoutes.QIBLA) },
                 )
                 1 -> PrayerScreen(
-                    onOpenSettings = { navController.navigate(NiyyahRoutes.SETTINGS) },
+                    onOpenSettings = { navController.navigateReorder(NiyyahRoutes.SETTINGS) },
                 )
                 2 -> QuranScreen(
                     onOpenBookmarks = { navController.navigate(NiyyahRoutes.bookmarks("QURAN")) },
@@ -72,7 +87,9 @@ fun MainShell(navController: NavHostController) {
 
         NiyyahBottomNav(
             pageOffset = pagerState.currentPage + pagerState.currentPageOffsetFraction,
-            onTabSelected = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
+            onTabSelected = { index ->
+                scope.launch { pagerState.animateScrollToPage(index, animationSpec = settleSpec) }
+            },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()

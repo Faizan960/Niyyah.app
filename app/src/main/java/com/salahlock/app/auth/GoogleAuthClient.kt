@@ -1,6 +1,7 @@
 package com.salahlock.app.auth
 
 import android.content.Context
+import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CredentialOption
 import androidx.credentials.CustomCredential
@@ -59,6 +60,18 @@ class GoogleAuthClient(private val context: Context) {
             .setAutoSelectEnabled(true)
             .build()
         return request(option)
+    }
+
+    /**
+     * Clears the Credential Manager's cached selection so the next sign-in shows
+     * the account picker again (instead of silently re-selecting the account the
+     * user just logged out of). Failures are swallowed — the local identity has
+     * already been cleared by the caller, so logout must never be blocked by this.
+     */
+    suspend fun signOut() {
+        runCatching {
+            credentialManager.clearCredentialState(ClearCredentialStateRequest())
+        }
     }
 
     private suspend fun request(option: CredentialOption): GoogleAuthResult {

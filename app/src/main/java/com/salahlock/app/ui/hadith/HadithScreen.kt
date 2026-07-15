@@ -63,6 +63,7 @@ fun HadithScreen(
     onOpenTopic: (topic: String) -> Unit = {},
     onOpenHadith: (hadithId: String) -> Unit = {},
     onOpenBook: (collection: String, bookNumber: String) -> Unit = { _, _ -> },
+    onOpenAzkar: () -> Unit = {},
     viewModel: KnowledgeViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -108,6 +109,7 @@ fun HadithScreen(
                     counts = uiState.collectionCounts,
                     onOpenCollection = onOpenCollection,
                 )
+                AzkarSection(onOpenAzkar = onOpenAzkar)
                 ThemesSection(onOpenTopic = onOpenTopic)
             }
         }
@@ -127,12 +129,9 @@ private fun HadithHeader() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_home_menu),
-                contentDescription = "Menu",
-                tint = NiyyahColors.TextBody,
-                modifier = Modifier.width(18.dp).height(12.dp),
-            )
+            // Balances the trailing icon so the wordmark stays centred (BM-009.2:
+            // the non-functional hamburger was removed).
+            Box(modifier = Modifier.width(16.dp))
             Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
             Icon(
                 painter = painterResource(R.drawable.ic_bell),
@@ -482,6 +481,50 @@ private fun SixBooksSection(
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * Azkar & Remembrance — entry point to the Azkar library. The Azkar screen is a
+ * dedicated destination; this card is its reachable link from the Hadith surface.
+ */
+@Composable
+private fun AzkarSection(onOpenAzkar: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        Text(
+            text = "Azkar & Remembrance",
+            style = NiyyahType.Quote.copy(lineHeight = 32.sp),
+            color = NiyyahColors.TextPrimary,
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(NiyyahColors.Surface, NiyyahShapes.Chip)
+                .border(1.dp, NiyyahColors.Border, NiyyahShapes.Chip)
+                .clickable { onOpenAzkar() }
+                .padding(17.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Daily Adhkar",
+                    style = NiyyahType.Quote.copy(lineHeight = 32.sp),
+                    color = NiyyahColors.TextPrimary,
+                )
+                Text(
+                    text = "Morning, evening, prayer & sleep",
+                    style = NiyyahType.Body,
+                    color = NiyyahColors.TextBody,
+                )
+            }
+            Icon(
+                painter = painterResource(R.drawable.ic_arrow_right),
+                contentDescription = null,
+                tint = TextMutedLocal,
+                modifier = Modifier.size(16.dp),
+            )
         }
     }
 }

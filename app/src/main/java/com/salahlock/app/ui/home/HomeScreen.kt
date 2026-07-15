@@ -60,6 +60,7 @@ import java.util.Locale
 fun HomeScreen(
     viewModel: HomeViewModel = viewModel(),
     onOpenProfile: () -> Unit = {},
+    onOpenQibla: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -77,7 +78,7 @@ fun HomeScreen(
         ) {
             GreetingSection()
             IntentionCard(uiState.dailyIntention)
-            PrayerHeroCard(uiState)
+            PrayerHeroCard(uiState, onOpenQibla = onOpenQibla)
             PrayerTimeline(uiState)
         }
     }
@@ -182,7 +183,7 @@ private fun IntentionCard(intention: String) {
 
 /** Prayer hero — node 1:46. 400dp navy card, mosque image, bottom gradient. */
 @Composable
-private fun PrayerHeroCard(uiState: HomeUiState) {
+private fun PrayerHeroCard(uiState: HomeUiState, onOpenQibla: () -> Unit = {}) {
     val next = uiState.nextPrayer
     val timeFormatter = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)
     val countdown = next?.let {
@@ -297,7 +298,9 @@ private fun PrayerHeroCard(uiState: HomeUiState) {
                 }
                 Row(
                     modifier = Modifier
+                        .clip(NiyyahShapes.Pill)
                         .background(NiyyahColors.Surface, NiyyahShapes.Pill)
+                        .clickable { onOpenQibla() }
                         .padding(horizontal = 24.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),

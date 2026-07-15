@@ -6,6 +6,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 
+/**
+ * Navigate to [route] without ever stacking a second copy of it. If [route] is
+ * already on the back stack it is reused (popped back to) instead of pushed
+ * again. This is what breaks the Settings⇄Profile loop: bouncing between the two
+ * screens now oscillates the stack instead of growing it without bound.
+ */
+internal fun NavHostController.navigateReorder(route: String) = navigate(route) {
+    popUpTo(route) { inclusive = false }
+    launchSingleTop = true
+}
+
 /** Route constants for every Figma screen (BM-005 build order). */
 object NiyyahRoutes {
     const val SPLASH = "splash"
@@ -14,7 +25,6 @@ object NiyyahRoutes {
     const val MAIN = "main"
     const val HOME = "home"
     const val PRAYER = "prayer"
-    const val SALAH_LOCK = "salah_lock"
     const val QURAN = "quran"
     const val QURAN_SURAHS = "quran_surahs"
     const val QURAN_READER = "quran_reader/{surahNumber}?ayah={ayah}"
@@ -71,11 +81,8 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
         // Tab shell — Home / Prayer / Quran / Knowledge live inside the pager (MainShell),
         // not as separate NavHost destinations, so swipe keeps them all mounted.
         composable(NiyyahRoutes.MAIN) { MainShell(navController = navController) }
-        composable(NiyyahRoutes.SALAH_LOCK) {
-            com.salahlock.app.ui.lock.SalahLockScreen(
-                viewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
-            )
-        }
+        // Note: the Salah-lock countdown is shown by LockOverlayActivity, not as a
+        // NavHost destination — so there is deliberately no `composable` for it.
         composable(NiyyahRoutes.QURAN_SURAHS) {
             com.salahlock.app.ui.quran.QuranSurahListScreen(
                 onBack = { navController.popBackStack() },
@@ -108,6 +115,7 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
                 onOpenBook = { collection, book ->
                     navController.navigate(NiyyahRoutes.hadithBookReader(collection, book))
                 },
+                onOpenAzkar = { navController.navigate(NiyyahRoutes.AZKAR) },
             )
         }
         composable(
@@ -213,13 +221,13 @@ fun NiyyahNavHost(navController: NavHostController, modifier: Modifier = Modifie
             com.salahlock.app.ui.profile.ProfileScreen(
                 onOpenCollections = { navController.navigate(NiyyahRoutes.COLLECTIONS) },
                 onOpenBookmarks = { navController.navigate(NiyyahRoutes.bookmarks()) },
-                onOpenSettings = { navController.navigate(NiyyahRoutes.SETTINGS) },
+                onOpenSettings = { navController.navigateReorder(NiyyahRoutes.SETTINGS) },
                 onOpenReflection = { navController.navigate(NiyyahRoutes.MONTHLY_REFLECTION) },
             )
         }
         composable(NiyyahRoutes.SETTINGS) {
             com.salahlock.app.ui.settings.SettingsScreen(
-                onOpenProfile = { navController.navigate(NiyyahRoutes.PROFILE) },
+                onOpenProfile = { navController.navigateReorder(NiyyahRoutes.PROFILE) },
             )
         }
     }

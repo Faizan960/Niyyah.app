@@ -89,12 +89,9 @@ private fun PrayerHeader(photoUrl: String?) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_home_menu),
-                contentDescription = "Menu",
-                tint = NiyyahColors.TextPrimary,
-                modifier = Modifier.padding(8.dp).width(18.dp).height(12.dp),
-            )
+            // Balances the trailing avatar so the wordmark stays centred (BM-009.2:
+            // the non-functional hamburger was removed).
+            Box(modifier = Modifier.size(32.dp))
             Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
             Box(modifier = Modifier.size(32.dp).clip(CircleShape)) {
                 ProfileAvatar(

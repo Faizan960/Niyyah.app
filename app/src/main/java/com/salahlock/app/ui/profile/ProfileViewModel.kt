@@ -328,11 +328,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         _extraState.update { it.copy(signInState = SignInState.IDLE, signInError = null) }
     }
 
-    fun signOut() {
-        identity.clearIdentity()
-        _extraState.update { it.copy(signInState = SignInState.IDLE) }
-    }
-
     private fun observeIdentity() {
         viewModelScope.launch {
             combine(
