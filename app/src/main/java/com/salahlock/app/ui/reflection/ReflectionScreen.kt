@@ -3,7 +3,6 @@ package com.salahlock.app.ui.reflection
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +25,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -35,7 +36,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -50,10 +50,10 @@ import com.salahlock.app.ui.theme.NiyyahType
 /**
  * Monthly Reflection — Figma frame 1:1320 (light).
  *
- * Wired to the existing [ReflectionViewModel]: rank, prayer consistency and
- * motivation quote are live; Quran progress and the Journey Flow chart mirror
- * the frame (no reading tracker / weekly series yet). Export Report writes a
- * PNG via the existing exporter.
+ * BM-006.8: fully live from [ReflectionViewModel] — rank, prayer consistency
+ * (with in-month streak), Quran progress from quran_progress, newly earned
+ * achievements, and a Journey Flow chart drawn from real daily/weekly
+ * completion. Export Report writes a PNG via the existing exporter.
  */
 private val TextBody = Color(0xFF45474E)
 private val CardRadius = RoundedCornerShape(12.dp)
@@ -80,8 +80,8 @@ fun ReflectionScreen(viewModel: ReflectionViewModel = viewModel()) {
             verticalArrangement = Arrangement.spacedBy(40.dp),
         ) {
             IntroSection()
-            RankAndProgress(uiState.report)
-            JourneyFlowCard()
+            RankAndProgress(uiState)
+            JourneyFlowCard(daily = uiState.dailySeries, weekly = uiState.weeklySeries)
             VerseAndExport(
                 report = uiState.report,
                 onExport = { exportLauncher.launch("niyyah-reflection.png") },
@@ -149,9 +149,10 @@ private fun IntroSection() {
     }
 }
 
-/** Rank card + consistency stats — node 1:1368. */
+/** Rank card + consistency stats — node 1:1368. All values live. */
 @Composable
-private fun RankAndProgress(report: MonthlyReport?) {
+private fun RankAndProgress(uiState: ReflectionUiState) {
+    val report = uiState.report
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         // Rank card — node 1:1369.
         Column(
@@ -203,24 +204,42 @@ private fun RankAndProgress(report: MonthlyReport?) {
                     }
                 }
             }
+            // Achievements newly earned this month (real data; empty = hidden).
+            if (!report?.newAchievements.isNullOrEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    report!!.newAchievements.forEach { achievement ->
+                        Text(
+                            text = "${achievement.emoji} ${achievement.title}",
+                            style = NiyyahType.Badge,
+                            color = TextBody,
+                        )
+                    }
+                }
+            }
         }
-        // Prayer consistency — node 1:1382 (live).
+        // Prayer consistency — node 1:1382 (live, with real in-month streak).
         StatCard(
             label = "PRAYER CONSISTENCY",
             iconRes = R.drawable.ic_clock,
             percent = report?.stats?.completionPercent ?: 0,
             ringColor = NiyyahColors.Navy,
             statLine = report?.let { "${it.stats.completedPrayers}/${it.stats.expectedPrayers} Prayers" } ?: "—",
-            statSub = "Keep your rhythm",
+            statSub = report?.let { "Longest streak: ${it.stats.longestStreakInMonth} days" }
+                ?: "Keep your rhythm",
         )
-        // Quran progress — node 1:1401 (placeholder; no reading tracker yet).
+        // Quran progress — node 1:1401 (live from quran_progress).
         StatCard(
             label = "QURAN PROGRESS",
             iconRes = R.drawable.ic_quran_small,
-            percent = 60,
+            percent = uiState.quranPercent,
             ringColor = RingGold,
-            statLine = "3 Juz Read",
-            statSub = "Steady pace",
+            statLine = if (uiState.quranJuzReached > 0) "Juz ${uiState.quranJuzReached} Reached"
+            else "Begin reading",
+            statSub = "Overall progress",
         )
     }
 }
@@ -306,9 +325,10 @@ private fun StatCard(
     }
 }
 
-/** Journey Flow — node 1:1420. Chart mirrors the frame (no weekly series yet). */
+/** Journey Flow — node 1:1420. Chart drawn from real daily/weekly completion. */
 @Composable
-private fun JourneyFlowCard() {
+private fun JourneyFlowCard(daily: List<Int>, weekly: List<Int>) {
+    var showWeekly by remember { mutableStateOf(true) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -328,20 +348,8 @@ private fun JourneyFlowCard() {
                 color = NiyyahColors.TextPrimary,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(
-                    modifier = Modifier
-                        .background(Color(0xFFF2F0EC), NiyyahShapeChip)
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                ) {
-                    Text(text = "Daily", style = NiyyahType.Badge, color = Color(0xFF666666))
-                }
-                Box(
-                    modifier = Modifier
-                        .background(NiyyahColors.TextPrimary, NiyyahShapeChip)
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                ) {
-                    Text(text = "Weekly", style = NiyyahType.Badge, color = Color.White)
-                }
+                ChartChip(label = "Daily", selected = !showWeekly) { showWeekly = false }
+                ChartChip(label = "Weekly", selected = showWeekly) { showWeekly = true }
             }
         }
         Box(
@@ -349,22 +357,21 @@ private fun JourneyFlowCard() {
                 .fillMaxWidth()
                 .height(192.dp),
         ) {
-            Image(
-                painter = painterResource(R.drawable.img_journey_chart),
-                contentDescription = null,
-                contentScale = ContentScale.FillBounds,
-                modifier = Modifier.fillMaxSize(),
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(start = 16.dp, end = 16.dp, top = 32.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                AxisMarker(dotBottomPadding = 40.dp, label = "W1")
-                AxisMarker(dotBottomPadding = 48.dp, label = "W2")
-                AxisMarker(dotBottomPadding = 64.dp, label = "W3")
-                AxisMarker(dotBottomPadding = 96.dp, label = "W4")
+            val series = if (showWeekly) weekly else daily
+            if (series.isEmpty()) {
+                Text(
+                    text = "Your journey will appear here as you pray.",
+                    style = NiyyahType.Badge,
+                    color = NiyyahColors.TextSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+            } else {
+                JourneyChart(
+                    series = series,
+                    labels = if (showWeekly) series.indices.map { "W${it + 1}" } else emptyList(),
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
             Box(
                 modifier = Modifier
@@ -386,20 +393,76 @@ private fun JourneyFlowCard() {
 
 private val NiyyahShapeChip = RoundedCornerShape(12.dp)
 
+/** Daily/Weekly toggle chip — same styling as the frame's static chips. */
 @Composable
-private fun AxisMarker(dotBottomPadding: androidx.compose.ui.unit.Dp, label: String) {
-    Column(
-        modifier = Modifier.fillMaxHeight(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Bottom,
+private fun ChartChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .background(
+                if (selected) NiyyahColors.TextPrimary else Color(0xFFF2F0EC),
+                NiyyahShapeChip,
+            )
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .padding(bottom = dotBottomPadding)
-                .size(6.dp)
-                .background(NiyyahColors.TextPrimary, RoundedCornerShape(50)),
+        Text(
+            text = label,
+            style = NiyyahType.Badge,
+            color = if (selected) Color.White else Color(0xFF666666),
         )
-        Text(text = label, style = NiyyahType.Badge, color = NiyyahColors.TextSecondary)
+    }
+}
+
+/**
+ * Real completion line chart: smooth navy line + dots, with optional axis
+ * labels underneath (weekly view). Values are 0–100.
+ */
+@Composable
+private fun JourneyChart(series: List<Int>, labels: List<String>, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+        ) {
+            if (series.isEmpty()) return@Canvas
+            val stepX = if (series.size == 1) 0f else size.width / (series.size - 1)
+            fun pointAt(i: Int) = Offset(
+                x = if (series.size == 1) size.width / 2f else stepX * i,
+                y = size.height - (series[i].coerceIn(0, 100) / 100f) * size.height,
+            )
+            val path = androidx.compose.ui.graphics.Path()
+            for (i in series.indices) {
+                val p = pointAt(i)
+                if (i == 0) path.moveTo(p.x, p.y) else path.lineTo(p.x, p.y)
+            }
+            drawPath(
+                path = path,
+                color = NiyyahColors.Navy,
+                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round),
+            )
+            // Dots only when sparse enough to stay calm (weekly / short months).
+            if (series.size <= 8) {
+                for (i in series.indices) {
+                    drawCircle(
+                        color = NiyyahColors.TextPrimary,
+                        radius = 3.dp.toPx(),
+                        center = pointAt(i),
+                    )
+                }
+            }
+        }
+        if (labels.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                labels.forEach { label ->
+                    Text(text = label, style = NiyyahType.Badge, color = NiyyahColors.TextSecondary)
+                }
+            }
+        }
     }
 }
 
