@@ -1,653 +1,520 @@
 package com.salahlock.app.ui.onboarding
 
+import android.Manifest
 import android.content.Intent
+import android.os.Build
+import android.location.Geocoder
+import android.location.LocationManager
+import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.salahlock.app.R
-import com.salahlock.app.data.preferences.UserPreferences
-import com.salahlock.app.ui.theme.EbGaramond
-import com.salahlock.app.ui.theme.NiyyahColors
-import com.salahlock.app.ui.theme.NiyyahType
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.salahlock.app.SalahLockApplication
+import com.salahlock.app.data.model.AppCategory
+import com.salahlock.app.theme.*
 import com.salahlock.app.util.PermissionHelper
+import com.salahlock.app.verification.VerificationMethod
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Locale
 
-/**
- * Onboarding — 6-step flow from design/Reference:
- * Onboarding welcome screen.png → permissions-5 (Location) → permissions-3
- * (Background Activity) → permissions-1 (Overlay) → permissions-4 (Usage
- * Access) → permissions-2 (Choose Your Focus). Step order follows the dot
- * indicators in the reference frames.
- */
-private const val STEP_COUNT = 6
+private const val TAG = "OnboardingPermissions"
 
-private val GoldBar = Color(0xFFB08A3C)
-private val DotInactive = Color(0xFFD9D9D9)
-private val GoldOutline = Color(0xFFD4A84F)
-private val GoldText = Color(0xFFB08A3C)
-private val LavenderCircle = Color(0xFFE8EAF6)
+// Total onboarding steps:
+// 0 = Welcome
+// 1 = Location
+// 2 = App Usage Access
+// 3 = Display Over Apps
+// 4 = Battery Optimization
+// 5 = Choose Apps To Lock   (only after all permissions)
+// 6 = Verification Method
+private const val TOTAL_STEPS = 7
 
 @Composable
-fun OnboardingScreen(onDone: () -> Unit) {
+fun OnboardingScreen(onComplete: () -> Unit) {
     val context = LocalContext.current
+    val appContext = context.applicationContext
+    val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
-    var step by rememberSaveable { mutableIntStateOf(0) }
 
-    fun next() {
-        if (step < STEP_COUNT - 1) step++
+    // Always start at step 0 (Welcome) on first install.
+    // firstIncompleteOnboardingStep handles returning users (e.g., re-opened mid-onboarding).
+    var step by rememberSaveable {
+        mutableIntStateOf(
+            if (PermissionHelper.hasCriticalPermissions(appContext)) {
+                // All critical permissions already granted — skip to battery step
+                4
+            } else {
+                0
+            }
+        )
+    }
+    var permissionState by remember { mutableStateOf(readPermissionState(appContext)) }
+    var usageSettingsOpened by rememberSaveable { mutableStateOf(false) }
+    var overlaySettingsOpened by rememberSaveable { mutableStateOf(false) }
+    var gpsDetecting by remember { mutableStateOf(false) }
+    var gpsError by remember { mutableStateOf<String?>(null) }
+
+    fun refreshPermissions(reason: String) {
+        val after = readPermissionState(appContext)
+        permissionState = after
+        Log.d(TAG, "Permission refresh ($reason): $after currentStep=$step")
     }
 
-    fun finish() {
-        scope.launch {
-            UserPreferences(context.applicationContext).setOnboardingDone(true)
-            onDone()
+    // Auto-advance from step 2 when usage access granted
+    LaunchedEffect(permissionState.usageStatsGranted, usageSettingsOpened) {
+        if (step == 2 && permissionState.usageStatsGranted) {
+            Log.d(TAG, "Usage access granted; advancing to step 3")
+            usageSettingsOpened = false
+            step = 3
+        }
+    }
+    // Auto-advance from step 3 when overlay granted
+    LaunchedEffect(permissionState.overlayGranted, overlaySettingsOpened) {
+        if (step == 3 && permissionState.overlayGranted) {
+            Log.d(TAG, "Overlay granted; advancing to step 4")
+            overlaySettingsOpened = false
+            step = 4
         }
     }
 
+    // Resume listener to refresh permissions when returning from system settings
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                refreshPermissions("onResume")
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Permission launchers
     val locationLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { next() }
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        refreshPermissions("locationResult")
+        if (results.values.any { it }) step++
+        else step++ // Advance even if denied — user can set manually in settings
+    }
+
+    // Android 13+ requires POST_NOTIFICATIONS at runtime. We request it between Welcome
+    // and Location — the OS dialog fires, then we advance to step 1 regardless of outcome.
+    val notificationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { _ ->
+        refreshPermissions("notificationResult")
+        step = 1 // Advance to Location step whether granted or denied
+    }
+
+    val usageSettingsLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        Log.d(TAG, "Returned from Usage Access settings.")
+        refreshPermissions("usageSettingsResult")
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(NiyyahColors.Background),
+            .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.systemBars),
     ) {
-        when (step) {
-            0 -> WelcomeStep(onContinue = { next() }, onSkip = { finish() })
-            1 -> LocationStep(
-                onAllow = {
-                    if (PermissionHelper.hasLocationPermission(context)) next()
-                    else locationLauncher.launch(
-                        arrayOf(
-                            android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                            android.Manifest.permission.ACCESS_FINE_LOCATION,
-                        ),
-                    )
-                },
-                onLater = { next() },
-                onBack = { step-- },
-                onSkip = { finish() },
-            )
-            2 -> BackgroundStep(
-                onAllow = {
-                    if (!PermissionHelper.isBatteryOptimizationIgnored(context)) {
-                        runCatching { context.startActivity(PermissionHelper.batteryOptimizationIntent(context)) }
-                    }
-                    next()
-                },
-                onLater = { next() },
-                onBack = { step-- },
-                onSkip = { finish() },
-            )
-            3 -> OverlayStep(
-                onAllow = {
-                    if (!PermissionHelper.canDrawOverlays(context)) {
-                        runCatching { context.startActivity(PermissionHelper.overlaySettingsIntent(context)) }
-                    }
-                    next()
-                },
-                onLater = { next() },
-                onBack = { step-- },
-                onSkip = { finish() },
-            )
-            4 -> UsageStep(
-                onAllow = {
-                    if (!PermissionHelper.hasUsageStatsPermission(context)) {
-                        runCatching { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
-                    }
-                    next()
-                },
-                onLater = { next() },
-                onSkip = { finish() },
-            )
-            5 -> FocusStep(
-                onStart = { finish() },
-                onConfigureLater = { finish() },
-                onBack = { step-- },
-            )
-        }
-    }
-}
-
-// ---------------------------------------------------------------- Steps
-
-/** Step 1 — Onboarding welcome screen.png. */
-@Composable
-private fun WelcomeStep(onContinue: () -> Unit, onSkip: () -> Unit) {
-    StepColumn {
-        OnboardingHeader(leading = { CloseWord(onSkip) }, wordmark = true, onSkip = onSkip)
-        Spacer(Modifier.height(44.dp))
-        HeroImage(R.drawable.img_onb_welcome)
-        Spacer(Modifier.height(48.dp))
-        StepTitle("Welcome to NIYYAH")
-        Spacer(Modifier.height(16.dp))
-        StepBody(
-            "Begin every day with intention. Niyyah helps you organize your worship, " +
-                "knowledge, and daily habits while keeping your focus on what truly matters.",
-        )
-        Spacer(Modifier.weight(1f))
-        DotsRow(active = 0)
-        Spacer(Modifier.height(48.dp))
-        PrimaryButton(label = "CONTINUE", trailingArrow = true, onClick = onContinue)
-        Spacer(Modifier.height(40.dp))
-    }
-}
-
-/** Step 2 — Onboarding screen for permissions-5.png (Location). */
-@Composable
-private fun LocationStep(onAllow: () -> Unit, onLater: () -> Unit, onBack: () -> Unit, onSkip: () -> Unit) {
-    StepColumn {
-        OnboardingHeader(
-            leading = {
-                HeaderIcon(R.drawable.ic_close, width = 14.dp, height = 14.dp, onClick = onBack)
-            },
-            wordmark = true,
-            onSkip = onSkip,
-        )
-        Spacer(Modifier.height(44.dp))
-        HeroImage(R.drawable.img_onb_location)
-        Spacer(Modifier.height(32.dp))
-        StepTitle("Prayer Times & Location")
-        Spacer(Modifier.height(16.dp))
-        StepBody(
-            "Niyyah uses your location to calculate accurate prayer times and determine " +
-                "the Qibla direction.",
-        )
-        Spacer(Modifier.height(28.dp))
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(NiyyahColors.Surface)
-                .padding(20.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                IconCircle(R.drawable.ic_set_location, circle = NiyyahColors.TextPrimary, tint = Color.White)
-                Column {
-                    Text(
-                        text = "Location Access",
-                        style = NiyyahType.BodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = NiyyahColors.TextPrimary,
-                    )
-                    Text(
-                        text = "Required for prayer times",
-                        style = NiyyahType.Badge,
-                        color = NiyyahColors.TextSecondary,
-                    )
-                }
-            }
-            Spacer(Modifier.height(20.dp))
-            PrimaryButton(label = "ALLOW LOCATION", onClick = onAllow)
-            Spacer(Modifier.height(12.dp))
-            SecondaryButton(label = "LATER", onClick = onLater)
-        }
-        Spacer(Modifier.weight(1f))
-        DotsRow(active = 1)
-        Spacer(Modifier.height(40.dp))
-    }
-}
-
-/** Step 3 — Onboarding screen for permissions-3.png (Background Activity). */
-@Composable
-private fun BackgroundStep(onAllow: () -> Unit, onLater: () -> Unit, onBack: () -> Unit, onSkip: () -> Unit) {
-    StepColumn {
-        OnboardingHeader(
-            leading = {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .shadow(4.dp, CircleShape, ambientColor = Color(0x22071836))
-                        .background(Color.White, CircleShape)
-                        .clickable(onClick = onBack),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrow_left),
-                        contentDescription = "Back",
-                        tint = NiyyahColors.TextPrimary,
-                        modifier = Modifier.width(16.dp).height(13.dp),
-                    )
-                }
-            },
-            wordmark = false,
-            onSkip = onSkip,
-        )
-        Spacer(Modifier.height(56.dp))
-        BackgroundHeroCluster()
-        Spacer(Modifier.height(44.dp))
-        StepTitle("Reliable Prayer Protection")
-        Spacer(Modifier.height(16.dp))
-        StepBody(
-            "Allow Niyyah to stay active in the background so prayer reminders and " +
-                "Focus Mode continue working reliably.",
-        )
-        Spacer(Modifier.height(28.dp))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(8.dp, RoundedCornerShape(16.dp), ambientColor = Color(0x14071836))
-                .background(Color.White, RoundedCornerShape(16.dp))
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(NiyyahColors.SoftFill, RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_settings_gear),
-                    contentDescription = null,
-                    tint = NiyyahColors.TextPrimary,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "PERMISSION",
-                    style = NiyyahType.LabelUppercase.copy(fontSize = 11.sp, letterSpacing = 1.1.sp),
-                    color = NiyyahColors.TextSecondary,
-                )
-                Text(
-                    text = "Background Activity",
-                    style = NiyyahType.BodyMedium,
-                    color = NiyyahColors.TextPrimary,
-                )
-            }
-            Icon(
-                painter = painterResource(R.drawable.ic_info_circle),
-                contentDescription = null,
-                tint = GoldOutline,
-                modifier = Modifier.size(18.dp),
-            )
-        }
-        Spacer(Modifier.weight(1f))
-        DotsRow(active = 2)
-        Spacer(Modifier.height(28.dp))
-        PrimaryButton(label = "ALLOW", onClick = onAllow)
-        Spacer(Modifier.height(12.dp))
-        SecondaryButton(label = "LATER", onClick = onLater)
-        Spacer(Modifier.height(32.dp))
-    }
-}
-
-/** Step 4 — Onboarding screen for permissions-1.png (Display over other apps). */
-@Composable
-private fun OverlayStep(onAllow: () -> Unit, onLater: () -> Unit, onBack: () -> Unit, onSkip: () -> Unit) {
-    StepColumn {
-        OnboardingHeader(
-            leading = {
-                HeaderIcon(R.drawable.ic_arrow_left, width = 18.dp, height = 14.dp, onClick = onBack)
-            },
-            wordmark = false,
-            onSkip = onSkip,
-        )
-        Spacer(Modifier.height(28.dp))
-        HeroImage(R.drawable.img_onb_overlay, cornerRadius = 32.dp)
-        Spacer(Modifier.height(36.dp))
-        StepTitle("Stay Focused During Prayer")
-        Spacer(Modifier.height(16.dp))
-        StepBody(
-            "Niyyah uses a secure overlay only during prayer to help reduce " +
-                "distractions and keep you focused.",
-        )
-        Spacer(Modifier.height(32.dp))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(8.dp, RoundedCornerShape(20.dp), ambientColor = Color(0x14071836))
-                .background(Color.White, RoundedCornerShape(20.dp))
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            IconCircle(R.drawable.ic_onb_layers, circle = LavenderCircle, tint = NiyyahColors.TextPrimary)
-            Column {
-                Text(
-                    text = "Display Over Other Apps",
-                    style = NiyyahType.BodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = NiyyahColors.TextPrimary,
-                )
-                Text(
-                    text = "Required to gently hide incoming calls and messages while you pray.",
-                    style = NiyyahType.Badge.copy(lineHeight = 18.sp),
-                    color = NiyyahColors.TextSecondary,
-                )
-            }
-        }
-        Spacer(Modifier.weight(1f))
-        PrimaryButton(label = "Allow Access", uppercase = false, onClick = onAllow)
-        Spacer(Modifier.height(14.dp))
-        SecondaryButton(label = "Maybe Later", uppercase = false, onClick = onLater)
-        Spacer(Modifier.height(28.dp))
-        DotsRow(active = 3)
-        Spacer(Modifier.height(28.dp))
-    }
-}
-
-/** Step 5 — Onboarding screen for permissions-4.png (Usage Access). */
-@Composable
-private fun UsageStep(onAllow: () -> Unit, onLater: () -> Unit, onSkip: () -> Unit) {
-    StepColumn {
-        OnboardingHeader(leading = { CloseWord(onSkip) }, wordmark = true, onSkip = onSkip)
-        Spacer(Modifier.height(40.dp))
-        HeroImage(R.drawable.img_onb_usage, cornerRadius = 40.dp)
-        Spacer(Modifier.height(36.dp))
-        StepTitle("Protect Your Time")
-        Spacer(Modifier.height(16.dp))
-        StepBody(
-            "Niyyah needs Usage Access to temporarily block selected applications " +
-                "during prayer.",
-        )
-        Spacer(Modifier.height(32.dp))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(8.dp, RoundedCornerShape(16.dp), ambientColor = Color(0x14071836))
-                .background(Color.White, RoundedCornerShape(16.dp))
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Usage Access",
-                style = NiyyahType.BodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = NiyyahColors.TextPrimary,
-                modifier = Modifier.weight(1f),
-            )
-            StaticToggle(on = false)
-        }
-        Spacer(Modifier.height(20.dp))
-        DotsRow(active = 4)
-        Spacer(Modifier.weight(1f))
-        PrimaryButton(label = "Allow", uppercase = false, onClick = onAllow)
-        Spacer(Modifier.height(14.dp))
-        SecondaryButton(label = "Later", uppercase = false, onClick = onLater)
-        Spacer(Modifier.height(36.dp))
-    }
-}
-
-/** Step 6 — Onboarding screen for permissions-2.png (Choose Your Focus). */
-@Composable
-private fun FocusStep(onStart: () -> Unit, onConfigureLater: () -> Unit, onBack: () -> Unit) {
-    var focusMode by rememberSaveable { mutableIntStateOf(0) }
-    StepColumn {
-        OnboardingHeader(
-            leading = {
-                HeaderIcon(R.drawable.ic_arrow_left, width = 18.dp, height = 14.dp, onClick = onBack)
-            },
-            wordmark = true,
-            onSkip = null,
-        )
-        Spacer(Modifier.height(40.dp))
-        HeroImage(R.drawable.img_onb_focus, cornerRadius = 24.dp, borderColor = NiyyahColors.Border)
-        Spacer(Modifier.height(36.dp))
-        StepTitle("Choose Your Focus")
-        Spacer(Modifier.height(16.dp))
-        StepBody(
-            "Introduce Focus Mode. Receive reminders or go deep into concentration " +
-                "during your dedicated times.",
-        )
-        Spacer(Modifier.height(32.dp))
-        ModeCard(
-            iconRes = R.drawable.ic_emergency_lock,
-            title = "Focus Mode",
-            body = "Lock selected apps during prayer and dedicated reflection times.",
-            selected = focusMode == 0,
-            onClick = { focusMode = 0 },
-        )
-        Spacer(Modifier.height(16.dp))
-        ModeCard(
-            iconRes = R.drawable.ic_bell,
-            title = "Gentle Mode",
-            body = "Receive timely reminders without locking your applications.",
-            selected = focusMode == 1,
-            onClick = { focusMode = 1 },
-        )
-        Spacer(Modifier.weight(1f))
-        DotsRow(active = 5)
-        Spacer(Modifier.height(28.dp))
-        PrimaryButton(label = "Start Using NIYYAH", uppercase = false, trailingArrow = true, onClick = onStart)
-        Spacer(Modifier.height(14.dp))
-        SecondaryButton(label = "Configure Later", uppercase = false, onClick = onConfigureLater)
-        Spacer(Modifier.height(28.dp))
-    }
-}
-
-// ---------------------------------------------------------------- Pieces
-
-@Composable
-private fun StepColumn(content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(horizontal = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        content = content,
-    )
-}
-
-@Composable
-private fun OnboardingHeader(
-    leading: @Composable () -> Unit,
-    wordmark: Boolean,
-    onSkip: (() -> Unit)?,
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(64.dp),
-    ) {
-        Box(modifier = Modifier.align(Alignment.CenterStart)) { leading() }
-        if (wordmark) {
-            Text(
-                text = "NIYYAH",
-                style = NiyyahType.Wordmark.copy(fontSize = 26.sp, letterSpacing = 2.sp),
-                color = NiyyahColors.TextPrimary,
-                modifier = Modifier.align(Alignment.Center),
-            )
-        }
-        if (onSkip != null) {
-            Text(
-                text = "SKIP",
-                style = NiyyahType.LabelUppercase.copy(fontSize = 12.sp, letterSpacing = 1.2.sp),
-                color = NiyyahColors.TextSecondary,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .clickable(onClick = onSkip),
-            )
-        }
-    }
-}
-
-/** Serif lowercase "close" word used in the welcome / usage headers. */
-@Composable
-private fun CloseWord(onClick: () -> Unit) {
-    Text(
-        text = "close",
-        fontFamily = EbGaramond,
-        fontWeight = FontWeight.Medium,
-        fontSize = 22.sp,
-        color = NiyyahColors.TextPrimary,
-        modifier = Modifier.clickable(onClick = onClick),
-    )
-}
-
-@Composable
-private fun HeaderIcon(
-    iconRes: Int,
-    width: androidx.compose.ui.unit.Dp,
-    height: androidx.compose.ui.unit.Dp,
-    onClick: () -> Unit,
-) {
-    Icon(
-        painter = painterResource(iconRes),
-        contentDescription = null,
-        tint = NiyyahColors.TextPrimary,
-        modifier = Modifier
-            .clickable(onClick = onClick)
-            .width(width)
-            .height(height),
-    )
-}
-
-@Composable
-private fun HeroImage(
-    imageRes: Int,
-    cornerRadius: androidx.compose.ui.unit.Dp = 24.dp,
-    borderColor: Color? = null,
-) {
-    var modifier = Modifier
-        .fillMaxWidth()
-        .clip(RoundedCornerShape(cornerRadius))
-    if (borderColor != null) {
-        modifier = modifier.border(1.dp, borderColor, RoundedCornerShape(cornerRadius))
-    }
-    Image(
-        painter = painterResource(imageRes),
-        contentDescription = null,
-        contentScale = ContentScale.FillWidth,
-        modifier = modifier,
-    )
-}
-
-/** Floating icon cluster hero — permissions-3 frame. */
-@Composable
-private fun BackgroundHeroCluster() {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            ClusterChip(R.drawable.ic_set_security)
-            ClusterChip(R.drawable.ic_onb_battery)
-        }
+        // Background gradient
         Box(
             modifier = Modifier
-                .offset(y = (-14).dp)
-                .size(76.dp)
-                .shadow(16.dp, CircleShape, ambientColor = Color(0x33071836))
-                .background(Color.White, CircleShape),
-            contentAlignment = Alignment.Center,
+                .size(500.dp)
+                .align(Alignment.TopCenter)
+                .offset(y = (-150).dp)
+                .background(
+                    Brush.radialGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f), Color.Transparent))
+                )
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_set_darkmode),
-                contentDescription = null,
-                tint = GoldText,
-                modifier = Modifier.size(28.dp),
+            Spacer(Modifier.height(24.dp))
+
+            // Step indicator dots
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                repeat(TOTAL_STEPS) { i ->
+                    val isActive = i == step
+                    val isDone = i < step
+                    Box(
+                        modifier = Modifier
+                            .size(if (isActive) 28.dp else 8.dp, 8.dp)
+                            .background(
+                                when {
+                                    isActive -> MaterialTheme.colorScheme.tertiary
+                                    isDone   -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                                    else     -> MaterialTheme.colorScheme.surfaceVariant
+                                },
+                                RoundedCornerShape(4.dp),
+                            )
+                            .animateContentSize(animationSpec = spring(stiffness = Spring.StiffnessMedium))
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(40.dp))
+
+            AnimatedContent(
+                targetState = step,
+                transitionSpec = {
+                    val forward = targetState > initialState
+                    (slideInHorizontally { if (forward) it else -it } + fadeIn()) togetherWith
+                            (slideOutHorizontally { if (forward) -it else it } + fadeOut())
+                },
+                label = "onboarding_step",
+            ) { currentStep ->
+                when (currentStep) {
+                    0 -> WelcomeStep(onNext = {
+                        // On Android 13+, request notification permission before Location step.
+                        // Without this, adhan and missed-prayer notifications are silently blocked.
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                            !permissionState.notificationGranted) {
+                            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            step++
+                        }
+                    })
+                    1 -> LocationStep(
+                        isGranted = permissionState.locationGranted,
+                        gpsDetecting = gpsDetecting,
+                        gpsError = gpsError,
+                        onRequestLocation = {
+                            gpsError = null
+                            locationLauncher.launch(arrayOf(
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                            ))
+                        },
+                        onDetectGps = {
+                            if (!permissionState.locationGranted) {
+                                locationLauncher.launch(arrayOf(
+                                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                ))
+                            } else {
+                                gpsDetecting = true
+                                gpsError = null
+                                scope.launch {
+                                    try {
+                                        val app = appContext as SalahLockApplication
+                                        val locationClient = com.salahlock.app.util.LocationClient(appContext)
+                                        val location = locationClient.getCurrentLocation()
+                                        if (location != null) {
+                                            val cityName = withContext(Dispatchers.IO) {
+                                                try {
+                                                    @Suppress("DEPRECATION")
+                                                    Geocoder(appContext, Locale.getDefault())
+                                                        .getFromLocation(location.latitude, location.longitude, 1)
+                                                        ?.firstOrNull()?.locality ?: "Unknown"
+                                                } catch (_: Exception) { "Unknown" }
+                                            }
+                                            app.userPreferences.setLocation(
+                                                lat = location.latitude,
+                                                lng = location.longitude,
+                                                city = cityName,
+                                                mode = "GPS",
+                                            )
+                                        } else {
+                                            gpsError = "Could not detect location. Please try again."
+                                        }
+                                    } catch (e: Exception) {
+                                        gpsError = "Location error: ${e.localizedMessage}"
+                                    } finally {
+                                        gpsDetecting = false
+                                    }
+                                }
+                            }
+                        },
+                        onSkip = { step++ },
+                        onNext = { step++ },
+                    )
+                    2 -> PermissionStep(
+                        title = "App Usage Access",
+                        arabicText = "المراقبة",
+                        description = "Niyyah needs to see which app is open so it can show the prayer reminder when you open a distracting app during prayer time.\n\nThis is used ONLY during active prayer windows — not 24/7.",
+                        buttonText = "Open Settings",
+                        onGrant = {
+                            Log.d(TAG, "Opening Usage Access settings.")
+                            usageSettingsOpened = true
+                            usageSettingsLauncher.launch(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                        },
+                        isGranted = permissionState.usageStatsGranted,
+                        onSkip = {},
+                        canSkip = false,
+                        onNext = { step++ },
+                    )
+                    3 -> PermissionStep(
+                        title = "Display Over Apps",
+                        arabicText = "العرض",
+                        description = "Niyyah needs to display the prayer reminder over other apps.\n\nThis is the screen you see when you open Instagram during prayer time.",
+                        buttonText = "Open Settings",
+                        onGrant = {
+                            Log.d(TAG, "Opening overlay permission settings.")
+                            overlaySettingsOpened = true
+                            val intent = Intent(
+                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:${context.packageName}")
+                            )
+                            context.startActivity(intent)
+                        },
+                        isGranted = permissionState.overlayGranted,
+                        onSkip = {},
+                        canSkip = false,
+                        onNext = { step++ },
+                    )
+                    4 -> BatteryStep(
+                        onGrant = {
+                            Log.d(TAG, "Opening battery optimization settings.")
+                            val intent = Intent(
+                                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+                            ).apply {
+                                data = Uri.parse("package:${context.packageName}")
+                            }
+                            context.startActivity(intent)
+                        },
+                        isGranted = permissionState.batteryOptimizationIgnored,
+                        onContinue = { step++ },
+                    )
+                    5 -> AppSelectionStep(
+                        onContinue = { step++ },
+                        onSkip = { step++ },
+                    )
+                    6 -> VerificationMethodStep(onComplete = onComplete)
+                }
+            }
+        }
+    }
+}
+
+private data class OnboardingPermissionState(
+    val locationGranted: Boolean,
+    val usageStatsGranted: Boolean,
+    val overlayGranted: Boolean,
+    val batteryOptimizationIgnored: Boolean,
+    val notificationGranted: Boolean,
+)
+
+private fun readPermissionState(context: android.content.Context): OnboardingPermissionState =
+    OnboardingPermissionState(
+        locationGranted = PermissionHelper.hasLocationPermission(context),
+        usageStatsGranted = PermissionHelper.hasUsageStatsPermission(context),
+        overlayGranted = PermissionHelper.canDrawOverlays(context),
+        batteryOptimizationIgnored = PermissionHelper.isBatteryOptimizationIgnored(context),
+        notificationGranted = PermissionHelper.hasNotificationPermission(context),
+    )
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Step Composables
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+fun WelcomeStep(onNext: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = "بسم الله الرحمن الرحيم",
+            fontFamily = FontFamily.Serif,
+            fontSize = 22.sp,
+            color = MaterialTheme.colorScheme.tertiary,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(36.dp))
+        Text(
+            text = "Niyyah",
+            style = MaterialTheme.typography.displayMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "Live with intention.",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontStyle = FontStyle.Italic,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(40.dp))
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            Text(
+                text = "Niyyah creates a gentle space between the adhan and distraction.\n\nWhen prayer time arrives, the apps you choose rest quietly until you confirm your prayer.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                lineHeight = 26.sp,
+                modifier = Modifier.padding(20.dp),
             )
+        }
+        Spacer(Modifier.weight(1f))
+        Button(
+            onClick = onNext,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.tertiary,
+                contentColor = MaterialTheme.colorScheme.background,
+            ),
+        ) {
+            Text("Get Started", fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
     }
 }
 
 @Composable
-private fun ClusterChip(iconRes: Int) {
-    Box(
-        modifier = Modifier
-            .size(60.dp)
-            .shadow(8.dp, RoundedCornerShape(16.dp), ambientColor = Color(0x22071836))
-            .background(Color.White, RoundedCornerShape(16.dp)),
-        contentAlignment = Alignment.Center,
+fun LocationStep(
+    isGranted: Boolean,
+    gpsDetecting: Boolean,
+    gpsError: String?,
+    onRequestLocation: () -> Unit,
+    onDetectGps: () -> Unit,
+    onSkip: () -> Unit,
+    onNext: () -> Unit,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            tint = NiyyahColors.TextPrimary,
-            modifier = Modifier.size(22.dp),
+        Text("القبلة", fontFamily = FontFamily.Serif, fontSize = 64.sp, color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.25f))
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Location",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontWeight = FontWeight.SemiBold,
         )
-    }
-}
+        Spacer(Modifier.height(20.dp))
+        Text(
+            "Niyyah needs your location to calculate accurate prayer times for your city.\n\nYour location is stored locally on your device only — never uploaded.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            lineHeight = 26.sp,
+        )
+        Spacer(Modifier.weight(1f))
 
-@Composable
-private fun StepTitle(text: String) {
-    Text(
-        text = text,
-        fontFamily = EbGaramond,
-        fontWeight = FontWeight.Medium,
-        fontSize = 30.sp,
-        lineHeight = 38.sp,
-        color = NiyyahColors.TextPrimary,
-        textAlign = TextAlign.Center,
-    )
-}
-
-@Composable
-private fun StepBody(text: String) {
-    Text(
-        text = text,
-        style = NiyyahType.Body.copy(lineHeight = 26.sp),
-        color = NiyyahColors.TextSecondary,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.padding(horizontal = 4.dp),
-    )
-}
-
-@Composable
-private fun DotsRow(active: Int) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        repeat(STEP_COUNT) { i ->
-            if (i == active) {
-                Box(
-                    modifier = Modifier
-                        .width(32.dp)
-                        .height(6.dp)
-                        .background(GoldBar, RoundedCornerShape(3.dp)),
+        if (isGranted) {
+            // Permission granted — show GPS detect option
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = SuccessGreen.copy(alpha = 0.12f)),
+                border = BorderStroke(1.dp, SuccessGreen.copy(alpha = 0.35f)),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            ) {
+                Text(
+                    "✓ Location permission granted",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = SuccessLight,
+                    textAlign = TextAlign.Center,
                 )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(7.dp)
-                        .background(DotInactive, CircleShape),
+            }
+            Button(
+                onClick = onDetectGps,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.background,
+                ),
+            ) {
+                if (gpsDetecting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.background,
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    Text("Detect My Location", fontWeight = FontWeight.Bold)
+                }
+            }
+            gpsError?.let {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = RustLight,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = onNext,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            ) {
+                Text("Continue →", fontWeight = FontWeight.Bold)
+            }
+        } else {
+            Button(
+                onClick = onRequestLocation,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.background,
+                ),
+            ) {
+                Text("Grant Location", fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.height(12.dp))
+            TextButton(onClick = onSkip) {
+                Text(
+                    "Skip for now (set manually in Settings)",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
                 )
             }
         }
@@ -655,145 +522,434 @@ private fun DotsRow(active: Int) {
 }
 
 @Composable
-private fun PrimaryButton(
-    label: String,
-    uppercase: Boolean = true,
-    trailingArrow: Boolean = false,
-    onClick: () -> Unit,
+fun PermissionStep(
+    title: String,
+    arabicText: String,
+    description: String,
+    buttonText: String,
+    onGrant: () -> Unit,
+    isGranted: Boolean,
+    onSkip: () -> Unit = {},
+    canSkip: Boolean = true,
+    onNext: (() -> Unit)? = null,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(NiyyahColors.TextPrimary)
-            .clickable(onClick = onClick),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth(),
     ) {
+        Text(arabicText, fontFamily = FontFamily.Serif, fontSize = 64.sp, color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.25f))
+        Spacer(Modifier.height(4.dp))
         Text(
-            text = label,
-            style = if (uppercase) {
-                NiyyahType.ButtonLabel.copy(letterSpacing = 1.2.sp)
-            } else {
-                NiyyahType.BodyMedium.copy(fontWeight = FontWeight.SemiBold)
-            },
-            color = Color.White,
+            title,
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontWeight = FontWeight.SemiBold,
         )
-        if (trailingArrow) {
-            Spacer(Modifier.width(10.dp))
-            Icon(
-                painter = painterResource(R.drawable.ic_arrow_right),
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.width(16.dp).height(12.dp),
-            )
+        Spacer(Modifier.height(20.dp))
+        Text(
+            description,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            lineHeight = 26.sp,
+        )
+        Spacer(Modifier.weight(1f))
+
+        if (isGranted) {
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = SuccessGreen.copy(alpha = 0.12f)),
+                border = BorderStroke(1.dp, SuccessGreen.copy(alpha = 0.35f)),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            ) {
+                Text(
+                    "✓ Permission granted",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = SuccessLight,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            Button(
+                onClick = onNext ?: onSkip,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            ) {
+                Text("Continue →", fontWeight = FontWeight.Bold)
+            }
+        } else {
+            Button(
+                onClick = onGrant,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.background,
+                ),
+            ) {
+                Text(buttonText, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.height(12.dp))
+            if (canSkip) {
+                TextButton(onClick = onSkip) {
+                    Text("Skip for now", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                }
+            } else {
+                Text(
+                    "This permission is required for Niyyah to work.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = RustLight,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun SecondaryButton(label: String, uppercase: Boolean = true, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .border(1.dp, GoldOutline, RoundedCornerShape(28.dp))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
+fun BatteryStep(onGrant: () -> Unit, isGranted: Boolean, onContinue: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth(),
     ) {
+        Text("🔋", fontSize = 64.sp, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(16.dp))
         Text(
-            text = label,
-            style = if (uppercase) {
-                NiyyahType.ButtonLabel.copy(letterSpacing = 1.2.sp)
-            } else {
-                NiyyahType.BodyMedium.copy(fontWeight = FontWeight.Medium)
-            },
-            color = GoldText,
+            "Battery Optimization",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
         )
+        Spacer(Modifier.height(20.dp))
+        Text(
+            "Disable battery optimization for Niyyah so prayer alarms fire reliably — especially on Xiaomi, Samsung, and Realme devices which aggressively kill background apps.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            lineHeight = 26.sp,
+        )
+        Spacer(Modifier.weight(1f))
+        if (isGranted) {
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = SuccessGreen.copy(alpha = 0.12f)),
+                border = BorderStroke(1.dp, SuccessGreen.copy(alpha = 0.35f)),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            ) {
+                Text(
+                    "✓ Battery optimization disabled",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = SuccessLight,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        } else {
+            Button(
+                onClick = onGrant,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.background,
+                ),
+            ) {
+                Text("Disable Battery Optimization", fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.height(12.dp))
+        }
+        Button(
+            onClick = onContinue,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+            ),
+        ) {
+            Text(
+                if (isGranted) "Continue →" else "Continue without (less reliable)",
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
     }
 }
 
-/** Selectable mode card — permissions-2 frame. */
+// ─────────────────────────────────────────────────────────────────────────────
+// Step 5 — Choose Apps To Lock  (reuses AppBlacklistRepository via OnboardingAppsViewModel)
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
-private fun ModeCard(
-    iconRes: Int,
+private fun AppSelectionStep(
+    onContinue: () -> Unit,
+    onSkip: () -> Unit,
+) {
+    val vm: OnboardingAppsViewModel = viewModel()
+    val state by vm.state.collectAsState()
+    var persisting by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Text(
+            "Protect Your Focus",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "Choose the apps that should be locked during prayer times.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(16.dp))
+
+        // Search — by app name or package name
+        OutlinedTextField(
+            value = state.query,
+            onValueChange = vm::setQuery,
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Search apps") },
+            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        // Quick presets (additive)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            PresetChip("Social Media") { vm.applyPreset(AppCategory.SOCIAL) }
+            PresetChip("Entertainment") { vm.applyPreset(AppCategory.ENTERTAINMENT) }
+            PresetChip("Gaming") { vm.applyPreset(AppCategory.GAMES) }
+            PresetChip("Productivity") { vm.applyPreset(AppCategory.PRODUCTIVITY) }
+        }
+
+        Spacer(Modifier.height(12.dp))
+        Text(
+            "${state.selectedCount} apps selected",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(Modifier.height(8.dp))
+
+        if (state.isLoading) {
+            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                items(state.filtered, key = { it.packageName }) { app ->
+                    AppSelectRow(
+                        app = app,
+                        selected = app.packageName in state.selected,
+                        onToggle = { vm.toggle(app.packageName) },
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+        Button(
+            onClick = { persisting = true; vm.persist(onContinue) },
+            enabled = !persisting,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary, contentColor = MaterialTheme.colorScheme.background),
+        ) {
+            Text("Continue →", fontWeight = FontWeight.Bold)
+        }
+        TextButton(onClick = onSkip, modifier = Modifier.fillMaxWidth()) {
+            Text("Skip For Now", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@Composable
+private fun PresetChip(label: String, onClick: () -> Unit) {
+    AssistChip(
+        onClick = onClick,
+        label = { Text(label) },
+    )
+}
+
+@Composable
+private fun AppSelectRow(
+    app: OnboardingApp,
+    selected: Boolean,
+    onToggle: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onToggle)
+            .padding(vertical = 6.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        OnboardingAppIcon(packageName = app.packageName, label = app.label)
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                app.label,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                app.category.displayName,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Checkbox(checked = selected, onCheckedChange = { onToggle() })
+    }
+}
+
+@Composable
+private fun OnboardingAppIcon(packageName: String, label: String) {
+    val context = LocalContext.current
+    var bitmap by remember(packageName) { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
+    LaunchedEffect(packageName) {
+        withContext(Dispatchers.IO) {
+            try {
+                val drawable = context.packageManager.getApplicationIcon(packageName)
+                val w = drawable.intrinsicWidth.coerceAtLeast(1)
+                val h = drawable.intrinsicHeight.coerceAtLeast(1)
+                val bmp = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
+                val canvas = android.graphics.Canvas(bmp)
+                drawable.setBounds(0, 0, canvas.width, canvas.height)
+                drawable.draw(canvas)
+                bitmap = bmp.asImageBitmap()
+            } catch (_: Exception) {}
+        }
+    }
+    Box(
+        modifier = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        val bmp = bitmap
+        if (bmp != null) {
+            Image(bitmap = bmp, contentDescription = label, modifier = Modifier.fillMaxSize())
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    label.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Step 6 — Verification Method
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun VerificationMethodStep(onComplete: () -> Unit) {
+    val context = LocalContext.current
+    val app = context.applicationContext as SalahLockApplication
+    val scope = rememberCoroutineScope()
+    var selected by remember { mutableStateOf(VerificationMethod.ASK_EVERY_TIME) }
+    var saving by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("التحقق", fontFamily = FontFamily.Serif, fontSize = 64.sp, color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.25f))
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Verification Method",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            "Choose how Niyyah confirms you have prayed. You can change this anytime in Settings.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(28.dp))
+
+        VerificationOption("Ask Every Time", "Pick text or voice each time", selected == VerificationMethod.ASK_EVERY_TIME) {
+            selected = VerificationMethod.ASK_EVERY_TIME
+        }
+        Spacer(Modifier.height(12.dp))
+        VerificationOption("Type", "Type a short affirmation", selected == VerificationMethod.TEXT) {
+            selected = VerificationMethod.TEXT
+        }
+        Spacer(Modifier.height(12.dp))
+        VerificationOption("Voice", "Say your confirmation aloud", selected == VerificationMethod.VOICE) {
+            selected = VerificationMethod.VOICE
+        }
+
+        Spacer(Modifier.weight(1f))
+        Button(
+            onClick = {
+                saving = true
+                scope.launch {
+                    app.userPreferences.setVerificationMethod(selected.name)
+                    onComplete()
+                }
+            },
+            enabled = !saving,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.tertiary,
+                contentColor = MaterialTheme.colorScheme.background,
+            ),
+        ) {
+            Text("Begin — الله أكبر", fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun VerificationOption(
     title: String,
-    body: String,
+    subtitle: String,
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    Row(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(NiyyahColors.Surface)
-            .border(
-                width = if (selected) 1.5.dp else 1.dp,
-                color = if (selected) NiyyahColors.Navy else NiyyahColors.Hairline,
-                shape = RoundedCornerShape(20.dp),
-            )
-            .clickable(onClick = onClick)
-            .padding(24.dp),
-        horizontalArrangement = Arrangement.spacedBy(20.dp),
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = if (selected) EmeraldPrimary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, if (selected) EmeraldPrimary else MaterialTheme.colorScheme.surfaceVariant),
     ) {
-        IconCircle(iconRes, circle = LavenderCircle, tint = NiyyahColors.TextPrimary)
-        Column {
-            Text(
-                text = title,
-                fontFamily = EbGaramond,
-                fontWeight = FontWeight.Medium,
-                fontSize = 22.sp,
-                lineHeight = 28.sp,
-                color = NiyyahColors.TextPrimary,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = body,
-                style = NiyyahType.Body.copy(fontSize = 15.sp, lineHeight = 22.sp),
-                color = NiyyahColors.TextSecondary,
-            )
+        Row(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (selected) {
+                Icon(Icons.Rounded.Check, contentDescription = null, tint = EmeraldPrimary)
+            }
         }
-    }
-}
-
-@Composable
-private fun IconCircle(iconRes: Int, circle: Color, tint: Color) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .background(circle, CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            tint = tint,
-            modifier = Modifier.size(20.dp),
-        )
-    }
-}
-
-/** Static toggle as drawn in the usage frame. */
-@Composable
-private fun StaticToggle(on: Boolean) {
-    Box(
-        modifier = Modifier
-            .width(48.dp)
-            .height(26.dp)
-            .background(
-                if (on) NiyyahColors.TextPrimary else Color(0xFFDDE3F0),
-                RoundedCornerShape(13.dp),
-            )
-            .padding(3.dp),
-        contentAlignment = if (on) Alignment.CenterEnd else Alignment.CenterStart,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .shadow(1.dp, CircleShape)
-                .background(Color.White, CircleShape),
-        )
     }
 }

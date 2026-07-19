@@ -42,32 +42,9 @@ class LockViewModel(application: Application) : AndroidViewModel(application) {
         observeStreak()
     }
 
-    /**
-     * Emits true once the locked prayer is verified (or overridden) for today —
-     * observed from Room, the same signal UsageStatsPollingService uses to end the
-     * window. LockOverlayActivity collects this to dismiss itself after the
-     * verification flow succeeds.
-     */
-    private val _verified = MutableStateFlow(false)
-    val verified: StateFlow<Boolean> = _verified.asStateFlow()
-
     fun init(prayer: PrayerName, lockEndMs: Long) {
         _state.update { it.copy(prayer = prayer, lockEndMs = lockEndMs) }
         loadOverrideState()
-        observeVerified(prayer)
-    }
-
-    private fun observeVerified(prayer: PrayerName) {
-        viewModelScope.launch {
-            app.database.prayerRecordDao()
-                .observeRecordsForDate(LocalDate.now().toString())
-                .collect { records ->
-                    val done = records.any {
-                        it.prayerName == prayer.name && (it.verified || it.overrideUsed)
-                    }
-                    if (done) _verified.update { true }
-                }
-        }
     }
 
     private fun observeVerificationPrefs() {

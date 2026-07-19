@@ -35,8 +35,6 @@ data class HomeUiState(
     val locationMissing: Boolean = false,
     val cityName: String = "",
     val userName: String = "",
-    /** Signed-in user's Google photo URL, or null when signed out (BM-008.1). */
-    val userPhotoUrl: String? = null,
     val today: String = LocalDate.now().toString(),
     /** Pre-computed map of prayer name → isPast (avoids per-frame LocalDateTime.now()) */
     val isPastMap: Map<PrayerName, Boolean> = emptyMap(),
@@ -56,8 +54,6 @@ data class HomeUiState(
     val qiblaBearing: Int = 0,
     /** SL-004 — Jumma 1 time "HH:mm" for the masjid card (blank = not set) */
     val jummaTime: String = "",
-    /** BM-008.2 — the day's intention, rotated deterministically by date. */
-    val dailyIntention: String = "",
 ) {
     val isPaused: Boolean get() = pauseUntilMs > currentTimeMs
 }
@@ -70,7 +66,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        _uiState.update { it.copy(dailyIntention = com.salahlock.app.spiritual.DailyIntention.forDate()) }
         observeCityName()
         observeTodayPrayers()
         observeStreak()
@@ -165,11 +160,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             app.userIdentity.displayName.collect { name ->
                 _uiState.update { it.copy(userName = name) }
-            }
-        }
-        viewModelScope.launch {
-            app.userIdentity.photoUrl.collect { url ->
-                _uiState.update { it.copy(userPhotoUrl = url) }
             }
         }
     }

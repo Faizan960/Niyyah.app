@@ -171,22 +171,13 @@ class HadithReaderViewModel(application: Application) : AndroidViewModel(applica
         if (readPositionKey.isNotEmpty() && index >= 0) {
             viewModelScope.launch {
                 userPrefs.saveHadithPosition(readPositionKey, index)
-                // Feed the "recently read" list from the hadith actually on screen.
-                _uiState.value.hadiths[index]?.let {
-                    repository.updateReadTimestamp(it.id, System.currentTimeMillis())
-                }
             }
         }
     }
 
     fun toggleBookmark(id: String, isBookmarked: Boolean) {
-        // Topic mode = Knowledge module reader; book/single mode = Hadith module.
-        val source = if (currentMode is LoadMode.Topic)
-            com.salahlock.app.data.repository.KnowledgeRepository.BOOKMARK_SOURCE_KNOWLEDGE
-        else
-            com.salahlock.app.data.repository.KnowledgeRepository.BOOKMARK_SOURCE_HADITH
         viewModelScope.launch {
-            repository.toggleHadithBookmark(id, isBookmarked, source)
+            repository.toggleHadithBookmark(id, isBookmarked)
             val updatedMap = _uiState.value.hadiths.mapValues { (_, hadith) ->
                 if (hadith.id == id) hadith.copy(isBookmarked = isBookmarked) else hadith
             }

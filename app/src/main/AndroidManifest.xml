@@ -104,11 +104,10 @@
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout"
             android:theme="@style/Theme.SalahLock.Overlay" />
 
-        <!-- ── PRAYER VERIFICATION FLOW ── -->
-        <!-- Method selection → voice / typing / camera → unlock success.
-             Launched over the lock overlay by LockOverlayActivity. -->
+        <!-- ── CAMERA VERIFICATION ACTIVITY ── -->
+        <!-- Reserved for future ML verification integration — not active in current build -->
         <activity
-            android:name=".ui.verification.VerificationActivity"
+            android:name=".ui.camera.CameraVerificationActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
 

@@ -1,231 +1,219 @@
-package com.salahlock.app.ui.knowledge
+﻿package com.salahlock.app.ui.knowledge
 
-import androidx.compose.foundation.Image
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.outlined.LibraryBooks
+import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.salahlock.app.R
-import com.salahlock.app.ui.theme.NiyyahColors
-import com.salahlock.app.ui.theme.NiyyahShapes
-import com.salahlock.app.ui.theme.NiyyahType
-
-/**
- * Knowledge library — Figma frame 1:767 (light), wired to real data (BM-006):
- * search runs over the hadith library, category chips open curated topic
- * collections, and the Continue Reading rail resumes real books in progress.
- */
-private val ChipBorder = Color(0xFFC5C6CE)
-private val ProgressGold = Color(0xFFEEC064)
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.salahlock.app.data.db.entity.HadithEntity
+import com.salahlock.app.data.db.entity.collectionDisplayName
+import com.salahlock.app.data.db.entity.formattedReference
+import com.salahlock.app.theme.ElevatedSurface
+import com.salahlock.app.theme.EmeraldPrimary
+import com.salahlock.app.theme.GoldAccent
+import com.salahlock.app.theme.MotionTokens
+import com.salahlock.app.theme.MutedSage
+import com.salahlock.app.theme.WarmStone
+import kotlinx.coroutines.delay
 
 @Composable
 fun KnowledgeScreen(
-    onOpenTopic: (topic: String) -> Unit = {},
-    onOpenHadith: (hadithId: String) -> Unit = {},
-    onOpenBook: (collection: String, bookNumber: String) -> Unit = { _, _ -> },
-    onViewAll: () -> Unit = {},
-    viewModel: KnowledgeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    viewModel: KnowledgeViewModel = viewModel(),
+    onNavigateToHadithTopic: (String) -> Unit,
+    onNavigateToCollection: (String) -> Unit,
+    onNavigateToAzkarReader: (String) -> Unit,
+    onNavigateToSingleHadith: (String) -> Unit = {},
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-    ) {
-        KnowledgeHeader()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val focusManager = LocalFocusManager.current
+
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { paddingValues ->
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 24.dp, bottom = 168.dp),
-            verticalArrangement = Arrangement.spacedBy(40.dp),
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(top = 48.dp),
         ) {
-            SearchAndFilterSection(
-                query = uiState.searchQuery,
-                onQueryChange = viewModel::onSearchQueryChanged,
-                onClear = viewModel::clearSearch,
-                isSearchActive = uiState.isSearchActive,
-                isSearching = uiState.isSearching,
-                results = uiState.searchResults,
-                onOpenHadith = onOpenHadith,
-                onOpenTopic = onOpenTopic,
+            val titleAlpha by animateFloatAsState(
+                targetValue = if (state.isSearchActive) 0f else 1f,
+                animationSpec = MotionTokens.normalTween(),
+                label = "knowledgeTitleAlpha",
             )
-            if (!uiState.isSearchActive) {
-                FeaturedCollectionCard(onExplore = { onOpenTopic("Knowledge") })
-                ContinueReadingSection(
-                    recentBooks = uiState.recentBooks,
-                    onOpenBook = onOpenBook,
-                    onViewAll = onViewAll,
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .alpha(titleAlpha),
+            ) {
+                Text(
+                    text = "Knowledge",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    text = "Explore the depths of Islamic heritage",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
-    }
-}
 
-/** Header — node 1:801. 64dp bar, hamburger / NIYYAH / bell, hairline bottom border. */
-@Composable
-private fun KnowledgeHeader() {
-    Column(modifier = Modifier.fillMaxWidth().background(NiyyahColors.HeaderBackground)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .height(64.dp)
-                .padding(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Balances the trailing icon so the wordmark stays centred (BM-009.2:
-            // the non-functional hamburger was removed).
-            Box(modifier = Modifier.width(16.dp))
-            Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
-            Icon(
-                painter = painterResource(R.drawable.ic_bell),
-                contentDescription = "Notifications",
-                tint = NiyyahColors.TextBody,
-                modifier = Modifier.width(16.dp).height(20.dp),
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(NiyyahColors.Hairline),
-        )
-    }
-}
+            Spacer(modifier = Modifier.height(16.dp))
 
-/** Search input + topic filter chips — nodes 1:812 / 1:818. Live (BM-006). */
-@Composable
-private fun SearchAndFilterSection(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onClear: () -> Unit,
-    isSearchActive: Boolean,
-    isSearching: Boolean,
-    results: List<HadithSearchResult>,
-    onOpenHadith: (hadithId: String) -> Unit,
-    onOpenTopic: (topic: String) -> Unit,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .shadow(1.dp, NiyyahShapes.Chip, ambientColor = Color(0x0D000000), spotColor = Color(0x0D000000))
-                .background(NiyyahColors.Surface, NiyyahShapes.Chip)
-                .border(1.dp, ChipBorder, NiyyahShapes.Chip)
-                .padding(start = 16.dp, end = 17.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(15.dp),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_search),
-                contentDescription = null,
-                tint = NiyyahColors.TextSecondary,
-                modifier = Modifier.size(18.dp),
+            // ── Search Bar ────────────────────────────────────────────────────
+            OutlinedTextField(
+                value = state.searchQuery,
+                onValueChange = { viewModel.onSearchQueryChanged(it) },
+                placeholder = { Text("Search hadiths, topics, or references…") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (state.searchQuery.isNotEmpty()) {
+                        IconButton(onClick = {
+                            viewModel.clearSearch()
+                            focusManager.clearFocus()
+                        }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                        }
+                    }
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = EmeraldPrimary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                ),
             )
-            Box(modifier = Modifier.weight(1f)) {
-                if (query.isEmpty()) {
-                    Text(
-                        text = "Search the library...",
-                        style = NiyyahType.Body,
-                        color = NiyyahColors.TextSecondary,
-                    )
-                }
-                androidx.compose.foundation.text.BasicTextField(
-                    value = query,
-                    onValueChange = onQueryChange,
-                    textStyle = NiyyahType.Body.copy(color = NiyyahColors.TextPrimary),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Search hint
+            if (state.searchQuery.isEmpty()) {
+                Text(
+                    text = "Try: patience, salah, Bukhari 647, Muslim 178",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 28.dp),
                 )
             }
-            if (query.isNotEmpty()) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_close),
-                    contentDescription = "Clear search",
-                    tint = NiyyahColors.TextSecondary,
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // ── Sync Error Banner ─────────────────────────────────────────────
+            if (state.syncError != null) {
+                Row(
                     modifier = Modifier
-                        .clickable(onClick = onClear)
-                        .size(12.dp),
-                )
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f))
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.Outlined.Warning,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = state.syncError!!,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    IconButton(
+                        onClick = { viewModel.retrySyncData() },
+                        modifier = Modifier.size(32.dp),
+                    ) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "Retry",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
             }
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            TopicChip("All Topics", selected = true, onClick = {})
-            TopicChip("Theology", selected = false, onClick = { onOpenTopic("Theology") })
-            TopicChip("History", selected = false, onClick = { onOpenTopic("History") })
-            TopicChip("Spirituality", selected = false, onClick = { onOpenTopic("Spirituality") })
-            TopicChip("Jurisprudence", selected = false, onClick = { onOpenTopic("Jurisprudence") })
-        }
-        if (isSearchActive) {
-            when {
-                isSearching -> Text(
-                    text = "Searching…",
-                    style = NiyyahType.Body,
-                    color = NiyyahColors.TextSecondary,
+
+            // ── Tab Selector (only shown when not searching) ──────────────────
+            if (!state.isSearchActive) {
+                SegmentedControl(
+                    selectedTab = state.selectedTab,
+                    onTabSelected = { viewModel.selectTab(it) },
                 )
-                results.isEmpty() -> Text(
-                    text = "Nothing in the library matched your search.",
-                    style = NiyyahType.Body,
-                    color = NiyyahColors.TextSecondary,
-                )
-                else -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    results.take(30).forEach { result ->
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(NiyyahColors.Surface, NiyyahShapes.Chip)
-                                .border(1.dp, NiyyahColors.Border, NiyyahShapes.Chip)
-                                .clickable { onOpenHadith(result.hadith.id) }
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            Text(
-                                text = result.bookTitle,
-                                style = NiyyahType.LabelUppercase.copy(fontSize = 11.sp),
-                                color = NiyyahColors.TextBody,
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // ── Content Area ──────────────────────────────────────────────────
+            Crossfade(
+                targetState = state.isSearchActive,
+                animationSpec = MotionTokens.normalTween(),
+                label = "search_crossfade",
+            ) { inSearchMode ->
+                if (inSearchMode) {
+                    SearchResultsSection(
+                        results = state.searchResults,
+                        isSearching = state.isSearching,
+                        query = state.searchQuery,
+                        onResultClick = { result -> onNavigateToSingleHadith(result.hadith.id) },
+                    )
+                } else {
+                    Crossfade(
+                        targetState = state.selectedTab,
+                        animationSpec = MotionTokens.normalTween(),
+                        label = "tab_crossfade",
+                    ) { tab ->
+                        when (tab) {
+                            KnowledgeTab.HADITH -> HadithContent(
+                                state = state,
+                                onNavigateToTopic = onNavigateToHadithTopic,
+                                onNavigateToCollection = onNavigateToCollection,
                             )
-                            Text(
-                                text = result.matchHighlight,
-                                style = NiyyahType.Body,
-                                color = NiyyahColors.TextPrimary,
+                            KnowledgeTab.AZKAR -> AzkarContent(
+                                state = state,
+                                onNavigateToReader = onNavigateToAzkarReader,
                             )
                         }
                     }
@@ -235,183 +223,558 @@ private fun SearchAndFilterSection(
     }
 }
 
+// ── Search Results ────────────────────────────────────────────────────────────
+
 @Composable
-private fun TopicChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .background(if (selected) NiyyahColors.Navy else NiyyahColors.SoftFill, NiyyahShapes.Chip)
-            .then(if (selected) Modifier else Modifier.border(1.dp, ChipBorder, NiyyahShapes.Chip))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 21.dp, vertical = 9.dp),
-    ) {
-        Text(
-            text = label,
-            style = NiyyahType.Body,
-            color = if (selected) Color.White else NiyyahColors.TextBody,
-            textAlign = TextAlign.Center,
-        )
+private fun SearchResultsSection(
+    results: List<HadithSearchResult>,
+    isSearching: Boolean,
+    query: String,
+    onResultClick: (HadithSearchResult) -> Unit,
+) {
+    when {
+        isSearching -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(color = EmeraldPrimary, modifier = Modifier.size(28.dp))
+                    Spacer(Modifier.height(12.dp))
+                    Text("Searching…", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        results.isEmpty() && query.isNotBlank() -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(32.dp),
+                ) {
+                    Text(
+                        "No results for: $query",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Try a different keyword, or use Collection + Number format like: Bukhari 647, Muslim 178.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+
+        else -> {
+            LazyColumn(
+                contentPadding = PaddingValues(
+                    start = 24.dp, end = 24.dp, top = 8.dp, bottom = 120.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                item {
+                    Text(
+                        text = "${results.size} result${if (results.size == 1) "" else "s"}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 4.dp),
+                    )
+                }
+                itemsIndexed(results, key = { _, r -> r.hadith.id }) { index, result ->
+                    StaggeredAppear(index = index) {
+                        SearchResultCard(result = result, onClick = { onResultClick(result) })
+                    }
+                }
+            }
+        }
     }
 }
 
-/** Featured collection hero card — node 1:829. Opens the Knowledge topic. */
+/**
+ * Plays a one-time fade + 16dp rise on first appearance, staggered by [index].
+ * Uses graphicsLayer (no layout pass) so it never causes layout shift.
+ * LaunchedEffect(Unit) ensures it plays once per item instance, not on every scroll.
+ */
 @Composable
-private fun FeaturedCollectionCard(onExplore: () -> Unit) {
-    Column(
+private fun StaggeredAppear(index: Int, content: @Composable () -> Unit) {
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(MotionTokens.staggerDelayFor(index).toLong())
+        shown = true
+    }
+    val alpha by animateFloatAsState(
+        targetValue = if (shown) 1f else 0f,
+        animationSpec = MotionTokens.normalTween(),
+        label = "staggerAlpha",
+    )
+    val rise by animateFloatAsState(
+        targetValue = if (shown) 0f else 32f,
+        animationSpec = MotionTokens.normalTween(),
+        label = "staggerRise",
+    )
+    Box(modifier = Modifier.graphicsLayer { this.alpha = alpha; translationY = rise }) {
+        content()
+    }
+}
+
+/** Press-scale feedback: 1.0 → 0.97 while pressed, springs back on release. No bounce. */
+@Composable
+private fun Modifier.pressScale(interactionSource: MutableInteractionSource): Modifier {
+    val pressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.97f else 1f,
+        animationSpec = MotionTokens.fastTween(),
+        label = "pressScale",
+    )
+    return this.graphicsLayer { scaleX = scale; scaleY = scale }
+}
+
+@Composable
+private fun SearchResultCard(result: HadithSearchResult, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    val cardColor = if (isLight) MaterialTheme.colorScheme.surface else ElevatedSurface
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .pressScale(interaction)
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        border = if (isLight) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)) else null,
+        elevation = CardDefaults.cardElevation(0.dp),
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            // Reference header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = result.hadith.formattedReference,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = GoldAccent,
+                )
+                Text(
+                    text = result.bookTitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = WarmStone,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Hadith preview with match context
+            Text(
+                text = result.matchHighlight,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
+                lineHeight = 22.sp,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis,
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = "Tap to read full hadith →",
+                style = MaterialTheme.typography.labelSmall,
+                color = EmeraldPrimary,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+// ── Existing Content Sections ─────────────────────────────────────────────────
+
+@Composable
+private fun SegmentedControl(selectedTab: KnowledgeTab, onTabSelected: (KnowledgeTab) -> Unit) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(NiyyahColors.Surface)
-            .border(1.dp, NiyyahColors.Border, RoundedCornerShape(16.dp)),
+            .height(48.dp)
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
+            .padding(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(modifier = Modifier.fillMaxWidth().height(256.dp)) {
-            Image(
-                painter = painterResource(R.drawable.img_knowledge_hero),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.matchParentSize(),
-            )
+        KnowledgeTab.entries.forEach { tab ->
+            val isSelected = selectedTab == tab
             Box(
                 modifier = Modifier
-                    .matchParentSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color(0x66000000)),
-                        ),
-                    ),
-            )
-        }
-        Column(modifier = Modifier.fillMaxWidth().padding(32.dp)) {
-            Text(
-                text = "FEATURED COLLECTION",
-                style = NiyyahType.Body.copy(letterSpacing = 1.6.sp),
-                color = NiyyahColors.Green,
-                modifier = Modifier.padding(bottom = 16.dp),
-            )
-            Text(
-                text = "The Golden Age of\nIslamic Scholarship",
-                style = NiyyahType.Quote.copy(fontSize = 16.sp, lineHeight = 20.sp),
-                color = NiyyahColors.TextPrimary,
-                modifier = Modifier.padding(bottom = 16.dp),
-            )
-            Text(
-                text = "Explore foundational texts that shaped intellectual discourse during the classical period, featuring works from Andalusia to Baghdad.",
-                style = NiyyahType.Body,
-                color = NiyyahColors.TextBody,
-                modifier = Modifier.padding(bottom = 32.dp),
-            )
-            Box(
-                modifier = Modifier
-                    .background(NiyyahColors.Navy, NiyyahShapes.Button)
-                    .clickable(onClick = onExplore)
-                    .padding(horizontal = 32.dp, vertical = 12.dp),
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(if (isSelected) EmeraldPrimary else Color.Transparent)
+                    .clickable { onTabSelected(tab) },
+                contentAlignment = Alignment.Center,
             ) {
-                Text(text = "Explore Collection", style = NiyyahType.Body, color = Color.White)
+                Text(
+                    text = tab.name.lowercase().replaceFirstChar { it.uppercase() },
+                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                )
             }
         }
     }
 }
 
-/** Continue reading rail — node 1:845. Real in-progress books (BM-006). */
 @Composable
-private fun ContinueReadingSection(
-    recentBooks: List<RecentBook>,
-    onOpenBook: (collection: String, bookNumber: String) -> Unit,
-    onViewAll: () -> Unit,
+private fun HadithContent(
+    state: KnowledgeUiState,
+    onNavigateToTopic: (String) -> Unit,
+    onNavigateToCollection: (String) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            Text(
-                text = "Continue Reading",
-                style = NiyyahType.Quote.copy(fontSize = 16.sp, lineHeight = 24.sp),
-                color = NiyyahColors.TextPrimary,
-            )
-            Text(
-                text = "View All",
-                style = NiyyahType.Body,
-                color = NiyyahColors.TextPrimary,
-                modifier = Modifier.clickable(onClick = onViewAll),
-            )
+    LazyColumn(
+        contentPadding = PaddingValues(bottom = 120.dp),
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        item {
+            SectionTitle("Daily Hadith")
+            DailyHadithCard(state)
         }
-        if (recentBooks.isEmpty()) {
-            Text(
-                text = "Open a book from the Hadith library to begin your reading journey.",
-                style = NiyyahType.Body,
-                color = NiyyahColors.TextBody,
-                modifier = Modifier.padding(horizontal = 24.dp),
-            )
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+        item {
+            SectionTitle("Topics")
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Box(modifier = Modifier.width(8.dp))
-                recentBooks.forEachIndexed { index, book ->
-                    BookCard(
-                        coverRes = if (index % 2 == 0) R.drawable.img_book_purification else R.drawable.img_book_ghazali,
-                        title = book.title,
-                        author = book.author,
-                        progress = book.progress,
-                        onClick = { onOpenBook(book.collection, book.bookNumber) },
+                items(state.categories) { category ->
+                    TopicCard(title = category, onClick = { onNavigateToTopic(category) })
+                }
+            }
+        }
+        item {
+            SectionTitle("Collections")
+            data class CollectionMeta(val display: String, val internal: String, val hadiths: String, val books: String)
+            val collections = listOf(
+                CollectionMeta("Sahih al-Bukhari", "bukhari", "7,563 Hadiths", "114 Books"),
+                CollectionMeta("Sahih Muslim", "muslim", "7,470 Hadiths", "56 Books"),
+            )
+            Column(
+                modifier = Modifier.padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                collections.forEach { meta ->
+                    CollectionCard(
+                        title = meta.display,
+                        hadiths = meta.hadiths,
+                        books = meta.books,
+                        onClick = { onNavigateToCollection(meta.internal) },
                     )
                 }
-                Box(modifier = Modifier.width(8.dp))
             }
         }
     }
 }
 
-/** Book item — node 1:852. 256dp card, 80x112 cover, gold progress. */
 @Composable
-private fun BookCard(coverRes: Int, title: String, author: String, progress: Float, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .width(256.dp)
-            .background(NiyyahColors.Surface, NiyyahShapes.Chip)
-            .border(1.dp, NiyyahColors.Border, NiyyahShapes.Chip)
-            .clickable(onClick = onClick)
-            .padding(17.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+private fun AzkarContent(state: KnowledgeUiState, onNavigateToReader: (String) -> Unit) {
+    // SL-007 — categories as a 2-column tile grid (icon + title) instead of a list.
+    // Navigation unchanged: tap → same onNavigateToReader(category).
+    androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+        columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(2),
+        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 120.dp),
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Image(
-            painter = painterResource(coverRes),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .width(80.dp)
-                .height(112.dp)
-                .clip(RoundedCornerShape(4.dp)),
-        )
+        items(state.azkarCategories.size) { i ->
+            val category = state.azkarCategories[i]
+            AzkarCategoryCard(title = category, onClick = { onNavigateToReader(category) })
+        }
+    }
+}
+
+/** Icon for an azkar category tile (keyword match — categories are dynamic strings). */
+private fun azkarEmoji(category: String): String {
+    val c = category.lowercase()
+    return when {
+        "morning" in c -> "🌅"
+        "evening" in c -> "🌇"
+        "sleep" in c || "night" in c -> "🌙"
+        "wake" in c -> "⏰"
+        "prayer" in c || "salah" in c -> "🕌"
+        "food" in c || "eat" in c -> "🍽️"
+        "travel" in c -> "🧳"
+        "home" in c || "house" in c -> "🏠"
+        "protection" in c -> "🛡️"
+        "forgive" in c || "istighfar" in c -> "🤲"
+        "praise" in c || "tasbih" in c -> "📿"
+        else -> "☪️"
+    }
+}
+
+@Composable
+private fun SectionTitle(title: String) {
+    Text(
+        text = title.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        color = MutedSage,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 1.5.sp,
+        modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
+    )
+}
+
+@Composable
+private fun DailyHadithCard(state: KnowledgeUiState) {
+    val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    val cardColor = if (isLight) MaterialTheme.colorScheme.surface else ElevatedSurface
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        border = if (isLight) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                 else androidx.compose.foundation.BorderStroke(1.dp, GoldAccent.copy(alpha = 0.15f)),
+        elevation = CardDefaults.cardElevation(0.dp),
+    ) {
+        Column(modifier = Modifier.padding(28.dp)) {
+            if (state.dailyHadith != null) {
+                val hadith = state.dailyHadith
+
+                // Gold citation chip at top
+                Surface(
+                    color = GoldAccent.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Text(
+                        text = hadith.formattedReference,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = GoldAccent,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (hadith.arabicText.isNotEmpty()) {
+                    Text(
+                        text = hadith.arabicText,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        lineHeight = 40.sp,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    HorizontalDivider(color = GoldAccent.copy(alpha = 0.15f), thickness = 0.5.dp)
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
+
+                Text(
+                    text = hadith.translationText,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 28.sp,
+                    maxLines = 4,
+                    overflow = TextOverflow.Ellipsis,
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = hadith.collectionDisplayName,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = WarmStone,
+                    )
+                    Text(
+                        text = "READ HADITH →",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = EmeraldPrimary,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp,
+                    )
+                }
+            } else if (state.isSyncing) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = EmeraldPrimary, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.height(8.dp))
+                        Text("Syncing hadith library…", style = MaterialTheme.typography.bodySmall, color = WarmStone)
+                    }
+                }
+            } else {
+                Text(
+                    "No hadiths available. Connect to the internet to load the hadith library.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = WarmStone,
+                )
+            }
+        }
+    }
+}
+
+/** Maps topic category names to Material icons for visual hierarchy. */
+private fun topicIcon(title: String) = when (title.lowercase()) {
+    "salah", "prayer" -> Icons.Outlined.Mosque
+    "faith", "iman" -> Icons.Outlined.AutoAwesome
+    "knowledge", "ilm" -> Icons.Outlined.MenuBook
+    "charity", "zakat", "sadaqah" -> Icons.Outlined.VolunteerActivism
+    "family", "marriage" -> Icons.Outlined.FamilyRestroom
+    "character", "manners", "akhlaq" -> Icons.Outlined.SelfImprovement
+    "patience", "sabr" -> Icons.Outlined.HourglassEmpty
+    "justice", "adl" -> Icons.Outlined.Balance
+    "dua", "supplication" -> Icons.Outlined.EmojiPeople
+    "brotherhood", "unity" -> Icons.Outlined.Diversity3
+    "quran" -> Icons.Outlined.AutoStories
+    "fasting", "sawm", "ramadan" -> Icons.Outlined.NightShelter
+    "hajj", "pilgrimage" -> Icons.Outlined.NearMe
+    "tawbah", "repentance" -> Icons.Outlined.Refresh
+    else -> Icons.Outlined.Star
+}
+
+@Composable
+private fun TopicCard(title: String, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    val cardColor = if (isLight) MaterialTheme.colorScheme.surface else ElevatedSurface
+
+    Card(
+        modifier = Modifier
+            .width(140.dp)
+            .height(104.dp)
+            .pressScale(interaction)
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        border = if (isLight) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)) else null,
+        elevation = CardDefaults.cardElevation(0.dp),
+    ) {
         Column(
-            modifier = Modifier.height(112.dp).padding(vertical = 4.dp),
+            modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(
+                imageVector = topicIcon(title),
+                contentDescription = null,
+                tint = EmeraldPrimary.copy(alpha = 0.7f),
+                modifier = Modifier.size(20.dp),
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+                lineHeight = 20.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CollectionCard(title: String, hadiths: String = "", books: String = "", onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    val cardColor = if (isLight) MaterialTheme.colorScheme.surface else ElevatedSurface
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .pressScale(interaction)
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        border = if (isLight) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)) else null,
+        elevation = CardDefaults.cardElevation(0.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = NiyyahType.Body.copy(lineHeight = 22.sp),
-                    color = NiyyahColors.TextPrimary,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
                 )
-                Text(text = author, style = NiyyahType.Body, color = NiyyahColors.TextBody)
+                if (hadiths.isNotEmpty() || books.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = listOf(hadiths, books).filter { it.isNotEmpty() }.joinToString(" · "),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = WarmStone,
+                    )
+                }
             }
+            Icon(
+                Icons.Outlined.LibraryBooks,
+                contentDescription = null,
+                tint = if (isLight) MaterialTheme.colorScheme.onSurfaceVariant else WarmStone.copy(alpha = 0.6f),
+                modifier = Modifier.size(20.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AzkarCategoryCard(title: String, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    val cardColor = if (isLight) MaterialTheme.colorScheme.surface else ElevatedSurface
+
+    // SL-007 — square-ish tile: icon on top, title below.
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .pressScale(interaction)
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        border = if (isLight) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)) else null,
+        elevation = CardDefaults.cardElevation(0.dp),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(NiyyahShapes.Pill)
-                    .background(NiyyahColors.SoftFill),
+                    .size(52.dp)
+                    .background(EmeraldPrimary.copy(alpha = 0.10f), RoundedCornerShape(16.dp)),
+                contentAlignment = Alignment.Center,
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(progress)
-                        .height(6.dp)
-                        .background(ProgressGold),
-                )
+                Text(azkarEmoji(title), fontSize = 26.sp)
             }
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                maxLines = 2,
+            )
+            Text(
+                text = "Azkar",
+                style = MaterialTheme.typography.labelSmall,
+                color = MutedSage,
+            )
         }
     }
 }

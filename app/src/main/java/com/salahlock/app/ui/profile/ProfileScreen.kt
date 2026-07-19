@@ -1,570 +1,1414 @@
 package com.salahlock.app.ui.profile
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import android.app.Activity
+import android.content.pm.PackageManager
+import android.util.Log
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.foundation.Canvas
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.salahlock.app.R
-import com.salahlock.app.auth.GoogleAuthClient
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.salahlock.app.auth.GoogleAuthConfig
-import com.salahlock.app.auth.GoogleAuthResult
-import com.salahlock.app.ui.components.ProfileAvatar
-import com.salahlock.app.ui.theme.NiyyahColors
-import com.salahlock.app.ui.theme.NiyyahType
+import com.salahlock.app.theme.*
+import com.salahlock.app.data.preferences.UserPreferences.ThemePreference
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.material.icons.outlined.Backup
+import androidx.compose.material.icons.outlined.Restore
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.salahlock.app.theme.MotionTokens
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-/**
- * Profile — Figma frame 1:613 (light).
- *
- * BM-006.7: identity, statistics, milestones and the reflection preview are
- * live from [ProfileViewModel] (prayer records, Quran progress, bookmarks,
- * collections, achievements, spiritual rank, monthly report).
- */
-private val CardRadius = RoundedCornerShape(12.dp)
-private val RingGold = Color(0xFFEEC064)
-private val MintFill = Color(0x338BF7CB)
-private val GoldFill = Color(0x33EEC064)
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    onOpenCollections: () -> Unit = {},
-    onOpenBookmarks: () -> Unit = {},
-    onOpenSettings: () -> Unit = {},
-    onOpenReflection: () -> Unit = {},
-    viewModel: ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onNavigateBack: () -> Unit,
+    onNavigateToBlacklist: () -> Unit,
+    onNavigate: (String) -> Unit = {},
+    viewModel: ProfileViewModel = viewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val authClient = remember(context) { GoogleAuthClient(context) }
 
-    fun startGoogleSignIn() {
-        if (!GoogleAuthConfig.isConfigured) {
-            viewModel.startSignIn() // surfaces NOT_CONFIGURED
-            return
-        }
-        viewModel.startSignIn() // LOADING
-        scope.launch {
-            when (val result = authClient.signIn()) {
-                is GoogleAuthResult.Success -> viewModel.onSignInSuccess(
-                    displayName = result.identity.displayName,
-                    email = result.identity.email,
-                    photoUrl = result.identity.photoUrl,
-                    googleId = result.identity.googleId,
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Profile", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                scrollBehavior = scrollBehavior,
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 24.dp)
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            contentPadding = PaddingValues(bottom = 120.dp)
+        ) {
+            item { ProfileHeader(state, viewModel) }
+            // Monthly Spiritual Reflection — private frozen monthly reports.
+            item {
+                SectionTitle("Your Journey")
+                CardGroup {
+                    SettingsRowItem(
+                        icon = Icons.Outlined.AutoAwesome,
+                        title = "Monthly Reflections",
+                        subtitle = "Your private spiritual report, month by month",
+                        onClick = { onNavigate("monthly_reflections") },
+                    )
+                }
+            }
+            // SL-009 — Settings converted from inline expanding sections to dedicated
+            // pages. Each row navigates to a page that reuses the SAME section
+            // composable + ProfileViewModel (no duplicated state or logic).
+            item {
+                SectionTitle("Settings")
+                CardGroup {
+                    SettingsRowItem(icon = Icons.Outlined.Verified, title = "Verification Settings", subtitle = "Method, confirmations, reminders", onClick = { onNavigate("settings/verification") })
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+                    SettingsRowItem(icon = Icons.Outlined.Palette, title = "Appearance Settings", subtitle = "Theme", onClick = { onNavigate("settings/appearance") })
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+                    SettingsRowItem(icon = Icons.Outlined.Backup, title = "Backup Settings", subtitle = "Create, restore, auto backup", onClick = { onNavigate("settings/backup") })
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+                    SettingsRowItem(icon = Icons.Outlined.Tune, title = "App Settings", subtitle = "Calculation, adhan, lock duration", onClick = { onNavigate("settings/app") })
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+                    // SL-006 — Lock Per Prayer relocated from the App Blocker tab.
+                    SettingsRowItem(icon = Icons.Outlined.Lock, title = "Lock Per Prayer", subtitle = "Enable locking per prayer", onClick = { onNavigate("settings/lock_per_prayer") })
+                }
+            }
+            item {
+                SupportSection(
+                    onFeedback = { sendFeedback(context) },
+                    onHelp = { onNavigate("help_center") },
                 )
-                GoogleAuthResult.Cancelled -> viewModel.clearSignInError()
-                GoogleAuthResult.NoCredential ->
-                    viewModel.onSignInError("No Google account found on this device.")
-                is GoogleAuthResult.Error -> viewModel.onSignInError(result.message)
+            }
+            // SL-008 — Permission Status lives at the BOTTOM of Settings, as a page.
+            item {
+                CardGroup {
+                    SettingsRowItem(icon = Icons.Outlined.AdminPanelSettings, title = "Permission Status", subtitle = "Usage, overlay, notifications, battery", onClick = { onNavigate("settings/permissions") })
+                }
             }
         }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-    ) {
-        ProfileHeader(onOpenSettings)
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 128.dp),
-            verticalArrangement = Arrangement.spacedBy(40.dp),
-        ) {
-            IdentitySection(uiState, onSignIn = ::startGoogleSignIn)
-            StatisticsCard(uiState)
-            MilestonesSection(uiState, onOpenReflection)
-            ReflectionPreviewCard(uiState, onOpenReflection)
-            QuickLinks(uiState, onOpenCollections, onOpenBookmarks)
-        }
-    }
-}
-
-/** Header — node 1:648. Hamburger / NIYYAH / settings gear. */
-@Composable
-private fun ProfileHeader(onOpenSettings: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().background(NiyyahColors.HeaderBackground)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .height(64.dp)
-                .padding(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Balances the trailing settings icon so the wordmark stays centred
-            // (BM-009.2: the non-functional hamburger was removed).
-            Box(modifier = Modifier.width(20.dp))
-            Text(text = "NIYYAH", style = NiyyahType.Wordmark, color = NiyyahColors.TextPrimary)
-            Icon(
-                painter = painterResource(R.drawable.ic_settings_outline),
-                contentDescription = "Settings",
-                tint = NiyyahColors.TextBody,
-                modifier = Modifier.size(20.dp).clickable { onOpenSettings() },
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(NiyyahColors.Hairline),
-        )
     }
 }
 
 /**
- * Avatar + name — node 1:659. Fully live (BM-008.1): real Google photo/name/email
- * when signed in; when signed out the avatar becomes the Google sign-in trigger
- * (the design's Settings account row points here) with loading and error states.
+ * Fully vertical profile header card.
+ *
+ * Structure (top to bottom, all centered, no offsets, no overlays):
+ *   Avatar (72dp) → Name → Email/subtitle → CTA button
+ *   ── divider ──
+ *   Streak  |  Today's Salah
+ *
+ * Sprint D.3.4: stats are inline inside the card, not a separate LazyColumn item.
+ * Padding: 24dp. Corner: 24dp. No emerald background fills.
  */
 @Composable
-private fun IdentitySection(uiState: ProfileUiState, onSignIn: () -> Unit) {
-    val isLoading = uiState.signInState == SignInState.LOADING
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(128.dp)
-                .border(1.dp, NiyyahColors.Hairline, CircleShape)
-                .padding(1.dp)
-                .clip(CircleShape)
-                .then(if (uiState.isSignedIn || isLoading) Modifier else Modifier.clickable { onSignIn() }),
-            contentAlignment = Alignment.Center,
-        ) {
-            ProfileAvatar(
-                photoUrl = uiState.userPhotoUrl,
-                contentDescription = "Profile photo",
-                modifier = Modifier.fillMaxSize(),
-            )
-            if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize().background(Color(0x66000000)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp)
-                }
-            }
-        }
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                text = uiState.userName.ifBlank { "As-salamu alaykum" },
-                style = NiyyahType.Quote.copy(fontSize = 28.sp, lineHeight = 36.sp),
-                color = NiyyahColors.TextPrimary,
-            )
-            Text(
-                text = when {
-                    uiState.isSignedIn && uiState.userEmail.isNotBlank() -> uiState.userEmail
-                    uiState.signInState == SignInState.ERROR ->
-                        uiState.signInError ?: "Sign-in failed. Tap your photo to try again."
-                    uiState.signInState == SignInState.NOT_CONFIGURED ->
-                        "Google sign-in is not configured."
-                    else -> "Tap your photo to sign in with Google"
-                },
-                style = NiyyahType.Body,
-                color = if (uiState.signInState == SignInState.ERROR) Color(0xFFE5484D) else NiyyahColors.TextBody,
-                textAlign = TextAlign.Center,
-            )
-        }
-        Row(
-            modifier = Modifier.padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            listOfNotNull(
-                uiState.memberSince.ifBlank { null },
-                uiState.spiritualRank.ifBlank { null },
-            ).forEach { label ->
-                Box(
-                    modifier = Modifier
-                        .background(NiyyahColors.SoftFill, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                ) {
-                    Text(text = label, style = NiyyahType.Badge, color = Color(0xFF666666))
-                }
+fun ProfileHeader(state: ProfileUiState, viewModel: ProfileViewModel) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(state.signInState) {
+        if (state.signInState == SignInState.LOADING) {
+            scope.launch {
+                performGoogleSignIn(
+                    context = context,
+                    onSuccess = { name, email, photo, id -> viewModel.onSignInSuccess(name, email, photo, id) },
+                    onError = { msg -> viewModel.onSignInError(msg) },
+                )
             }
         }
     }
-}
+    if (state.signInState == SignInState.ERROR) {
+        LaunchedEffect(state.signInError) { viewModel.clearSignInError() }
+    }
 
-/** Personal statistics — node 1:673. Live weekly consistency + Quran progress. */
-@Composable
-private fun StatisticsCard(uiState: ProfileUiState) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(NiyyahColors.Surface, CardRadius)
-            .border(1.dp, NiyyahColors.Border, CardRadius)
-            .padding(25.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+    // Count-up animations hoisted outside AnimatedContent — survive auth transitions
+    val streakAnim = remember { Animatable(0f) }
+    LaunchedEffect(state.currentStreak) {
+        streakAnim.animateTo(state.currentStreak.toFloat(), MotionTokens.slowTween())
+    }
+    val prayerAnim = remember { Animatable(0f) }
+    LaunchedEffect(state.totalPrayers) {
+        prayerAnim.animateTo(state.totalPrayers.toFloat(), MotionTokens.slowTween())
+    }
+
+    val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isLight) MaterialTheme.colorScheme.surface else ElevatedSurface
+        ),
+        elevation = CardDefaults.cardElevation(0.dp),
+        border = if (!isLight) BorderStroke(1.dp, GoldAccent.copy(alpha = 0.15f)) else null,
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = "Personal Statistics",
-                style = NiyyahType.Quote.copy(lineHeight = 32.sp),
-                color = NiyyahColors.TextPrimary,
-                modifier = Modifier.padding(bottom = 9.dp),
+
+            // ── Identity section ─────────────────────────────────────────────
+            AnimatedContent(
+                targetState = state.isSignedIn,
+                transitionSpec = {
+                    fadeIn(MotionTokens.normalTween()) togetherWith fadeOut(MotionTokens.normalTween())
+                },
+                label = "authIdentity",
+            ) { isSignedIn ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    if (isSignedIn) {
+                        // Avatar — 72dp initials, no offset, no zIndex
+                        val initials = state.userName
+                            .split(" ")
+                            .filter { it.isNotBlank() }
+                            .take(2)
+                            .map { it.first().uppercaseChar() }
+                            .joinToString("")
+                            .ifEmpty { "?" }
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
+                                .background(EmeraldPrimary),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = initials,
+                                color = Color.White,
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+
+                        Text(
+                            text = state.userName.ifBlank { "Musafir" },
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
+                        )
+
+                        Spacer(Modifier.height(4.dp))
+
+                        Text(
+                            text = state.userEmail,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
+                        )
+
+                        Spacer(Modifier.height(20.dp))
+
+                        OutlinedButton(
+                            onClick = { viewModel.signOut() },
+                            modifier = Modifier.height(40.dp),
+                        ) {
+                            Text("Sign Out", style = MaterialTheme.typography.labelLarge)
+                        }
+
+                    } else {
+                        // Signed-out state — avatar + CTA
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.AccountCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(40.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+
+                        Text(
+                            text = "Sign in to sync your progress",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
+                        )
+
+                        Spacer(Modifier.height(4.dp))
+
+                        Text(
+                            text = "Backup your streak and prayer history.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+
+                        if (state.signInState == SignInState.NOT_CONFIGURED) {
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = "Google Sign-In is not configured.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+
+                        if (state.signInError != null) {
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = state.signInError,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+
+                        Spacer(Modifier.height(20.dp))
+
+                        OutlinedButton(
+                            onClick = { viewModel.startSignIn() },
+                            modifier = Modifier.height(40.dp),
+                            enabled = state.signInState != SignInState.LOADING,
+                        ) {
+                            if (state.signInState == SignInState.LOADING) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = EmeraldPrimary,
+                                )
+                                Spacer(Modifier.width(8.dp))
+                            }
+                            Text("Continue with Google", fontWeight = FontWeight.SemiBold)
+                        }
+
+                        Spacer(Modifier.height(4.dp))
+
+                        Text(
+                            text = "Cloud sync is in development.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+
+            // ── Divider ──────────────────────────────────────────────────────
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                thickness = 0.5.dp,
             )
-            Box(
+
+            // ── Stats row ────────────────────────────────────────────────────
+            val streakCount = streakAnim.value.toInt()
+            val prayerCount = prayerAnim.value.toInt()
+            // Correct plural: "1 Day", "2 Days"
+            val streakLabel = if (streakCount == 1) "Day" else "Days"
+
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(1.dp)
-                    .background(NiyyahColors.Border),
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            StatColumn(
-                label = "PRAYER\nCONSISTENCY",
-                bigText = "${uiState.weeklyConsistencyPercent}%",
-                sideText = "this week",
-                progress = uiState.weeklyConsistencyPercent / 100f,
-                barColor = NiyyahColors.Navy,
-                modifier = Modifier.weight(1f),
-            )
-            StatColumn(
-                label = "READING\nPROGRESS",
-                bigText = if (uiState.readingJuz > 0) "Juz\n${uiState.readingJuz}" else "—",
-                sideText = uiState.readingSurahName.ifBlank { "Begin reading" },
-                progress = uiState.readingProgressFraction,
-                barColor = RingGold,
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatColumn(
-    label: String,
-    bigText: String,
-    sideText: String,
-    progress: Float,
-    barColor: Color,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = label,
-            style = NiyyahType.LabelUppercase.copy(letterSpacing = 1.4.sp),
-            color = NiyyahColors.TextBody,
-        )
-        Row(
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = bigText,
-                style = NiyyahType.Quote.copy(fontSize = 36.sp, lineHeight = 36.sp, letterSpacing = (-0.36).sp),
-                color = NiyyahColors.TextPrimary,
-            )
-            Text(
-                text = sideText,
-                style = NiyyahType.Body,
-                color = NiyyahColors.TextBody,
-                modifier = Modifier.padding(bottom = 4.dp),
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-                .height(8.dp)
-                .clip(RoundedCornerShape(50))
-                .background(NiyyahColors.SoftFill),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(progress)
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(barColor),
-            )
-        }
-    }
-}
-
-/** Milestones bento — node 1:699. Tiles show real unlocked achievements. */
-@Composable
-private fun MilestonesSection(uiState: ProfileUiState, onOpenReflection: () -> Unit) {
-    val achievements = uiState.unlockedAchievements
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(
-            text = "Milestones",
-            style = NiyyahType.Quote.copy(lineHeight = 32.sp),
-            color = NiyyahColors.TextPrimary,
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            MilestoneTile(
-                circleColor = MintFill,
-                iconRes = R.drawable.ic_streak_calendar,
-                title = achievements.getOrNull(0)?.title ?: "First Steps",
-                subtitle = achievements.getOrNull(0)?.description ?: "Your journey begins",
-                modifier = Modifier.weight(1f),
-            )
-            MilestoneTile(
-                circleColor = GoldFill,
-                iconRes = R.drawable.ic_khatam_book,
-                title = achievements.getOrNull(1)?.title ?: "In Progress",
-                subtitle = achievements.getOrNull(1)?.description ?: "Keep your rhythm",
-                modifier = Modifier.weight(1f),
-            )
-        }
-        // Set-new-goal dashed tile — node 1:721.
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(342.dp)
-                .clickable { onOpenReflection() },
-            contentAlignment = Alignment.Center,
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                drawRoundRect(
-                    color = Color(0xFFE7E2DA),
-                    cornerRadius = CornerRadius(12.dp.toPx()),
-                    style = Stroke(
-                        width = 1.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 12f)),
-                    ),
-                )
-            }
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .height(IntrinsicSize.Min),
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_plus_small),
-                    contentDescription = null,
-                    tint = NiyyahColors.TextBody,
-                    modifier = Modifier.size(14.dp),
-                )
-                Text(text = "Set new goal", style = NiyyahType.Badge, color = NiyyahColors.TextBody)
-            }
-        }
-    }
-}
-
-@Composable
-private fun MilestoneTile(
-    circleColor: Color,
-    iconRes: Int,
-    title: String,
-    subtitle: String,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .shadow(6.dp, CardRadius, ambientColor = Color(0x0D1E2D4C), spotColor = Color(0x0D1E2D4C))
-            .background(NiyyahColors.SurfaceElevated, CardRadius)
-            .padding(horizontal = 16.dp, vertical = 27.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Box(
-            modifier = Modifier.size(48.dp).background(circleColor, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                tint = NiyyahColors.TextPrimary,
-                modifier = Modifier.width(22.dp).height(21.dp),
-            )
-        }
-        Text(
-            text = title,
-            style = NiyyahType.LabelUppercase.copy(letterSpacing = 0.7.sp),
-            color = NiyyahColors.TextPrimary,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-        Text(text = subtitle, style = NiyyahType.Badge, color = NiyyahColors.TextBody, textAlign = TextAlign.Center)
-    }
-}
-
-/** Monthly reflection preview — node 1:726. Live from the current report. */
-@Composable
-private fun ReflectionPreviewCard(uiState: ProfileUiState, onOpenReflection: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(CardRadius)
-            .background(NiyyahColors.Surface)
-            .border(1.dp, NiyyahColors.Border, CardRadius),
-    ) {
-        Image(
-            painter = painterResource(R.drawable.img_reflection_preview),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxWidth().height(128.dp),
-        )
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = uiState.reflectionHeadline.ifBlank { "Your Monthly Reflection" },
-                    style = NiyyahType.Quote.copy(lineHeight = 32.sp),
-                    color = NiyyahColors.TextPrimary,
-                )
-                Text(
-                    text = uiState.reflectionBody.ifBlank {
-                        "A gentle look back at your month of worship awaits."
-                    }.let { if (it.length > 96) it.take(96).trimEnd() + "…" else it },
-                    style = NiyyahType.Body,
-                    color = NiyyahColors.TextBody,
-                    modifier = Modifier.padding(bottom = 8.dp),
-                )
-                Column(modifier = Modifier.clickable { onOpenReflection() }) {
+                // Streak
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
                     Text(
-                        text = "READ FULL ENTRY",
-                        style = NiyyahType.LabelUppercase.copy(letterSpacing = 1.4.sp),
-                        color = NiyyahColors.TextPrimary,
-                        modifier = Modifier.padding(bottom = 5.dp),
+                        text = if (streakCount > 0) "$streakCount $streakLabel" else "—",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (streakCount > 0) GoldAccent else MaterialTheme.colorScheme.onSurface,
                     )
-                    Box(
-                        modifier = Modifier
-                            .width(136.dp)
-                            .height(1.dp)
-                            .background(NiyyahColors.TextPrimary),
+                    Text(
+                        text = "STREAK",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MutedSage,
+                        letterSpacing = 1.sp,
+                    )
+                }
+
+                // Vertical divider between stats
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(0.5.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                )
+
+                // Today's Salah
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = "$prayerCount / 5",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (prayerCount > 0) EmeraldPrimary else MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = "TODAY'S SALAH",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MutedSage,
+                        letterSpacing = 1.sp,
                     )
                 }
             }
-            // Date badge — node 1:735.
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(end = 24.dp)
-                    .offset(y = (-32).dp)
-                    .size(64.dp)
-                    .shadow(8.dp, CircleShape)
-                    .background(NiyyahColors.Navy, CircleShape),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
+        }
+    }
+}
+
+/**
+ * Performs the Credential Manager Google Sign-In flow.
+ * Must be called from a coroutine with an Activity context.
+ */
+private suspend fun performGoogleSignIn(
+    context: android.content.Context,
+    onSuccess: (name: String, email: String, photo: String?, googleId: String) -> Unit,
+    onError: (message: String) -> Unit,
+) {
+    val tag = "AuthDebug"
+
+    // Log diagnostic info before every attempt so it appears in Logcat regardless of outcome
+    val packageName = context.packageName
+    val sha1 = runCatching {
+        val sig = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            context.packageManager
+                .getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+                .signingInfo
+                ?.apkContentsSigners
+                ?.firstOrNull()
+        } else {
+            @Suppress("DEPRECATION")
+            context.packageManager
+                .getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+                .signatures
+                ?.firstOrNull()
+        }
+        sig?.let {
+            val md = java.security.MessageDigest.getInstance("SHA-1")
+            md.update(it.toByteArray())
+            md.digest().joinToString(":") { b -> "%02X".format(b) }
+        } ?: "unavailable"
+    }.getOrElse { "error reading SHA-1: ${it.message}" }
+
+    Log.d(tag, "=== Google Sign-In Attempt ===")
+    Log.d(tag, "WEB_CLIENT_ID : ${GoogleAuthConfig.WEB_CLIENT_ID}")
+    Log.d(tag, "Package name  : $packageName")
+    Log.d(tag, "SHA-1 (debug) : $sha1")
+    Log.d(tag, "isConfigured  : ${GoogleAuthConfig.isConfigured}")
+
+    // --- Device environment diagnostics ---
+    val playServicesCode = GoogleApiAvailability.getInstance()
+        .isGooglePlayServicesAvailable(context)
+    val playServicesAvailable = playServicesCode == com.google.android.gms.common.ConnectionResult.SUCCESS
+    val playServicesMsg = GoogleApiAvailability.getInstance()
+        .getErrorString(playServicesCode)
+
+    val accountCount = runCatching {
+        android.accounts.AccountManager.get(context)
+            .getAccountsByType("com.google").size
+    }.getOrDefault(-1)
+
+    val manufacturer = android.os.Build.MANUFACTURER
+    val brand = android.os.Build.BRAND
+    val model = android.os.Build.MODEL
+    val androidVer = android.os.Build.VERSION.RELEASE
+    val sdk = android.os.Build.VERSION.SDK_INT
+
+    Log.d(tag, "--- Device Environment ---")
+    Log.d(tag, "Device      : $manufacturer / $brand / $model")
+    Log.d(tag, "Android     : $androidVer (API $sdk)")
+    Log.d(tag, "Play Services available : $playServicesAvailable (code=$playServicesCode msg=$playServicesMsg)")
+    Log.d(tag, "Google accounts on device : $accountCount")
+    Log.d(tag, "--- Request Config ---")
+    Log.d(tag, "Credential option : GetSignInWithGoogleOption (standard account picker, bypasses One Tap)")
+    Log.d(tag, "WEB_CLIENT_ID     : ${GoogleAuthConfig.WEB_CLIENT_ID}")
+
+    if (!playServicesAvailable) {
+        val msg = "Google Play Services unavailable: $playServicesMsg (code=$playServicesCode)"
+        Log.e(tag, msg)
+        onError(msg)
+        return
+    }
+
+    try {
+        val activity = context as? Activity ?: run {
+            val msg = "Sign-in requires an Activity context — got ${context::class.simpleName}"
+            Log.e(tag, msg)
+            onError(msg)
+            return
+        }
+
+        val credentialManager = CredentialManager.create(context)
+
+        // GetSignInWithGoogleOption shows the standard "Choose an account" dialog.
+        // It does NOT use One Tap — avoiding the [28439] "User disabled the feature"
+        // error that fires when One Tap has been suppressed (dismissed too many times
+        // or restricted by OEM like MIUI/HyperOS).
+        val signInOption = GetSignInWithGoogleOption.Builder(GoogleAuthConfig.WEB_CLIENT_ID)
+            .build()
+
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(signInOption)
+            .build()
+
+        Log.d(tag, "Calling CredentialManager.getCredential() with GetSignInWithGoogleOption…")
+        val result = credentialManager.getCredential(activity, request)
+        val credential = result.credential
+        Log.d(tag, "Credential received — type: ${credential.type}")
+
+        if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+            val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
+            Log.d(tag, "Sign-in SUCCESS — email: ${googleCredential.id}")
+            onSuccess(
+                googleCredential.displayName ?: "User",
+                googleCredential.id,
+                googleCredential.profilePictureUri?.toString(),
+                googleCredential.id,
+            )
+        } else {
+            val msg = "Unexpected credential type: ${credential.type}"
+            Log.e(tag, msg)
+            onError(msg)
+        }
+    } catch (e: GetCredentialCancellationException) {
+        Log.d(tag, "Sign-in cancelled by user.")
+        onError("")
+    } catch (e: GetCredentialException) {
+        Log.e(tag, "=== GetCredentialException ===")
+        Log.e(tag, "Class   : ${e.javaClass.name}")
+        Log.e(tag, "Type    : ${e.type}")
+        Log.e(tag, "Message : ${e.message}")
+        Log.e(tag, "Cause   : ${e.cause}")
+        Log.e(tag, "Stack trace:", e)
+        Log.e(tag, "--- Diagnostics ---")
+        Log.e(tag, "Play Services: $playServicesAvailable ($playServicesMsg)")
+        Log.e(tag, "Google accounts: $accountCount")
+        Log.e(tag, "Device: $manufacturer $model (Android $androidVer)")
+        Log.e(tag, "Package: $packageName  SHA-1: $sha1")
+        onError("Sign-in failed: ${e.message}")
+    } catch (e: Exception) {
+        Log.e(tag, "Unexpected exception during sign-in", e)
+        onError("Unexpected error: ${e.message}")
+    }
+}
+
+@Composable
+fun ProgressSection(state: ProfileUiState) {
+    SectionTitle("Your Journey")
+
+    val streakAnim = remember { Animatable(0f) }
+    LaunchedEffect(state.currentStreak) {
+        streakAnim.animateTo(state.currentStreak.toFloat(), MotionTokens.slowTween())
+    }
+    val prayerAnim = remember { Animatable(0f) }
+    LaunchedEffect(state.totalPrayers) {
+        prayerAnim.animateTo(state.totalPrayers.toFloat(), MotionTokens.slowTween())
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        ProgressCard(
+            title = "Streak",
+            value = if (state.currentStreak > 0) "${streakAnim.value.toInt()} days" else "—",
+            modifier = Modifier.weight(1f),
+        )
+        ProgressCard(
+            title = "Today's Salah",
+            value = "${prayerAnim.value.toInt()} / 5",
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+fun ProgressCard(title: String, value: String, modifier: Modifier = Modifier) {
+    val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    val cardColor = if (isLight) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f) else ElevatedSurface
+
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        border = if (!isLight) androidx.compose.foundation.BorderStroke(1.dp, GoldAccent.copy(alpha = 0.10f)) else null,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                text = title.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MutedSage,
+                letterSpacing = 1.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+    }
+}
+
+/**
+ * Backup & Transfer section.
+ *
+ * Features:
+ *  - Create Backup → SAF → ZIP (manifest.json + metadata.json + AES-256-GCM backup.json)
+ *  - Share Backup → cache → Android share sheet (WhatsApp, Drive, Telegram, Files, …)
+ *  - Restore Backup → SAF picker → preview dialog → confirm → restore
+ *  - Auto Backup → WorkManager periodic job (offline, no network)
+ *
+ * No cloud. No account required. User owns their data.
+ */
+@Composable
+fun BackupSection(state: ProfileUiState, viewModel: ProfileViewModel) {
+    val backupState by viewModel.backupUiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // SAF — create new ZIP backup file
+    val createBackupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri -> uri?.let { viewModel.createBackup(it) } }
+
+    // SAF — open existing ZIP backup for restore (shows preview first)
+    val restorePickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri -> uri?.let { viewModel.loadBackupPreview(it) } }
+
+    val lastBackupText = when {
+        state.lastBackupMs == 0L -> "No backup yet"
+        else -> "Last backup: ${SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(Date(state.lastBackupMs))}"
+    }
+    val busy = backupState.isBackingUp || backupState.isRestoring || backupState.isLoadingPreview
+
+    SectionTitle("Backup & Transfer")
+
+    // Feedback banner (result or error)
+    if (backupState.resultMessage != null || backupState.errorMessage != null) {
+        val msg = backupState.resultMessage ?: backupState.errorMessage ?: ""
+        val isErr = backupState.errorMessage != null
+        Surface(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            shape = RoundedCornerShape(12.dp),
+            color = if (isErr) MaterialTheme.colorScheme.errorContainer else EmeraldPrimary.copy(alpha = 0.12f),
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                Text(msg, style = MaterialTheme.typography.bodySmall,
+                    color = if (isErr) MaterialTheme.colorScheme.onErrorContainer else EmeraldPrimary,
+                    modifier = Modifier.weight(1f))
+                TextButton(onClick = { viewModel.clearBackupResult() }) {
+                    Text("OK", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
+    }
+
+    // Restore preview confirmation dialog
+    val preview = backupState.preview
+    if (preview != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissPreview() },
+            title = { Text("Restore this backup?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PreviewRow("Backup date",     preview.backupDate)
+                    PreviewRow("App version",     "Niyyah ${preview.appVersion}")
+                    PreviewRow("Prayer records",  "${preview.prayerRecords}")
+                    PreviewRow("Current streak",  "${preview.currentStreak} ${if (preview.currentStreak == 1) "Day" else "Days"}")
+                    PreviewRow("Blocked apps",    "${preview.blockedApps}")
+                    if (preview.localMasjidName != null) {
+                        PreviewRow("Local Masjid", preview.localMasjidName)
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Existing prayer history and settings will be replaced.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.confirmRestore() },
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                ) { Text("Restore") }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissPreview() }) { Text("Cancel") }
+            },
+        )
+    }
+
+    CardGroup {
+        // Create Backup
+        SettingsRowItem(
+            icon = Icons.Outlined.Backup,
+            title = if (backupState.isBackingUp) "Creating backup…" else "Create Backup",
+            subtitle = lastBackupText,
+            onClick = {
+                if (!busy) {
+                    val filename = "Niyyah_Backup_${
+                        SimpleDateFormat("yyyy_MM_dd", Locale.US).format(Date())
+                    }.zip"
+                    createBackupLauncher.launch(filename)
+                }
+            },
+            trailing = if (backupState.isBackingUp) {
+                { CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = EmeraldPrimary) }
+            } else null,
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+
+        // Share Backup (share sheet)
+        SettingsRowItem(
+            icon = Icons.Outlined.Share,
+            title = "Share Backup",
+            subtitle = "Send via WhatsApp, Telegram, Files…",
+            onClick = {
+                if (!busy) scope.launch {
+                    try {
+                        val shareUri = context.let { ctx ->
+                            (ctx.applicationContext as? com.salahlock.app.SalahLockApplication)
+                                ?.backupRepository?.createShareableBackup()
+                        } ?: return@launch
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/zip"
+                            putExtra(Intent.EXTRA_STREAM, shareUri)
+                            putExtra(Intent.EXTRA_SUBJECT, "Niyyah Backup")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(Intent.createChooser(intent, "Share Backup"))
+                    } catch (e: Exception) {
+                        android.util.Log.e("BackupSection", "Share failed: ${e.message}", e)
+                    }
+                }
+            },
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+
+        // Restore Backup
+        SettingsRowItem(
+            icon = Icons.Outlined.Restore,
+            title = when {
+                backupState.isLoadingPreview -> "Reading backup…"
+                backupState.isRestoring -> "Restoring…"
+                else -> "Restore Backup"
+            },
+            subtitle = "Import from a .zip backup file",
+            onClick = {
+                if (!busy) restorePickerLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
+            },
+            trailing = if (backupState.isLoadingPreview || backupState.isRestoring) {
+                { CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = EmeraldPrimary) }
+            } else null,
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+
+        // Auto Backup frequency
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+            Text("Auto Backup", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text("Saves to device storage automatically", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("DISABLED" to "Off", "DAILY" to "Daily", "WEEKLY" to "Weekly", "MONTHLY" to "Monthly")
+                    .forEach { (value, label) ->
+                        val selected = state.autoBackupFrequency == value
+                        FilterChip(
+                            selected = selected,
+                            onClick = { viewModel.setAutoBackupFrequency(value) },
+                            label = { Text(label, style = MaterialTheme.typography.labelMedium) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = EmeraldPrimary.copy(alpha = 0.15f),
+                                selectedLabelColor = EmeraldPrimary,
+                            ),
+                        )
+                    }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewRow(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+@Composable
+fun SalahLockSection(state: ProfileUiState, viewModel: ProfileViewModel, onNavigateToBlacklist: () -> Unit) {
+    SectionTitle("Prayer Lock Rules")
+    CardGroup {
+        SettingsRowItem(icon = Icons.Outlined.Apps, title = "Manage Locked Apps", subtitle = "${state.blockedAppCount} apps locked", onClick = onNavigateToBlacklist)
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+
+        // Per-prayer lock toggles
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+            Text("Lock Per Prayer", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "Disable locking for specific prayers.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            state.prayerLockEnabled.forEach { (prayer, enabled) ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(prayer, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                    Switch(
+                        checked = enabled,
+                        onCheckedChange = { viewModel.setPrayerLockEnabled(prayer, it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = EmeraldPrimary,
+                        ),
+                    )
+                }
+            }
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+
+        // Permissions sub-section
+        Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Outlined.AdminPanelSettings, contentDescription = null, tint = EmeraldPrimary)
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Permission Status", fontWeight = FontWeight.Bold)
+                val allGranted = state.hasOverlayPermission && state.hasUsageStatsPermission && state.hasLocationPermission
                 Text(
-                    text = uiState.reflectionMonthLabel.ifBlank { "—" },
-                    style = NiyyahType.Badge.copy(letterSpacing = 1.2.sp, lineHeight = 12.sp),
-                    color = Color.White,
-                )
-                Text(
-                    text = uiState.reflectionDayLabel,
-                    style = NiyyahType.Quote.copy(lineHeight = 24.sp),
-                    color = Color.White,
-                    modifier = Modifier.padding(top = 4.dp),
+                    text = if (allGranted) "All Systems Go" else "Action Required",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (allGranted) EmeraldPrimary else MaterialTheme.colorScheme.error,
                 )
             }
         }
     }
 }
 
-/** Quick links — node 1:742. Live counts; navigate to Collections / Bookmarks. */
 @Composable
-private fun QuickLinks(
-    uiState: ProfileUiState,
-    onOpenCollections: () -> Unit,
-    onOpenBookmarks: () -> Unit,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 40.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        QuickLinkRow(
-            iconRes = R.drawable.ic_quicklink_collections,
-            title = "My Collections",
-            subtitle = "${uiState.collectionsCount} collections curated",
-            onClick = onOpenCollections,
-        )
-        QuickLinkRow(
-            iconRes = R.drawable.ic_bookmark_outline,
-            title = "Bookmarks",
-            subtitle = "${uiState.bookmarksCount} saved items",
-            onClick = onOpenBookmarks,
+fun AppearanceSection(state: ProfileUiState, viewModel: ProfileViewModel) {
+    SectionTitle("Appearance")
+    CardGroup {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text("Theme", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                ThemePreviewCard(
+                    modifier = Modifier.weight(1f),
+                    title = "System",
+                    icon = Icons.Outlined.SettingsSuggest,
+                    isSelected = state.themePreference == ThemePreference.SYSTEM,
+                    onClick = { viewModel.setThemePreference(ThemePreference.SYSTEM) }
+                )
+                ThemePreviewCard(
+                    modifier = Modifier.weight(1f),
+                    title = "Light",
+                    icon = Icons.Outlined.LightMode,
+                    isSelected = state.themePreference == ThemePreference.LIGHT,
+                    onClick = { viewModel.setThemePreference(ThemePreference.LIGHT) }
+                )
+                ThemePreviewCard(
+                    modifier = Modifier.weight(1f),
+                    title = "Dark",
+                    icon = Icons.Outlined.DarkMode,
+                    isSelected = state.themePreference == ThemePreference.DARK,
+                    onClick = { viewModel.setThemePreference(ThemePreference.DARK) }
+                )
+                ThemePreviewCard(
+                    modifier = Modifier.weight(1f),
+                    title = "AMOLED",
+                    icon = Icons.Outlined.Brightness3,
+                    isSelected = state.themePreference == ThemePreference.AMOLED,
+                    onClick = { viewModel.setThemePreference(ThemePreference.AMOLED) }
+                )
+            }
+        }
+        
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+        
+        SettingsRowItem(
+            icon = Icons.Outlined.InvertColors, 
+            title = "Dynamic Colors", 
+            subtitle = "Follow system wallpaper colors", 
+            onClick = { /* Disabled Placeholder */ }
         )
     }
 }
 
 @Composable
-private fun QuickLinkRow(iconRes: Int, title: String, subtitle: String, onClick: () -> Unit) {
+fun ThemePreviewCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val borderColor by animateColorAsState(
+        targetValue = if (isSelected) EmeraldPrimary else Color.Transparent,
+        label = "ThemePreviewBorder"
+    )
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) EmeraldPrimary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface,
+        label = "ThemePreviewBackground"
+    )
+
+    Card(
+        modifier = modifier
+            .height(80.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        border = BorderStroke(2.dp, borderColor)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon, 
+                contentDescription = title, 
+                tint = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title, 
+                style = MaterialTheme.typography.labelSmall, 
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+fun SettingsSection(state: ProfileUiState, viewModel: ProfileViewModel) {
+    SectionTitle("Settings")
+    var showCalcDialog by remember { mutableStateOf(false) }
+
+    CardGroup {
+        SettingsRowItem(icon = Icons.Outlined.Calculate, title = "Calculation Method", subtitle = state.calcMethod, onClick = { showCalcDialog = true })
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+        
+        Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Outlined.NotificationsActive, contentDescription = null, tint = EmeraldPrimary)
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Adhan Alerts", fontWeight = FontWeight.Bold)
+                Text("Lock apps when adhan calls", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Switch(
+                checked = state.adhanEnabled,
+                onCheckedChange = { viewModel.setAdhanEnabled(it) },
+                colors = SwitchDefaults.colors(checkedThumbColor = EmeraldPrimary, checkedTrackColor = EmeraldPrimary.copy(alpha = 0.3f))
+            )
+        }
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+        SettingsRowItem(icon = Icons.Outlined.Timer, title = "Lock Duration", subtitle = "${state.lockDurationMin} minutes", onClick = {})
+    }
+
+    if (showCalcDialog) {
+        AlertDialog(
+            onDismissRequest = { showCalcDialog = false },
+            title = { Text("Calculation Method") },
+            text = {
+                Column {
+                    val methods = listOf("KARACHI", "ISNA", "MWL", "EGYPT")
+                    methods.forEach { method ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.setCalculationMethod(method)
+                                    showCalcDialog = false
+                                }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(selected = state.calcMethod == method, onClick = null)
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(text = method)
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showCalcDialog = false }) { Text("Close") } }
+        )
+    }
+}
+
+@Composable
+fun VerificationSection(state: ProfileUiState, viewModel: ProfileViewModel) {
+    SectionTitle("Verification")
+    CardGroup {
+        // Method selector
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+            Text("Verification Method", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(Modifier.height(4.dp))
+            Text("How you confirm prayer before unlocking.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(12.dp))
+            listOf(
+                "TEXT" to "Text",
+                "VOICE" to "Voice",
+                "ASK_EVERY_TIME" to "Ask Every Time",
+            ).forEach { (value, label) ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RadioButton(
+                        selected = state.verificationMethod == value,
+                        onClick = { viewModel.setVerificationMethod(value) },
+                        colors = RadioButtonDefaults.colors(selectedColor = EmeraldPrimary),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                }
+            }
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+
+        // Confirmation count
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+            Text("Confirmations", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(Modifier.height(4.dp))
+            Text("How many times to repeat the affirmation.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(12.dp))
+            listOf(1, 2, 3).forEach { count ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RadioButton(
+                        selected = state.verificationConfirmCount == count,
+                        onClick = { viewModel.setVerificationConfirmCount(count) },
+                        colors = RadioButtonDefaults.colors(selectedColor = EmeraldPrimary),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("$count", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                }
+            }
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+
+        // Reminder sources
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+            Text("Reminder Sources", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(Modifier.height(4.dp))
+            Text("Which types of reminders to show before verification.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(12.dp))
+            data class ReminderToggle(val label: String, val checked: Boolean, val onToggle: (Boolean) -> Unit)
+            listOf(
+                ReminderToggle("Quran", state.reminderQuranEnabled) { viewModel.setReminderQuranEnabled(it) },
+                ReminderToggle("Hadith", state.reminderHadithEnabled) { viewModel.setReminderHadithEnabled(it) },
+                ReminderToggle("Reflection", state.reminderReflectionEnabled) { viewModel.setReminderReflectionEnabled(it) },
+            ).forEach { (label, checked, setter) ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                    Switch(
+                        checked = checked,
+                        onCheckedChange = { setter(it) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = EmeraldPrimary),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SupportSection(onFeedback: () -> Unit = {}, onHelp: () -> Unit = {}) {
+    SectionTitle("Support")
+    CardGroup {
+        SettingsRowItem(icon = Icons.Outlined.Feedback, title = "Send Feedback", subtitle = "Email or share your thoughts", onClick = onFeedback)
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+        SettingsRowItem(icon = Icons.Outlined.HelpOutline, title = "Help Center", subtitle = "FAQ and common questions", onClick = onHelp)
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+        SettingsRowItem(icon = Icons.Outlined.Info, title = "About Niyyah", subtitle = "Version ${com.salahlock.app.BuildConfig.VERSION_NAME}", onClick = {})
+    }
+}
+
+/**
+ * SL-010 — Send Feedback via email intent; falls back to the generic share sheet
+ * when no email app is installed. No network code, no new dependencies.
+ */
+fun sendFeedback(context: android.content.Context) {
+    val subject = "Niyyah Feedback (v${com.salahlock.app.BuildConfig.VERSION_NAME})"
+    val email = android.content.Intent(android.content.Intent.ACTION_SENDTO).apply {
+        data = android.net.Uri.parse("mailto:")
+        putExtra(android.content.Intent.EXTRA_EMAIL, arrayOf("salahlock.app@gmail.com"))
+        putExtra(android.content.Intent.EXTRA_SUBJECT, subject)
+    }
+    try {
+        context.startActivity(android.content.Intent.createChooser(email, "Send Feedback"))
+    } catch (_: Exception) {
+        val share = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_SUBJECT, subject)
+            putExtra(android.content.Intent.EXTRA_TEXT, "My feedback about Niyyah:\n\n")
+        }
+        runCatching { context.startActivity(android.content.Intent.createChooser(share, "Send Feedback")) }
+    }
+}
+
+// ── SL-009: Dedicated settings pages ─────────────────────────────────────────────
+// Thin Scaffold wrappers that REUSE the existing section composables + ProfileViewModel.
+// No duplicated state: all preferences live in DataStore/Room behind the same repos.
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsSubPage(
+    title: String,
+    onBack: () -> Unit,
+    content: @Composable ColumnScope.(ProfileUiState, ProfileViewModel) -> Unit,
+) {
+    val viewModel: ProfileViewModel = viewModel()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(title, fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 48.dp),
+        ) {
+            content(state, viewModel)
+        }
+    }
+}
+
+@Composable
+fun VerificationSettingsScreen(onBack: () -> Unit) =
+    SettingsSubPage("Verification", onBack) { state, vm -> VerificationSection(state, vm) }
+
+@Composable
+fun AppearanceSettingsScreen(onBack: () -> Unit) =
+    SettingsSubPage("Appearance", onBack) { state, vm -> AppearanceSection(state, vm) }
+
+@Composable
+fun BackupSettingsScreen(onBack: () -> Unit) =
+    SettingsSubPage("Backup & Transfer", onBack) { state, vm -> BackupSection(state, vm) }
+
+@Composable
+fun AppSettingsScreen(onBack: () -> Unit) =
+    SettingsSubPage("App Settings", onBack) { state, vm -> SettingsSection(state, vm) }
+
+/** SL-006 — Lock Per Prayer page. Reuses ProfileViewModel.setPrayerLockEnabled → UserPreferences. */
+@Composable
+fun LockPerPrayerScreen(onBack: () -> Unit) =
+    SettingsSubPage("Lock Per Prayer", onBack) { state, vm ->
+        Text(
+            "Disable locking for specific prayers. Locking stays active for all others.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(vertical = 12.dp),
+        )
+        CardGroup {
+            state.prayerLockEnabled.forEach { (prayer, enabled) ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(prayer, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                    Switch(
+                        checked = enabled,
+                        onCheckedChange = { vm.setPrayerLockEnabled(prayer, it) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = EmeraldPrimary),
+                    )
+                }
+            }
+        }
+    }
+
+/** SL-008/SL-009 — Permission Status page (bottom entry of Settings). ON_RESUME refresh preserved. */
+@Composable
+fun PermissionStatusScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val viewModel: ProfileViewModel = viewModel()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Refresh when returning from system settings (preserved from RC.5).
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val obs = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) viewModel.checkPermissions()
+        }
+        lifecycleOwner.lifecycle.addObserver(obs)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }
+    }
+
+    SettingsSubPage("Permission Status", onBack) { s, _ ->
+        PermissionStatusSection(s) { kind ->
+            context.startActivity(permissionIntent(context, kind))
+        }
+    }
+}
+
+/** SL-010 — Help Center: simple local FAQ, no network. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HelpCenterScreen(onBack: () -> Unit) {
+    val faqs = listOf(
+        "How does Niyyah work?" to "When a prayer time begins, the apps you selected are locked until you confirm your prayer. Confirm from the lock screen or the Home tab.",
+        "Which apps get locked?" to "Only the apps you choose in the Lock Apps tab. Calls, SMS, and essential system apps are never blocked.",
+        "How do I verify a prayer?" to "Tap \"I Prayed\" on Home, or complete the short reflection + typed/voice affirmation on the lock screen.",
+        "What is Pause Niyyah?" to "A temporary break (15m–1h or until the next prayer). While paused, no locking or adhan notifications occur. Prayer tracking continues.",
+        "What are emergency overrides?" to "Three per month. Use one to bypass a lock in a genuine emergency — it still counts toward your day's record.",
+        "How do local masjid timings work?" to "Enter your masjid's jamaat times in Home → Your Masjid. They replace the calculated times everywhere, including locking.",
+        "Why does Niyyah need Usage Access and Display Over Apps?" to "Usage Access detects which app is open during a prayer window; Display Over Apps shows the prayer reminder over it. Both are used only during prayer windows.",
+        "Is my data private?" to "Yes. Prayer history, location, and settings stay on your device. Backups are local files you control. Nothing is uploaded.",
+    )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Help Center", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(bottom = 48.dp),
+        ) {
+            items(faqs.size) { i ->
+                val (q, a) = faqs[i]
+                var expanded by remember { mutableStateOf(false) }
+                Card(
+                    modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(0.dp),
+                ) {
+                    Column(Modifier.padding(20.dp)) {
+                        Text(q, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                        if (expanded) {
+                            Spacer(Modifier.height(8.dp))
+                            Text(a, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ── Permission Status (RC.5 — moved from Lock Apps tab) ─────────────────────────
+
+private fun permissionIntent(context: android.content.Context, kind: String): android.content.Intent = when (kind) {
+    "overlay" -> com.salahlock.app.util.PermissionHelper.overlaySettingsIntent(context)
+    "usage" -> android.content.Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS)
+    "battery" -> com.salahlock.app.util.PermissionHelper.batteryOptimizationIntent(context)
+    "notifications" -> android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+        .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+    else -> android.content.Intent(android.provider.Settings.ACTION_SETTINGS)
+}
+
+@Composable
+fun PermissionStatusSection(state: ProfileUiState, onOpen: (String) -> Unit) {
+    SectionTitle("Permission Status")
+    CardGroup {
+        PermissionStatusRow("Usage Access", state.hasUsageStatsPermission) { onOpen("usage") }
+        PermissionStatusRow("Display Over Apps", state.hasOverlayPermission) { onOpen("overlay") }
+        PermissionStatusRow("Notifications", state.hasNotificationPermission) { onOpen("notifications") }
+        PermissionStatusRow("Ignore Battery Optimization", state.hasBatteryOptimization) { onOpen("battery") }
+    }
+}
+
+@Composable
+private fun PermissionStatusRow(label: String, granted: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(NiyyahColors.Surface, CardRadius)
-            .border(1.dp, NiyyahColors.Border, CardRadius)
-            .clickable { onClick() }
-            .padding(17.dp),
+            .clickable(enabled = !granted, onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Box(
-            modifier = Modifier.size(40.dp).background(NiyyahColors.SoftFill, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                tint = NiyyahColors.TextPrimary,
-                modifier = Modifier.size(18.dp),
-            )
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+        if (granted) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.CheckCircle, contentDescription = "Granted", tint = EmeraldPrimary, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Granted", style = MaterialTheme.typography.labelMedium, color = EmeraldPrimary)
+            }
+        } else {
+            Text("Grant →", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error)
         }
+    }
+}
+
+@Composable
+fun SectionTitle(title: String) {
+    // Stitch V2 section header: small uppercase sans label, wide tracking
+    Text(
+        text = title.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        letterSpacing = 1.5.sp,
+        modifier = Modifier.padding(bottom = 10.dp),
+    )
+}
+
+@Composable
+fun CardGroup(content: @Composable ColumnScope.() -> Unit) {
+    // Stitch V2 card: surface + 1dp hairline, 16dp radius, no shadow
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    ) {
+        Column { content() }
+    }
+}
+
+@Composable
+fun SettingsRowItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    onClick: () -> Unit,
+    trailing: (@Composable () -> Unit)? = null,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = NiyyahType.LabelUppercase.copy(letterSpacing = 0.7.sp),
-                color = NiyyahColors.TextPrimary,
-            )
-            Text(text = subtitle, style = NiyyahType.Badge, color = NiyyahColors.TextBody)
+            Text(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+            if (subtitle != null) {
+                Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
-        Icon(
-            painter = painterResource(R.drawable.ic_chevron_right),
-            contentDescription = null,
-            tint = NiyyahColors.TextBody,
-            modifier = Modifier.width(8.dp).height(12.dp),
-        )
+        if (trailing != null) {
+            Spacer(Modifier.width(8.dp))
+            trailing()
+        }
     }
 }

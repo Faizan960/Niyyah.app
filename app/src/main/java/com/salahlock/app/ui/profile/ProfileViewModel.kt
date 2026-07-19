@@ -30,30 +30,6 @@ data class ProfileUiState(
     val currentStreak: Int = 0,
     val totalPrayers: Int = 0,
 
-    // BM-006.7 — live content statistics
-    /** Prayer consistency over the last 7 days (verified / expected 35). */
-    val weeklyConsistencyPercent: Int = 0,
-    /** Current juz reached by the newest Quran reading position (0 = none). */
-    val readingJuz: Int = 0,
-    /** Transliterated name of the most recently read surah. */
-    val readingSurahName: String = "",
-    /** Overall Quran completion 0.0–1.0 (furthest ayah reached per surah). */
-    val readingProgressFraction: Float = 0f,
-    val bookmarksCount: Int = 0,
-    val collectionsCount: Int = 0,
-    /** Unlocked achievements, most recent first (drives the Milestones bento). */
-    val unlockedAchievements: List<com.salahlock.app.data.model.Achievement> = emptyList(),
-    /** Current month's spiritual rank transliteration (e.g. "Muhsin"). */
-    val spiritualRank: String = "",
-    /** "Member since 'YY" derived from the earliest prayer record. */
-    val memberSince: String = "",
-    /** Latest monthly reflection preview (headline/body/month), if any. */
-    val reflectionHeadline: String = "",
-    val reflectionBody: String = "",
-    /** e.g. "NOV" / "12" for the reflection date badge. */
-    val reflectionMonthLabel: String = "",
-    val reflectionDayLabel: String = "",
-
     // Account
     val syncStatus: String = "Not synced — cloud sync coming soon",
 
@@ -136,84 +112,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         observeStreak()
         observeVerificationPrefs()
         observeBackupPrefs()
-        observeContentStats()
-        loadSpiritualStats()
-    }
-
-    // ── BM-006.7: live content statistics ────────────────────────────────────
-
-    private fun observeContentStats() {
-        viewModelScope.launch {
-            combine(
-                app.bookmarksRepository.observeAll(),
-                app.collectionsRepository.observeCollectionCount(),
-                app.quranRepository.getAllProgress(),
-            ) { bookmarks, collectionCount, progress ->
-                Triple(bookmarks.size, collectionCount, progress)
-            }.collect { (bookmarkCount, collectionCount, progress) ->
-                val surahs = app.quranRepository.getSurahs()
-                val totalAyahs = surahs.sumOf { it.ayahs.size }
-                val readAyahs = progress.sumOf { p ->
-                    val max = surahs.firstOrNull { it.number == p.surahNumber }?.ayahs?.size ?: p.maxAyah
-                    p.maxAyah.coerceAtMost(max)
-                }
-                val latest = progress.maxByOrNull { it.timestampMs }
-                val latestSurah = latest?.let { l -> surahs.firstOrNull { it.number == l.surahNumber } }
-                val juz = latestSurah?.ayahs
-                    ?.firstOrNull { it.numberInSurah == latest.lastAyah }?.juz
-                    ?: latestSurah?.ayahs?.firstOrNull()?.juz ?: 0
-                _extraState.update {
-                    it.copy(
-                        bookmarksCount = bookmarkCount,
-                        collectionsCount = collectionCount,
-                        readingJuz = juz,
-                        readingSurahName = latestSurah?.transliteration ?: "",
-                        readingProgressFraction =
-                            if (totalAyahs == 0) 0f else readAyahs.toFloat() / totalAyahs,
-                    )
-                }
-            }
-        }
-    }
-
-    private fun loadSpiritualStats() {
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            // Weekly consistency: verified prayers over the last 7 days / 35.
-            val today = java.time.LocalDate.now()
-            val records = runCatching {
-                app.database.prayerRecordDao()
-                    .getRecordsBetween(today.minusDays(6).toString(), today.toString())
-            }.getOrDefault(emptyList())
-            val done = records.count { it.verified || it.overrideUsed }
-            val weekly = (done * 100 / 35).coerceAtMost(100)
-
-            val earliest = runCatching { app.database.prayerRecordDao().getEarliestDate() }.getOrNull()
-            val memberSince = earliest
-                ?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() }
-                ?.let { "Member since '${it.year % 100}" }
-                ?: "Member since '${today.year % 100}"
-
-            val report = runCatching { app.spiritualReportRepository.currentMonthReport() }.getOrNull()
-            val unlocked = runCatching { app.spiritualReportRepository.allAchievements() }
-                .getOrDefault(emptyList())
-                .filter { it.unlocked }
-                .sortedByDescending { it.unlockedMonth }
-
-            _extraState.update {
-                it.copy(
-                    weeklyConsistencyPercent = weekly,
-                    memberSince = memberSince,
-                    spiritualRank = report?.rank?.transliteration ?: "",
-                    unlockedAchievements = unlocked,
-                    reflectionHeadline = report?.motivation?.headline ?: "",
-                    reflectionBody = report?.motivation?.body ?: "",
-                    reflectionMonthLabel = today.month.getDisplayName(
-                        java.time.format.TextStyle.SHORT, Locale.ENGLISH,
-                    ).uppercase(),
-                    reflectionDayLabel = today.dayOfMonth.toString(),
-                )
-            }
-        }
     }
 
     // ── Sprint E.2: Backup ────────────────────────────────────────────────────
@@ -326,6 +224,11 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     fun clearSignInError() {
         _extraState.update { it.copy(signInState = SignInState.IDLE, signInError = null) }
+    }
+
+    fun signOut() {
+        identity.clearIdentity()
+        _extraState.update { it.copy(signInState = SignInState.IDLE) }
     }
 
     private fun observeIdentity() {
