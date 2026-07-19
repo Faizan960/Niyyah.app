@@ -157,8 +157,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun observeUserIdentity() {
+        // BM-AUTH-001: greeting name comes from the Clerk-backed single auth state.
         viewModelScope.launch {
-            app.userIdentity.displayName.collect { name ->
+            app.authRepository.state.collect { state ->
+                val name = (state as? com.salahlock.app.auth.AuthState.SignedIn)?.user?.name ?: ""
                 _uiState.update { it.copy(userName = name) }
             }
         }

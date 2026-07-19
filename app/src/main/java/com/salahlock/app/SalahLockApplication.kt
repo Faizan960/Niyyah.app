@@ -3,8 +3,9 @@ package com.salahlock.app
 import android.app.Application
 import android.util.Log
 import androidx.work.Configuration
+import com.clerk.api.Clerk
+import com.salahlock.app.auth.AuthRepository
 import com.salahlock.app.data.db.AppDatabase
-import com.salahlock.app.data.preferences.UserIdentityPreferences
 import com.salahlock.app.data.preferences.UserPreferences
 import com.salahlock.app.data.repository.AppBlacklistRepository
 import com.salahlock.app.data.repository.EmergencyOverrideRepository
@@ -31,8 +32,15 @@ class SalahLockApplication : Application(), Configuration.Provider {
     // Manual dependency injection — no Hilt for MVP
     val database by lazy { AppDatabase.getInstance(this) }
     val userPreferences by lazy { UserPreferences(this) }
-    val userIdentity by lazy { UserIdentityPreferences(this) }
     val networkObserver by lazy { NetworkConnectivityObserver(this) }
+
+    /**
+     * BM-AUTH-001 — single authentication authority. Wraps the Clerk Android SDK
+     * and exposes one [AuthState] flow (Loading/SignedOut/SignedIn/Error) derived
+     * from Clerk's session. All auth-aware UI observes this; no screen calls Clerk
+     * directly. Clerk must be initialized (in [onCreate]) before this is collected.
+     */
+    val authRepository by lazy { AuthRepository(appScope) }
 
     val prayerSourceRepository by lazy {
         PrayerSourceRepository(userPreferences, database.localMasjidDao())
@@ -94,6 +102,16 @@ class SalahLockApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+
+        // BM-AUTH-001 — initialize Clerk first so session restoration begins at
+        // launch. The publishable key is a public/client-safe key injected from
+        // local.properties via BuildConfig. If it's blank (machine without the
+        // key), skip init — the app runs, auth simply stays signed-out.
+        if (BuildConfig.CLERK_PUBLISHABLE_KEY.isNotBlank()) {
+            Clerk.initialize(this, publishableKey = BuildConfig.CLERK_PUBLISHABLE_KEY)
+        } else {
+            Log.w("SalahLockApp", "Clerk publishable key missing — auth disabled.")
+        }
 
         // Register all notification channels at startup — MUST happen before any alarm fires
         NotificationHelper.createChannels(this)

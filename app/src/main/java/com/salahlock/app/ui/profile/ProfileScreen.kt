@@ -1,8 +1,5 @@
 package com.salahlock.app.ui.profile
 
-import android.app.Activity
-import android.content.pm.PackageManager
-import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,16 +22,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.credentials.CredentialManager
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.GetCredentialCancellationException
-import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.android.gms.common.GoogleApiAvailability
-import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.salahlock.app.auth.GoogleAuthConfig
 import com.salahlock.app.theme.*
 import com.salahlock.app.data.preferences.UserPreferences.ThemePreference
 import android.content.Intent
@@ -154,23 +143,8 @@ fun ProfileScreen(
  */
 @Composable
 fun ProfileHeader(state: ProfileUiState, viewModel: ProfileViewModel) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
-    LaunchedEffect(state.signInState) {
-        if (state.signInState == SignInState.LOADING) {
-            scope.launch {
-                performGoogleSignIn(
-                    context = context,
-                    onSuccess = { name, email, photo, id -> viewModel.onSignInSuccess(name, email, photo, id) },
-                    onError = { msg -> viewModel.onSignInError(msg) },
-                )
-            }
-        }
-    }
-    if (state.signInState == SignInState.ERROR) {
-        LaunchedEffect(state.signInError) { viewModel.clearSignInError() }
-    }
+    // BM-AUTH-001: sign-in/out are driven end-to-end by the ViewModel via Clerk
+    // (AuthRepository) — Clerk is the single authentication authority.
 
     // Count-up animations hoisted outside AnimatedContent — survive auth transitions
     val streakAnim = remember { Animatable(0f) }
@@ -419,142 +393,6 @@ fun ProfileHeader(state: ProfileUiState, viewModel: ProfileViewModel) {
                 }
             }
         }
-    }
-}
-
-/**
- * Performs the Credential Manager Google Sign-In flow.
- * Must be called from a coroutine with an Activity context.
- */
-private suspend fun performGoogleSignIn(
-    context: android.content.Context,
-    onSuccess: (name: String, email: String, photo: String?, googleId: String) -> Unit,
-    onError: (message: String) -> Unit,
-) {
-    val tag = "AuthDebug"
-
-    // Log diagnostic info before every attempt so it appears in Logcat regardless of outcome
-    val packageName = context.packageName
-    val sha1 = runCatching {
-        val sig = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-            context.packageManager
-                .getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-                .signingInfo
-                ?.apkContentsSigners
-                ?.firstOrNull()
-        } else {
-            @Suppress("DEPRECATION")
-            context.packageManager
-                .getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
-                .signatures
-                ?.firstOrNull()
-        }
-        sig?.let {
-            val md = java.security.MessageDigest.getInstance("SHA-1")
-            md.update(it.toByteArray())
-            md.digest().joinToString(":") { b -> "%02X".format(b) }
-        } ?: "unavailable"
-    }.getOrElse { "error reading SHA-1: ${it.message}" }
-
-    Log.d(tag, "=== Google Sign-In Attempt ===")
-    Log.d(tag, "WEB_CLIENT_ID : ${GoogleAuthConfig.WEB_CLIENT_ID}")
-    Log.d(tag, "Package name  : $packageName")
-    Log.d(tag, "SHA-1 (debug) : $sha1")
-    Log.d(tag, "isConfigured  : ${GoogleAuthConfig.isConfigured}")
-
-    // --- Device environment diagnostics ---
-    val playServicesCode = GoogleApiAvailability.getInstance()
-        .isGooglePlayServicesAvailable(context)
-    val playServicesAvailable = playServicesCode == com.google.android.gms.common.ConnectionResult.SUCCESS
-    val playServicesMsg = GoogleApiAvailability.getInstance()
-        .getErrorString(playServicesCode)
-
-    val accountCount = runCatching {
-        android.accounts.AccountManager.get(context)
-            .getAccountsByType("com.google").size
-    }.getOrDefault(-1)
-
-    val manufacturer = android.os.Build.MANUFACTURER
-    val brand = android.os.Build.BRAND
-    val model = android.os.Build.MODEL
-    val androidVer = android.os.Build.VERSION.RELEASE
-    val sdk = android.os.Build.VERSION.SDK_INT
-
-    Log.d(tag, "--- Device Environment ---")
-    Log.d(tag, "Device      : $manufacturer / $brand / $model")
-    Log.d(tag, "Android     : $androidVer (API $sdk)")
-    Log.d(tag, "Play Services available : $playServicesAvailable (code=$playServicesCode msg=$playServicesMsg)")
-    Log.d(tag, "Google accounts on device : $accountCount")
-    Log.d(tag, "--- Request Config ---")
-    Log.d(tag, "Credential option : GetSignInWithGoogleOption (standard account picker, bypasses One Tap)")
-    Log.d(tag, "WEB_CLIENT_ID     : ${GoogleAuthConfig.WEB_CLIENT_ID}")
-
-    if (!playServicesAvailable) {
-        val msg = "Google Play Services unavailable: $playServicesMsg (code=$playServicesCode)"
-        Log.e(tag, msg)
-        onError(msg)
-        return
-    }
-
-    try {
-        val activity = context as? Activity ?: run {
-            val msg = "Sign-in requires an Activity context — got ${context::class.simpleName}"
-            Log.e(tag, msg)
-            onError(msg)
-            return
-        }
-
-        val credentialManager = CredentialManager.create(context)
-
-        // GetSignInWithGoogleOption shows the standard "Choose an account" dialog.
-        // It does NOT use One Tap — avoiding the [28439] "User disabled the feature"
-        // error that fires when One Tap has been suppressed (dismissed too many times
-        // or restricted by OEM like MIUI/HyperOS).
-        val signInOption = GetSignInWithGoogleOption.Builder(GoogleAuthConfig.WEB_CLIENT_ID)
-            .build()
-
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(signInOption)
-            .build()
-
-        Log.d(tag, "Calling CredentialManager.getCredential() with GetSignInWithGoogleOption…")
-        val result = credentialManager.getCredential(activity, request)
-        val credential = result.credential
-        Log.d(tag, "Credential received — type: ${credential.type}")
-
-        if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-            val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
-            Log.d(tag, "Sign-in SUCCESS — email: ${googleCredential.id}")
-            onSuccess(
-                googleCredential.displayName ?: "User",
-                googleCredential.id,
-                googleCredential.profilePictureUri?.toString(),
-                googleCredential.id,
-            )
-        } else {
-            val msg = "Unexpected credential type: ${credential.type}"
-            Log.e(tag, msg)
-            onError(msg)
-        }
-    } catch (e: GetCredentialCancellationException) {
-        Log.d(tag, "Sign-in cancelled by user.")
-        onError("")
-    } catch (e: GetCredentialException) {
-        Log.e(tag, "=== GetCredentialException ===")
-        Log.e(tag, "Class   : ${e.javaClass.name}")
-        Log.e(tag, "Type    : ${e.type}")
-        Log.e(tag, "Message : ${e.message}")
-        Log.e(tag, "Cause   : ${e.cause}")
-        Log.e(tag, "Stack trace:", e)
-        Log.e(tag, "--- Diagnostics ---")
-        Log.e(tag, "Play Services: $playServicesAvailable ($playServicesMsg)")
-        Log.e(tag, "Google accounts: $accountCount")
-        Log.e(tag, "Device: $manufacturer $model (Android $androidVer)")
-        Log.e(tag, "Package: $packageName  SHA-1: $sha1")
-        onError("Sign-in failed: ${e.message}")
-    } catch (e: Exception) {
-        Log.e(tag, "Unexpected exception during sign-in", e)
-        onError("Unexpected error: ${e.message}")
     }
 }
 

@@ -5,7 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.salahlock.app.SalahLockApplication
-import com.salahlock.app.auth.GoogleAuthConfig
+import com.salahlock.app.auth.AuthState
 import com.salahlock.app.util.PermissionHelper
 import com.salahlock.app.data.preferences.UserPreferences.ThemePreference
 import com.salahlock.app.work.AutoBackupWorker
@@ -73,7 +73,7 @@ data class ProfileUiState(
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application as SalahLockApplication
     private val prefs = app.userPreferences
-    private val identity = app.userIdentity
+    private val authRepo = app.authRepository
 
     private val _extraState = MutableStateFlow(ProfileUiState())
 
@@ -200,52 +200,53 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         _backupUiState.update { it.copy(resultMessage = null, errorMessage = null) }
     }
 
-    // ── Google Sign-In ────────────────────────────────────────────────────────
+    // ── Authentication (Clerk) ────────────────────────────────────────────────
+    // BM-AUTH-001: Clerk is the sole auth authority. Identity is projected from
+    // AuthRepository.state; sign-in/out delegate to Clerk.
 
-    /** Called by the UI (Composable) after a successful Credential Manager response. */
-    fun onSignInSuccess(displayName: String, email: String, photoUrl: String?, googleId: String) {
-        identity.saveIdentity(displayName, email, photoUrl, googleId)
-        _extraState.update {
-            it.copy(signInState = SignInState.SUCCESS, signInError = null)
-        }
-    }
-
-    fun onSignInError(message: String) {
-        _extraState.update { it.copy(signInState = SignInState.ERROR, signInError = message) }
-    }
-
+    /** Starts Clerk's managed Google OAuth flow. Signed-in state arrives via [observeIdentity]. */
     fun startSignIn() {
-        if (!GoogleAuthConfig.isConfigured) {
-            _extraState.update { it.copy(signInState = SignInState.NOT_CONFIGURED) }
-            return
+        viewModelScope.launch {
+            _extraState.update { it.copy(signInState = SignInState.LOADING, signInError = null) }
+            val error = authRepo.signInWithGoogle()
+            _extraState.update {
+                if (error == null) it.copy(signInState = SignInState.SUCCESS, signInError = null)
+                else it.copy(signInState = SignInState.ERROR, signInError = error)
+            }
         }
-        _extraState.update { it.copy(signInState = SignInState.LOADING, signInError = null) }
     }
 
     fun clearSignInError() {
         _extraState.update { it.copy(signInState = SignInState.IDLE, signInError = null) }
     }
 
+    /** Real Clerk sign-out — invalidates the session. Signed-out state arrives via [observeIdentity]. */
     fun signOut() {
-        identity.clearIdentity()
-        _extraState.update { it.copy(signInState = SignInState.IDLE) }
+        viewModelScope.launch {
+            val error = authRepo.signOut()
+            if (error != null) {
+                _extraState.update { it.copy(signInState = SignInState.ERROR, signInError = error) }
+            }
+        }
     }
 
     private fun observeIdentity() {
         viewModelScope.launch {
-            combine(
-                identity.isSignedIn,
-                identity.displayName,
-                identity.email,
-                identity.photoUrl,
-            ) { signedIn, name, email, photo ->
-                listOf(signedIn, name, email, photo)
-            }.collect { values ->
-                val signedIn = values[0] as Boolean
-                val name = values[1] as String
-                val email = values[2] as String
-                val photo = values[3] as String?
-                _extraState.update { it.copy(isSignedIn = signedIn, userName = name, userEmail = email, userPhotoUrl = photo) }
+            authRepo.state.collect { state ->
+                when (state) {
+                    is AuthState.SignedIn -> _extraState.update {
+                        it.copy(
+                            isSignedIn = true,
+                            userName = state.user.name,
+                            userEmail = state.user.email,
+                            userPhotoUrl = state.user.imageUrl,
+                        )
+                    }
+                    is AuthState.Error -> _extraState.update { it.copy(signInError = state.message) }
+                    AuthState.SignedOut, AuthState.Loading -> _extraState.update {
+                        it.copy(isSignedIn = false, userName = "", userEmail = "", userPhotoUrl = null)
+                    }
+                }
             }
         }
     }

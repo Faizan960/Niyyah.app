@@ -25,6 +25,11 @@ val hasReleaseSigning = signingProp("KEYSTORE_PATH") != null
 val admobAppId = signingProp("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
 val admobInterstitialId = signingProp("ADMOB_INTERSTITIAL_ID") ?: "ca-app-pub-3940256099942544/1033173712"
 
+// BM-AUTH-001 — Clerk publishable key (public/client-safe key). Read from
+// local.properties so it stays out of VCS; empty fallback lets the build succeed
+// on machines without it (Clerk simply won't initialize). Never read the secret key.
+val clerkPublishableKey = signingProp("CLERK_PUBLISHABLE_KEY") ?: ""
+
 android {
     namespace = "com.salahlock.app"
     compileSdk = 36
@@ -40,6 +45,9 @@ android {
         // Sprint A.2 — master ad switch. Infra stays live (init + preload + cache),
         // but ads are never DISPLAYED while false. Flip to true to monetize (one line).
         buildConfigField("Boolean", "ADS_ENABLED", "false")
+
+        // BM-AUTH-001 — Clerk publishable key exposed to app code via BuildConfig.
+        buildConfigField("String", "CLERK_PUBLISHABLE_KEY", "\"$clerkPublishableKey\"")
     }
 
     signingConfigs {
@@ -171,10 +179,9 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 
 
-    // Google Sign-In via Credential Manager (modern replacement for deprecated play-services-auth flow)
-    implementation("androidx.credentials:credentials:1.3.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+    // BM-AUTH-001: Google Sign-In is now handled by Clerk (clerk-android-api). The
+    // former Credential Manager + googleid dependencies were removed after Clerk
+    // authentication passed full runtime verification.
 
     // Coil — loads the signed-in user's Google profile photo (BM-008.1). Compose-native,
     // small footprint; the only remote-image need in the app.
@@ -182,4 +189,9 @@ dependencies {
 
     // AdMob — single daily interstitial (Sprint A.1). No mediation, no analytics.
     implementation("com.google.android.gms:play-services-ads:24.5.0")
+
+    // BM-AUTH-001 — Clerk native Android SDK (custom/API-driven flow; no prebuilt
+    // -ui artifact, since we keep the existing restored Profile UI). Resolves from
+    // Maven Central. Clerk becomes the single authentication authority.
+    implementation("com.clerk:clerk-android-api:1.0.36")
 }

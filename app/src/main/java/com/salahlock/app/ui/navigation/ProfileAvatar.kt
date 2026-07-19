@@ -49,7 +49,7 @@ private val avatarBitmapCache = mutableMapOf<String, ImageBitmap>()
 /**
  * Google-style account avatar used as the entry point to [ProfileScreen].
  *
- * Reuses the existing auth identity ([UserIdentityPreferences]) — no new account system.
+ * Identity comes from the Clerk-backed single auth state (AuthRepository).
  * Content priority: Google profile photo → name initials → person icon.
  *
  * - Circular, [sizeDp] (default 40dp), Material 3 surface, subtle elevation + border.
@@ -65,8 +65,11 @@ fun ProfileAvatar(
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as SalahLockApplication
-    val displayName by app.userIdentity.displayName.collectAsState()
-    val photoUrl by app.userIdentity.photoUrl.collectAsState()
+    // BM-AUTH-001: identity comes from the Clerk-backed single auth state.
+    val authState by app.authRepository.state.collectAsState()
+    val signedIn = authState as? com.salahlock.app.auth.AuthState.SignedIn
+    val displayName = signedIn?.user?.name ?: ""
+    val photoUrl = signedIn?.user?.imageUrl
 
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -85,9 +88,13 @@ fun ProfileAvatar(
             runCatching {
                 val conn = (URL(url).openConnection() as HttpURLConnection).apply {
                     connectTimeout = 5000; readTimeout = 5000; doInput = true
+                    instanceFollowRedirects = true
                 }
-                conn.inputStream.use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
-            }.getOrNull()
+                // Buffer fully before decoding: BitmapFactory.decodeStream can return
+                // null on network streams (skip()/mark() quirks); decodeByteArray is robust.
+                val bytes = conn.inputStream.use { it.readBytes() }
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+            }.onFailure { android.util.Log.w("ProfileAvatar", "profile photo load failed: ${it.message}") }.getOrNull()
         }
         if (loaded != null) { avatarBitmapCache[url] = loaded; value = loaded }
     }
