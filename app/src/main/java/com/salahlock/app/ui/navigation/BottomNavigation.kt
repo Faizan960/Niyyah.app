@@ -81,7 +81,7 @@ fun FloatingBottomNavigationBar(
     val inactiveTint = MaterialTheme.colorScheme.onSurfaceVariant
     val barColor = MaterialTheme.colorScheme.background.copy(alpha = if (isLightMode) 0.94f else 0.88f)
 
-    Column(Modifier.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth().background(barColor)) {
         Box(
             Modifier
                 .fillMaxWidth()
@@ -91,7 +91,10 @@ fun FloatingBottomNavigationBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(barColor)
+                // BM-012: consume the system navigation-bar inset so the tab row
+                // never sits under the 3-button bar / gesture handle. The 12dp
+                // below is the extra breathing room for gesture mode (tiny inset).
+                .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(horizontal = 8.dp, vertical = 10.dp)
                 .padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),

@@ -77,6 +77,10 @@ fun TextVerificationScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            // BM-012: keep the input + Confirm button above the keyboard. The
+            // overlay is adjustResize, so this is a no-op double-pad guard when the
+            // window already resizes, and a safety net if it pans instead.
+            .imePadding()
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

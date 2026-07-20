@@ -76,6 +76,19 @@ class MainActivity : ComponentActivity() {
                 com.salahlock.app.data.preferences.UserPreferences.ThemePreference.AMOLED -> com.salahlock.app.theme.ThemeMode.AMOLED
             }
 
+            // BM-012: drive system-bar icon polarity from the resolved APP theme,
+            // not the system dark-mode at onCreate — otherwise a user whose app
+            // theme differs from the OS setting gets invisible (light-on-light or
+            // dark-on-dark) status/navigation icons under edge-to-edge.
+            val view = androidx.compose.ui.platform.LocalView.current
+            androidx.compose.runtime.SideEffect {
+                val window = (view.context as android.app.Activity).window
+                val controller = androidx.core.view.WindowCompat.getInsetsController(window, view)
+                val lightBars = themeMode == com.salahlock.app.theme.ThemeMode.LIGHT
+                controller.isAppearanceLightStatusBars = lightBars
+                controller.isAppearanceLightNavigationBars = lightBars
+            }
+
             SalahLockTheme(themeMode = themeMode) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
