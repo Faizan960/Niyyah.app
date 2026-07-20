@@ -109,25 +109,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // ── Pause SalahLock (Sprint N.3) ──────────────────────────────────────────
-    /** Pauses the lock engine for [minutes] from now. */
-    fun pauseForMinutes(minutes: Int) {
-        viewModelScope.launch {
-            app.userPreferences.setPauseUntil(System.currentTimeMillis() + minutes * 60_000L)
-        }
-    }
-
-    /** Pauses until the next prayer time (falls back to a 30-min pause if unknown). */
-    fun pauseUntilNextPrayer() {
-        viewModelScope.launch {
-            val next = _uiState.value.nextPrayer?.time
-            val untilMs = next
-                ?.atZone(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
-                ?: (System.currentTimeMillis() + 30 * 60_000L)
-            app.userPreferences.setPauseUntil(untilMs)
-        }
-    }
-
+    // ── Pause SalahLock ───────────────────────────────────────────────────────
+    // BM-011: pause *initiation* moved to the Lock Apps tab (BlacklistViewModel).
+    // Home only needs to resume, surfaced via the "paused" hairline alert.
     /** Resumes the lock engine immediately. */
     fun resumePause() {
         viewModelScope.launch { app.userPreferences.setPauseUntil(0L) }

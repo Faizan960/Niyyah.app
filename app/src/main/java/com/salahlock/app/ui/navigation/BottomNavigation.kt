@@ -74,8 +74,10 @@ fun FloatingBottomNavigationBar(
     onTabSelected: (Int) -> Unit,
 ) {
     val isLightMode = MaterialTheme.colorScheme.background.luminance() > 0.5f
-    val activeTint = if (isLightMode) Color(0xFF1E2D4C) else Color(0xFF61DCAC)
-    val pillColor = if (isLightMode) EmeraldPrimary.copy(alpha = 0.12f) else EmeraldPrimary.copy(alpha = 0.22f)
+    // BM-011 reference: the selected tab is a SOLID emerald pill with white
+    // icon + label; inactive tabs are muted icon-over-label.
+    val activeTint = Color.White
+    val pillColor = EmeraldPrimary
     val inactiveTint = MaterialTheme.colorScheme.onSurfaceVariant
     val barColor = MaterialTheme.colorScheme.background.copy(alpha = if (isLightMode) 0.94f else 0.88f)
 

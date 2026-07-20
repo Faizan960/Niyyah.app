@@ -11,6 +11,7 @@ import com.salahlock.app.data.model.BlockProfile
 import com.salahlock.app.data.repository.InstalledAppInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,6 +38,9 @@ data class BlacklistUiState(
     val activeProfile: BlockProfile = BlockProfile.CUSTOM,
     val isMultiSelectMode: Boolean = false,
     val selectedPackages: Set<String> = emptySet(),
+    /** BM-011 — lock engine paused until this epoch-millis (0 = not paused). */
+    val pauseUntilMs: Long = 0L,
+    val nowMs: Long = System.currentTimeMillis(),
     val blockedCount: Int = 0,
     val totalCount: Int = 0,
     /**
@@ -47,6 +51,9 @@ data class BlacklistUiState(
 ) {
     val availableCategories: List<AppCategory>
         get() = items.map { it.category }.toSet().sortedBy { it.displayName }
+
+    /** BM-011 — true while the lock engine is paused. */
+    val isPaused: Boolean get() = pauseUntilMs > nowMs
 }
 
 /**
@@ -90,6 +97,34 @@ class BlacklistViewModel(application: Application) : AndroidViewModel(applicatio
     init {
         loadApps()
         observeProfile()
+        observePause()
+    }
+
+    // ── Pause the lock engine (BM-011 — relocated from the old Home hamburger) ──
+    private fun observePause() {
+        viewModelScope.launch {
+            app.userPreferences.pauseUntil.collect { until ->
+                _uiState.update { it.copy(pauseUntilMs = until, nowMs = System.currentTimeMillis()) }
+            }
+        }
+        viewModelScope.launch {
+            while (true) {
+                _uiState.update { it.copy(nowMs = System.currentTimeMillis()) }
+                delay(30_000L)
+            }
+        }
+    }
+
+    /** Pauses the lock engine for [minutes] from now. */
+    fun pauseForMinutes(minutes: Int) {
+        viewModelScope.launch {
+            app.userPreferences.setPauseUntil(System.currentTimeMillis() + minutes * 60_000L)
+        }
+    }
+
+    /** Resumes the lock engine immediately. */
+    fun resumePause() {
+        viewModelScope.launch { app.userPreferences.setPauseUntil(0L) }
     }
     // SL-006: Lock Per Prayer moved to Profile → Settings → Lock Per Prayer.
     // Its single state holder is ProfileViewModel (via UserPreferences) — the

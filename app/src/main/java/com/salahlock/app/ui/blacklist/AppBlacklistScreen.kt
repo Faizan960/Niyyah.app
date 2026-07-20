@@ -48,6 +48,7 @@ fun AppBlacklistScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
     var showSortMenu by remember { mutableStateOf(false) }
+    var showPauseMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -82,6 +83,32 @@ fun AppBlacklistScreen(
                             Icon(Icons.Default.LockOpen, contentDescription = "Unblock Selected")
                         }
                     } else {
+                        // BM-011 — pause the lock engine (relocated from the old Home hamburger).
+                        Box {
+                            IconButton(onClick = {
+                                if (state.isPaused) viewModel.resumePause() else showPauseMenu = true
+                            }) {
+                                Icon(
+                                    if (state.isPaused) Icons.Outlined.PlayCircle else Icons.Outlined.PauseCircle,
+                                    contentDescription = if (state.isPaused) "Resume protection" else "Pause protection",
+                                    tint = if (state.isPaused) EmeraldPrimary else MaterialTheme.colorScheme.onSurface,
+                                )
+                            }
+                            DropdownMenu(expanded = showPauseMenu, onDismissRequest = { showPauseMenu = false }) {
+                                Text(
+                                    "Pause protection",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                )
+                                listOf(15 to "15 minutes", 30 to "30 minutes", 60 to "1 hour").forEach { (min, label) ->
+                                    DropdownMenuItem(
+                                        text = { Text(label) },
+                                        onClick = { viewModel.pauseForMinutes(min); showPauseMenu = false },
+                                    )
+                                }
+                            }
+                        }
                         IconButton(onClick = { viewModel.enterMultiSelect() }) {
                             Icon(Icons.Default.Checklist, contentDescription = "Multi-select")
                         }

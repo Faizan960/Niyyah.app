@@ -382,9 +382,9 @@ private fun MainTabsContent(navController: androidx.navigation.NavController) {
             when (page) {
                 0 -> HomeScreen(
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                    onNavigateToBlacklist = { scope.launch { pagerState.animateScrollToPage(1) } },
                     onNavigateToQibla = { navController.navigate(Screen.Qibla.route) },
                     onNavigateToAzkar = { navController.navigate("azkar") },
+                    onNavigateToBookmarks = { navController.navigate("bookmarks") },
                     onNavigateToLocalMasjid = { navController.navigate("local_masjid_setup") },
                 )
                 // Lock Apps tab — reuses AppBlacklistScreen (no back arrow in tab mode)
