@@ -23,9 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -299,7 +297,6 @@ private fun NextPrayerHero(
     val heroBorder = if (isLight) LightDivider else Color(0xFF25332E)
     val nameColor = if (isLight) Navy else DarkTextPrimary
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
-    val mosqueTint = if (isLight) WarmStoneLight.copy(alpha = 0.55f) else accent.copy(alpha = 0.22f)
     val sunColor = if (isLight) GoldAccent else StitchGold
 
     Box(
@@ -309,31 +306,19 @@ private fun NextPrayerHero(
             .background(heroBg)
             .border(1.dp, heroBorder, RoundedCornerShape(28.dp)),
     ) {
-        // Subtle architectural atmosphere (dark mode gets a soft emerald glow).
+        // Provided mosque artwork (design/Reference/homescreenmosque.svg → vector
+        // drawable). Rendered full-color, aspect preserved (Fit), pinned to the
+        // top-right so it never overlaps the prayer text/countdown on the left.
         Box(Modifier.matchParentSize()) {
-            if (!isLight) {
-                Box(
-                    Modifier
-                        .matchParentSize()
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(accent.copy(alpha = 0.16f), Color.Transparent),
-                                center = Offset(Float.POSITIVE_INFINITY, 0f),
-                                radius = 520f,
-                            )
-                        )
-                )
-            }
             Image(
-                painter = painterResource(R.drawable.ic_mosque_skyline),
+                painter = painterResource(R.drawable.homescreenmosque),
                 contentDescription = null,
-                colorFilter = ColorFilter.tint(mosqueTint),
-                contentScale = ContentScale.FillWidth,
+                contentScale = ContentScale.Fit,
                 alignment = Alignment.TopEnd,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 10.dp, end = 4.dp)
-                    .width(180.dp),
+                    .padding(top = 6.dp, end = 6.dp)
+                    .size(150.dp),
             )
         }
 
