@@ -22,8 +22,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -154,48 +152,19 @@ fun HadithMainScreen(
 
 @Composable
 private fun HadithHeader() {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                text = "Hadith",
-                style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = "Learn from the sayings &\nteachings of the Prophet ﷺ",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 22.sp,
-            )
-        }
-        Spacer(Modifier.width(12.dp))
-        val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
-        Box(
-            modifier = Modifier
-                .size(84.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.radialGradient(
-                        listOf(
-                            GoldAccent.copy(alpha = if (isLight) 0.22f else 0.34f),
-                            GoldAccent.copy(alpha = if (isLight) 0.06f else 0.10f),
-                        ),
-                    ),
-                )
-                .border(1.dp, GoldAccent.copy(alpha = 0.35f), CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                "ٱلْحَدِيث",
-                style = MaterialTheme.typography.titleLarge,
-                color = GoldAccent,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+        Text(
+            text = "Hadith",
+            style = MaterialTheme.typography.displayMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = "Learn from the sayings &\nteachings of the Prophet ﷺ",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            lineHeight = 22.sp,
+        )
     }
 }
 

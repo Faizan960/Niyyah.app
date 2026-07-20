@@ -88,7 +88,7 @@ fun QuranMainScreen(
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 item(key = "header") {
-                    QuranHeader(progressPercent = state.progressPercent, showProgress = state.ayahsRead > 0)
+                    QuranHeader()
                     Spacer(Modifier.height(20.dp))
                 }
 
@@ -220,54 +220,19 @@ fun QuranMainScreen(
 }
 
 @Composable
-private fun QuranHeader(progressPercent: Int, showProgress: Boolean) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                text = "Quran",
-                style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = "Read, reflect & connect with\nthe words of Allah",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 22.sp,
-            )
-        }
-        Spacer(Modifier.width(12.dp))
-        DecorativeMedallion(arabic = "ٱلْقُرْآن")
-    }
-}
-
-/** Compose-drawn calligraphic medallion (no stock imagery) — theme-aware glow. */
-@Composable
-private fun DecorativeMedallion(arabic: String) {
-    val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
-    Box(
-        modifier = Modifier
-            .size(84.dp)
-            .clip(CircleShape)
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(
-                        GoldAccent.copy(alpha = if (isLight) 0.22f else 0.30f),
-                        EmeraldPrimary.copy(alpha = if (isLight) 0.10f else 0.16f),
-                    ),
-                ),
-            )
-            .border(1.dp, GoldAccent.copy(alpha = 0.35f), CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
+private fun QuranHeader() {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
         Text(
-            text = arabic,
-            style = MaterialTheme.typography.titleLarge,
-            color = GoldAccent,
-            fontWeight = FontWeight.SemiBold,
+            text = "Quran",
+            style = MaterialTheme.typography.displayMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = "Read, reflect & connect with\nthe words of Allah",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            lineHeight = 22.sp,
         )
     }
 }
