@@ -10,9 +10,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
-import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.LocalLibrary
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Mosque
 import androidx.compose.material.icons.outlined.Person
@@ -27,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -37,28 +39,34 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Home : Screen("home", "Home", Icons.Outlined.Home)
     object Prayers : Screen("prayers", "Prayers", Icons.AutoMirrored.Outlined.List)
     object Qibla : Screen("qibla", "Qibla", Icons.Outlined.Explore)
-    object HadithAzkar : Screen("hadith_azkar", "Hadith", Icons.Outlined.Book)
 
     // Lock Apps — promoted to a primary tab in Sprint N.3 (reuses AppBlacklistScreen)
     object LockApps : Screen("lock_apps", "Lock Apps", Icons.Outlined.Lock)
+
+    // BM-011 — Quran and Hadith are now first-class, separate main tabs.
+    // Distinct book icons: open book (Quran) vs. library (Hadith collections).
+    object Quran : Screen("quran", "Quran", Icons.AutoMirrored.Outlined.MenuBook)
+    object Hadith : Screen("hadith", "Hadith", Icons.Outlined.LocalLibrary)
 
     // Screens not in bottom bar
     object Profile : Screen("profile", "Profile", Icons.Outlined.Person)
     object Blacklist : Screen("blacklist", "Blacklist", Icons.AutoMirrored.Outlined.List)
 }
 
-// Sprint N.3 — Prayer and Qibla folded into Home; Lock Apps promoted to a tab.
+// BM-011 — four primary tabs: Home · Lock Apps · Quran · Hadith.
 val BottomNavItems = listOf(
     Screen.Home,
     Screen.LockApps,
-    Screen.HadithAzkar,
+    Screen.Quran,
+    Screen.Hadith,
 )
 
 /**
- * Stitch V2 bottom bar: full-width "dark lens" glass bar — background at
- * ~70–90% opacity, 1dp hairline top border, icon over label, active item
- * tinted (emerald in dark, navy in light) with a small dot indicator.
- * Keeps the 3-tab pager contract (navigation structure unchanged).
+ * BM-011 bottom bar: full-width "dark lens" bar with a 1dp hairline top border
+ * and four tabs. The selected tab animates into a soft emerald pill (filled
+ * rounded container + icon + label), matching the Quran/Hadith reference.
+ * Inactive tabs are icon-over-label in the muted onSurfaceVariant tint.
+ * Signature unchanged (selectedIndex / onTabSelected) — pager contract intact.
  */
 @Composable
 fun FloatingBottomNavigationBar(
@@ -67,8 +75,9 @@ fun FloatingBottomNavigationBar(
 ) {
     val isLightMode = MaterialTheme.colorScheme.background.luminance() > 0.5f
     val activeTint = if (isLightMode) Color(0xFF1E2D4C) else Color(0xFF61DCAC)
+    val pillColor = if (isLightMode) EmeraldPrimary.copy(alpha = 0.12f) else EmeraldPrimary.copy(alpha = 0.22f)
     val inactiveTint = MaterialTheme.colorScheme.onSurfaceVariant
-    val barColor = MaterialTheme.colorScheme.background.copy(alpha = if (isLightMode) 0.92f else 0.85f)
+    val barColor = MaterialTheme.colorScheme.background.copy(alpha = if (isLightMode) 0.94f else 0.88f)
 
     Column(Modifier.fillMaxWidth()) {
         Box(
@@ -81,8 +90,9 @@ fun FloatingBottomNavigationBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(barColor)
-                .padding(top = 8.dp, bottom = 20.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+                .padding(horizontal = 8.dp, vertical = 10.dp)
+                .padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BottomNavItems.forEachIndexed { index, screen ->
@@ -92,38 +102,42 @@ fun FloatingBottomNavigationBar(
                     animationSpec = MotionTokens.normalTween(),
                     label = "navTint_$index",
                 )
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                val pillAlpha by animateFloatAsState(
+                    targetValue = if (isSelected) 1f else 0f,
+                    animationSpec = MotionTokens.normalTween(),
+                    label = "navPill_$index",
+                )
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .weight(1f)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(pillColor.copy(alpha = pillColor.alpha * pillAlpha))
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                             onClick = { onTabSelected(index) },
                         )
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = 10.dp),
                 ) {
                     Icon(
                         imageVector = screen.icon,
                         contentDescription = screen.title,
                         tint = tint,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                     )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = screen.title,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = tint,
-                    )
-                    Spacer(Modifier.height(3.dp))
-                    Box(
-                        Modifier
-                            .size(4.dp)
-                            .background(
-                                if (isSelected) tint else Color.Transparent,
-                                RoundedCornerShape(50),
-                            )
-                    )
+                    // Label only appears on the selected tab (space-efficient pill).
+                    if (pillAlpha > 0.05f) {
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = screen.title,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = tint,
+                            maxLines = 1,
+                            modifier = Modifier.graphicsLayer { alpha = pillAlpha },
+                        )
+                    }
                 }
             }
         }

@@ -48,6 +48,8 @@ data class KnowledgeUiState(
     // BM-010.6 — live counts for the Library gateway tiles.
     val bookmarkCount: Int = 0,
     val collectionCount: Int = 0,
+    // BM-011 — real per-topic hadith counts for Popular Topics cards.
+    val topicCounts: Map<String, Int> = emptyMap(),
 )
 
 enum class KnowledgeTab { HADITH, AZKAR }
@@ -106,7 +108,16 @@ class KnowledgeViewModel(application: Application) : AndroidViewModel(applicatio
                 syncStatus = newStatus,
                 syncError = errorMsg,
             )
+            loadTopicCounts()
         }
+    }
+
+    /** Real per-topic hadith counts (English) for the Popular Topics cards. */
+    private suspend fun loadTopicCounts() {
+        val counts = _uiState.value.categories.associateWith { topic ->
+            repository.getHadithCountByTopic(topic, "eng")
+        }
+        _uiState.value = _uiState.value.copy(topicCounts = counts)
     }
 
     fun retrySyncData() {

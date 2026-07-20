@@ -35,10 +35,13 @@ import com.salahlock.app.theme.MotionTokens
 import com.salahlock.app.theme.SalahLockTheme
 import com.salahlock.app.ui.blacklist.AppBlacklistScreen
 import com.salahlock.app.ui.home.HomeScreen
+import com.salahlock.app.ui.azkar.AzkarCategoriesScreen
+import com.salahlock.app.ui.hadith.HadithMainScreen
+import com.salahlock.app.ui.hadith.HadithTopicsScreen
 import com.salahlock.app.ui.knowledge.AzkarReaderScreen
 import com.salahlock.app.ui.knowledge.CollectionBooksScreen
 import com.salahlock.app.ui.knowledge.HadithReaderScreen
-import com.salahlock.app.ui.knowledge.KnowledgeScreen
+import com.salahlock.app.ui.quran.QuranMainScreen
 import com.salahlock.app.ui.navigation.BottomNavItems
 import com.salahlock.app.ui.navigation.FloatingBottomNavigationBar
 import com.salahlock.app.ui.navigation.Screen
@@ -255,14 +258,18 @@ fun MainAppContent() {
             AzkarReaderScreen(category = category, onBack = { navController.popBackStack() })
         }
 
-        // ── BM-010: preserved-backend modules restored into the stable UI ──────
-        composable("quran") {
-            com.salahlock.app.ui.quran.QuranSurahListScreen(
-                onOpenSurah = { surah, ayah ->
-                    navController.navigate(
-                        if (ayah != null) "quran_reader/$surah?ayah=$ayah" else "quran_reader/$surah",
-                    )
-                },
+        // ── BM-010 modules + BM-011 relocated deep screens ─────────────────────
+        // Azkar categories — moved out of the retired Knowledge tab (Home menu → Azkar).
+        composable("azkar") {
+            AzkarCategoriesScreen(
+                onOpenCategory = { category -> navController.navigate("azkar_reader/$category") },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        // Hadith "By Topic" browse + Popular Topics "See All".
+        composable("hadith_topics") {
+            HadithTopicsScreen(
+                onOpenTopic = { topic -> navController.navigate("hadith_reader/topic/$topic") },
                 onBack = { navController.popBackStack() },
             )
         }
@@ -320,9 +327,9 @@ private fun bookmarkRoute(item: com.salahlock.app.data.model.BookmarkItem): Stri
     }
 
 /**
- * Five-tab pager content. Placed at the "main" NavHost destination.
+ * BM-011 — four-tab pager content. Placed at the "main" NavHost destination.
  *
- * Pages:  0=Home (prayer dashboard)  1=Lock Apps  2=Knowledge
+ * Pages:  0=Home  1=Lock Apps  2=Quran  3=Hadith
  *
  * [beyondViewportPageCount]=1 keeps adjacent pages alive to preserve scroll state
  * and ViewModel state across swipes.
@@ -377,27 +384,34 @@ private fun MainTabsContent(navController: androidx.navigation.NavController) {
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                     onNavigateToBlacklist = { scope.launch { pagerState.animateScrollToPage(1) } },
                     onNavigateToQibla = { navController.navigate(Screen.Qibla.route) },
-                    onNavigateToAzkar = { scope.launch { pagerState.animateScrollToPage(2) } },
+                    onNavigateToAzkar = { navController.navigate("azkar") },
                     onNavigateToLocalMasjid = { navController.navigate("local_masjid_setup") },
                 )
                 // Lock Apps tab — reuses AppBlacklistScreen (no back arrow in tab mode)
                 1 -> AppBlacklistScreen(onNavigateBack = null)
-                2 -> KnowledgeScreen(
-                    onNavigateToHadithTopic = { topic ->
-                        navController.navigate("hadith_reader/topic/$topic")
+                // BM-011 — Quran main tab
+                2 -> QuranMainScreen(
+                    onOpenSurah = { surah, ayah ->
+                        navController.navigate(
+                            if (ayah != null) "quran_reader/$surah?ayah=$ayah" else "quran_reader/$surah",
+                        )
                     },
-                    onNavigateToCollection = { collection ->
+                    onOpenBookmarks = { navController.navigate("bookmarks") },
+                    onOpenCollections = { navController.navigate("collections") },
+                )
+                // BM-011 — Hadith main tab
+                3 -> HadithMainScreen(
+                    onOpenCollectionBooks = { collection ->
                         navController.navigate("collection_books/$collection")
                     },
-                    onNavigateToAzkarReader = { category ->
-                        navController.navigate("azkar_reader/$category")
+                    onOpenTopics = { navController.navigate("hadith_topics") },
+                    onOpenTopic = { topic ->
+                        navController.navigate("hadith_reader/topic/$topic")
                     },
-                    onNavigateToSingleHadith = { hadithId ->
+                    onOpenSingleHadith = { hadithId ->
                         navController.navigate("hadith_reader/single/${java.net.URLEncoder.encode(hadithId, "UTF-8")}")
                     },
-                    onNavigateToQuran = { navController.navigate("quran") },
-                    onNavigateToBookmarks = { navController.navigate("bookmarks") },
-                    onNavigateToCollections = { navController.navigate("collections") },
+                    onOpenBookmarks = { navController.navigate("bookmarks") },
                 )
             }
         }

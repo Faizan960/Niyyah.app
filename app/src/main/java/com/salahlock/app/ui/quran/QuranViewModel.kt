@@ -18,11 +18,19 @@ data class ContinueReading(
     val lastAyah: Int,
 )
 
+/** Real revelation-place filter (dataset field), surfaced by the Quran search filter icon. */
+enum class RevelationFilter(val label: String) {
+    ALL("All Surahs"),
+    MECCAN("Meccan"),
+    MEDINAN("Medinan"),
+}
+
 data class QuranHubState(
     val isLoading: Boolean = true,
     val error: String? = null,
     val surahs: List<Surah> = emptyList(),
     val searchQuery: String = "",
+    val revelationFilter: RevelationFilter = RevelationFilter.ALL,
     val filteredSurahs: List<Surah> = emptyList(),
     val continueReading: ContinueReading? = null,
     /** Ayahs ever reached across all surahs, out of [TOTAL_AYAHS]. */
@@ -56,7 +64,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     surahs = surahs,
-                    filteredSurahs = filterSurahs(surahs, _uiState.value.searchQuery),
+                    filteredSurahs = applyFilters(surahs, _uiState.value.searchQuery, _uiState.value.revelationFilter),
                 )
                 observeProgress(surahs)
             } catch (e: Exception) {
@@ -88,9 +96,29 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     fun onSearchQueryChanged(query: String) {
         _uiState.value = _uiState.value.copy(
             searchQuery = query,
-            filteredSurahs = filterSurahs(_uiState.value.surahs, query),
+            filteredSurahs = applyFilters(_uiState.value.surahs, query, _uiState.value.revelationFilter),
+        )
+    }
+
+    fun onRevelationFilterChanged(filter: RevelationFilter) {
+        _uiState.value = _uiState.value.copy(
+            revelationFilter = filter,
+            filteredSurahs = applyFilters(_uiState.value.surahs, _uiState.value.searchQuery, filter),
         )
     }
 
     fun clearSearch() = onSearchQueryChanged("")
+
+    private fun applyFilters(
+        surahs: List<Surah>,
+        query: String,
+        filter: RevelationFilter,
+    ): List<Surah> {
+        val bySearch = filterSurahs(surahs, query)
+        return when (filter) {
+            RevelationFilter.ALL -> bySearch
+            RevelationFilter.MECCAN -> bySearch.filter { it.revelationType.equals("Meccan", ignoreCase = true) }
+            RevelationFilter.MEDINAN -> bySearch.filter { it.revelationType.equals("Medinan", ignoreCase = true) }
+        }
+    }
 }
