@@ -57,6 +57,10 @@ fun KnowledgeScreen(
     onNavigateToCollection: (String) -> Unit,
     onNavigateToAzkarReader: (String) -> Unit,
     onNavigateToSingleHadith: (String) -> Unit = {},
+    // BM-010 — Knowledge is the gateway to the restored library modules.
+    onNavigateToQuran: () -> Unit = {},
+    onNavigateToBookmarks: () -> Unit = {},
+    onNavigateToCollections: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
@@ -175,6 +179,39 @@ fun KnowledgeScreen(
                     }
                 }
                 Spacer(Modifier.height(8.dp))
+            }
+
+            // ── Library (BM-010): gateway to Quran / Bookmarks / Collections ──
+            if (!state.isSearchActive) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    LibraryTile(
+                        title = "Quran",
+                        subtitle = "114 Surahs",
+                        icon = Icons.Outlined.AutoStories,
+                        onClick = onNavigateToQuran,
+                        modifier = Modifier.weight(1f),
+                    )
+                    LibraryTile(
+                        title = "Bookmarks",
+                        subtitle = "${state.bookmarkCount} saved",
+                        icon = Icons.Outlined.BookmarkBorder,
+                        onClick = onNavigateToBookmarks,
+                        modifier = Modifier.weight(1f),
+                    )
+                    LibraryTile(
+                        title = "Collections",
+                        subtitle = "${state.collectionCount} made",
+                        icon = Icons.Outlined.CollectionsBookmark,
+                        onClick = onNavigateToCollections,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
             // ── Tab Selector (only shown when not searching) ──────────────────
@@ -511,6 +548,56 @@ private fun azkarEmoji(category: String): String {
         "forgive" in c || "istighfar" in c -> "🤲"
         "praise" in c || "tasbih" in c -> "📿"
         else -> "☪️"
+    }
+}
+
+/** BM-010 — compact gateway tile to a restored library module. */
+@Composable
+private fun LibraryTile(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val interaction = remember { MutableInteractionSource() }
+    val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    val cardColor = if (isLight) MaterialTheme.colorScheme.surface else ElevatedSurface
+
+    Card(
+        modifier = modifier
+            .pressScale(interaction)
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        border = if (isLight) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)) else null,
+        elevation = CardDefaults.cardElevation(0.dp),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = EmeraldPrimary.copy(alpha = 0.8f),
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = MutedSage,
+                maxLines = 1,
+            )
+        }
     }
 }
 

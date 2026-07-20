@@ -254,8 +254,70 @@ fun MainAppContent() {
             val category = backStackEntry.arguments?.getString("category") ?: ""
             AzkarReaderScreen(category = category, onBack = { navController.popBackStack() })
         }
+
+        // ── BM-010: preserved-backend modules restored into the stable UI ──────
+        composable("quran") {
+            com.salahlock.app.ui.quran.QuranSurahListScreen(
+                onOpenSurah = { surah, ayah ->
+                    navController.navigate(
+                        if (ayah != null) "quran_reader/$surah?ayah=$ayah" else "quran_reader/$surah",
+                    )
+                },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable("quran_reader/{surah}?ayah={ayah}") { backStackEntry ->
+            val surah = backStackEntry.arguments?.getString("surah")?.toIntOrNull() ?: 1
+            val ayah = backStackEntry.arguments?.getString("ayah")?.toIntOrNull()
+            com.salahlock.app.ui.quran.QuranReaderScreen(
+                surahNumber = surah,
+                initialAyah = ayah,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable("bookmarks") {
+            com.salahlock.app.ui.bookmarks.BookmarksScreen(
+                onOpenBookmark = { item ->
+                    bookmarkRoute(item)?.let { navController.navigate(it) }
+                },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable("collections") {
+            com.salahlock.app.ui.collections.CollectionsScreen(
+                onOpenCollection = { id -> navController.navigate("collection/$id") },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable("collection/{id}") { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: -1L
+            com.salahlock.app.ui.collections.CollectionDetailScreen(
+                collectionId = id,
+                onOpenBookmark = { item ->
+                    bookmarkRoute(item)?.let { navController.navigate(it) }
+                },
+                onBack = { navController.popBackStack() },
+            )
+        }
     }
 }
+
+/**
+ * BM-010 — maps a unified bookmark to its module's reader route.
+ * Returns null when the navigation payload is incomplete (defensive; the
+ * aggregation layer always sets the fields relevant to the type).
+ */
+private fun bookmarkRoute(item: com.salahlock.app.data.model.BookmarkItem): String? =
+    when (item.type) {
+        com.salahlock.app.data.model.BookmarkType.QURAN -> item.surah?.let { s ->
+            if (item.ayah != null) "quran_reader/$s?ayah=${item.ayah}" else "quran_reader/$s"
+        }
+        com.salahlock.app.data.model.BookmarkType.HADITH,
+        com.salahlock.app.data.model.BookmarkType.KNOWLEDGE ->
+            item.hadithId?.let { "hadith_reader/single/${java.net.URLEncoder.encode(it, "UTF-8")}" }
+        com.salahlock.app.data.model.BookmarkType.AZKAR ->
+            item.azkarCategory?.let { "azkar_reader/$it" }
+    }
 
 /**
  * Five-tab pager content. Placed at the "main" NavHost destination.
@@ -333,6 +395,9 @@ private fun MainTabsContent(navController: androidx.navigation.NavController) {
                     onNavigateToSingleHadith = { hadithId ->
                         navController.navigate("hadith_reader/single/${java.net.URLEncoder.encode(hadithId, "UTF-8")}")
                     },
+                    onNavigateToQuran = { navController.navigate("quran") },
+                    onNavigateToBookmarks = { navController.navigate("bookmarks") },
+                    onNavigateToCollections = { navController.navigate("collections") },
                 )
             }
         }

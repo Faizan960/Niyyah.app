@@ -135,6 +135,7 @@ class QuranRepository private constructor(context: Context) {
     // ------------------------------------------------------------ progress
 
     fun getLastRead(): Flow<QuranProgressEntity?> = dao.getLastRead()
+    suspend fun getProgress(surah: Int): QuranProgressEntity? = dao.getProgress(surah)
     fun getRecentlyRead(limit: Int = 10): Flow<List<QuranProgressEntity>> = dao.getRecentlyRead(limit)
     fun getAllProgress(): Flow<List<QuranProgressEntity>> = dao.getAllProgress()
 

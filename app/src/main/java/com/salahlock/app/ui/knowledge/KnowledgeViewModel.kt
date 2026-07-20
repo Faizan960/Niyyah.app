@@ -45,6 +45,9 @@ data class KnowledgeUiState(
     val searchResults: List<HadithSearchResult> = emptyList(),
     val isSearching: Boolean = false,
     val isSearchActive: Boolean = false,
+    // BM-010.6 — live counts for the Library gateway tiles.
+    val bookmarkCount: Int = 0,
+    val collectionCount: Int = 0,
 )
 
 enum class KnowledgeTab { HADITH, AZKAR }
@@ -65,6 +68,21 @@ class KnowledgeViewModel(application: Application) : AndroidViewModel(applicatio
         syncData()
         loadBookmarksAndRecent()
         observeSearch()
+        observeLibraryCounts()
+    }
+
+    /** BM-010.6 — unified bookmark + collection counts for the Library tiles. */
+    private fun observeLibraryCounts() {
+        viewModelScope.launch {
+            app.bookmarksRepository.observeCounts().collect { counts ->
+                _uiState.value = _uiState.value.copy(bookmarkCount = counts.values.sum())
+            }
+        }
+        viewModelScope.launch {
+            app.collectionsRepository.observeCollectionCount().collect { count ->
+                _uiState.value = _uiState.value.copy(collectionCount = count)
+            }
+        }
     }
 
     private fun syncData() {
