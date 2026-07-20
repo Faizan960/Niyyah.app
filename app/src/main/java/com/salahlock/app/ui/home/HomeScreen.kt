@@ -4,7 +4,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,7 +26,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
@@ -306,22 +304,6 @@ private fun NextPrayerHero(
             .background(heroBg)
             .border(1.dp, heroBorder, RoundedCornerShape(28.dp)),
     ) {
-        // Provided mosque artwork (design/Reference/homescreenmosque.svg → vector
-        // drawable). Rendered full-color, aspect preserved (Fit), pinned to the
-        // top-right so it never overlaps the prayer text/countdown on the left.
-        Box(Modifier.matchParentSize()) {
-            Image(
-                painter = painterResource(R.drawable.homescreenmosque),
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                alignment = Alignment.TopEnd,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 6.dp, end = 6.dp)
-                    .size(150.dp),
-            )
-        }
-
         Column(Modifier.padding(22.dp)) {
             Row(verticalAlignment = Alignment.Top) {
                 Box(
