@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -19,51 +20,56 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.salahlock.app.data.model.PrayerName
 import com.salahlock.app.theme.*
-import com.salahlock.app.verification.AffirmationGenerator
+import com.salahlock.app.verification.VerificationPhraseProvider
 
 /**
  * Text-based verification screen.
  *
- * Presents [confirmCount] affirmations one at a time.
- * User types each affirmation into a text field.
- * Validation is case-insensitive with whitespace normalisation.
- * No typed text is stored — only the boolean success count.
+ * ONE phrase is selected for the session and the user types that SAME phrase
+ * [confirmCount] times. The phrase is held in [rememberSaveable] so it survives
+ * recomposition and configuration changes and never reshuffles between attempts
+ * or after a failed attempt.
+ *
+ * Matching is case-insensitive with typo tolerance and important-word
+ * safeguards (see [VerificationPhraseProvider]). No typed text is stored — only
+ * the boolean success count.
  */
 @Composable
 fun TextVerificationScreen(
-    prayer: PrayerName,
     confirmCount: Int,
     onSuccess: () -> Unit,
     onBack: () -> Unit,
 ) {
-    val affirmations = remember(prayer, confirmCount) {
-        AffirmationGenerator.generate(prayer, confirmCount)
+    val total = remember(confirmCount) { confirmCount.coerceAtLeast(1) }
+    // Selected ONCE per session and locked for every attempt.
+    val phrase = rememberSaveable {
+        VerificationPhraseProvider.randomPhrase().also {
+            if (com.salahlock.app.BuildConfig.DEBUG) android.util.Log.d("VerifySession", "TEXT session phrase selected: \"$it\"")
+        }
     }
 
-    var currentIndex by remember { mutableIntStateOf(0) }
+    var currentAttempt by rememberSaveable { mutableIntStateOf(0) }
     var inputText by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
 
-    val currentAffirmation = affirmations.getOrNull(currentIndex) ?: return
-
-    LaunchedEffect(currentIndex) {
-        inputText = ""
+    LaunchedEffect(currentAttempt) {
         showError = false
         focusRequester.requestFocus()
     }
 
     fun submit() {
-        if (AffirmationGenerator.validate(inputText, currentAffirmation)) {
+        if (VerificationPhraseProvider.matchesTyped(inputText, phrase)) {
             showError = false
-            if (currentIndex + 1 >= affirmations.size) {
+            inputText = ""
+            if (currentAttempt + 1 >= total) {
                 onSuccess()
             } else {
-                currentIndex++
+                currentAttempt++
             }
         } else {
+            // Stay on the SAME attempt and phrase — let the user retry.
             showError = true
         }
     }
@@ -85,34 +91,25 @@ fun TextVerificationScreen(
             letterSpacing = 1.5.sp,
         )
         Spacer(Modifier.height(12.dp))
-        VerificationProgressDots(current = currentIndex, total = affirmations.size)
+        VerificationProgressDots(current = currentAttempt, total = total)
 
         Spacer(Modifier.weight(0.8f))
 
-        // Affirmation display — animated slide on change
-        AnimatedContent(
-            targetState = currentAffirmation,
-            transitionSpec = {
-                (slideInVertically(tween(250)) { it / 4 } + fadeIn(tween(250)))
-                    .togetherWith(slideOutVertically(tween(150)) { -it / 4 } + fadeOut(tween(150)))
-            },
-            label = "affirmation_text",
+        // The single locked phrase (identical every attempt)
+        Text(
+            text = "\"$phrase\"",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+            lineHeight = 32.sp,
             modifier = Modifier.fillMaxWidth(),
-        ) { text ->
-            Text(
-                text = "\"$text\"",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-                lineHeight = 32.sp,
-            )
-        }
+        )
 
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = "Type the phrase above",
+            text = "Type the phrase above  ·  Attempt ${currentAttempt + 1} of $total",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -135,7 +132,7 @@ fun TextVerificationScreen(
             singleLine = true,
             isError = showError,
             supportingText = if (showError) {
-                { Text("That doesn't match — please try again.", color = MaterialTheme.colorScheme.error) }
+                { Text("Almost there — check the sentence and try again.", color = MaterialTheme.colorScheme.error) }
             } else null,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submit() }),
@@ -164,7 +161,7 @@ fun TextVerificationScreen(
             ),
         ) {
             Text(
-                text = if (currentIndex + 1 < affirmations.size) "Confirm (${currentIndex + 1}/${affirmations.size})" else "Complete",
+                text = if (currentAttempt + 1 < total) "Confirm (${currentAttempt + 1}/$total)" else "Complete",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )

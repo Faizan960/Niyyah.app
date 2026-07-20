@@ -100,7 +100,6 @@ fun VerificationFlowScreen(
                 )
 
                 VerificationStep.TEXT -> TextVerificationScreen(
-                    prayer = prayer,
                     confirmCount = confirmCount,
                     onSuccess = { step = VerificationStep.SUCCESS },
                     onBack = {
@@ -110,7 +109,6 @@ fun VerificationFlowScreen(
                 )
 
                 VerificationStep.VOICE -> VoiceVerificationScreen(
-                    prayer = prayer,
                     confirmCount = confirmCount,
                     onSuccess = { step = VerificationStep.SUCCESS },
                     onBack = {

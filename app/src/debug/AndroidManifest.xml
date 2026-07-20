@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  DEBUG-ONLY overlay. Makes LockOverlayActivity launchable via `adb am start`
+  so the BM-VERIFY-002 verification flow can be exercised in runtime QA without
+  installing a blacklisted app and waiting on UsageStatsPollingService.
+  Never merged into release builds; the production manifest keeps exported=false.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <activity
+            android:name=".ui.lock.LockOverlayActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+    </application>
+</manifest>

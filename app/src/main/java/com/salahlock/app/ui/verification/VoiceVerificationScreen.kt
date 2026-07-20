@@ -9,58 +9,64 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardAlt
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import com.salahlock.app.data.model.PrayerName
 import com.salahlock.app.theme.*
-import com.salahlock.app.verification.AffirmationGenerator
+import com.salahlock.app.verification.VerificationPhraseProvider
 
 private enum class VoiceState { IDLE, LISTENING, PROCESSING, ACCEPTED, ERROR_NO_MATCH, ERROR_UNAVAILABLE }
 
 /**
  * Voice-based verification screen.
  *
+ * ONE phrase is selected for the session and the user speaks that SAME phrase
+ * [confirmCount] times. The phrase is held in [rememberSaveable] so it never
+ * reshuffles between attempts or after a failed attempt.
+ *
  * Uses Android SpeechRecognizer for on-device recognition — no cloud API.
- * Falls back to text verification if speech is unavailable or permission denied.
+ * Matching never requires a perfect transcription (see
+ * [VerificationPhraseProvider]); it tolerates natural accent/recognizer
+ * variation while important-word coverage blocks false positives.
  *
  * No audio data is stored. Only the boolean result (match / no match) is used.
  */
 @Composable
 fun VoiceVerificationScreen(
-    prayer: PrayerName,
     confirmCount: Int,
     onSuccess: () -> Unit,
     onBack: () -> Unit,
     onFallbackToText: () -> Unit,
 ) {
     val context = LocalContext.current
-    val affirmations = remember(prayer, confirmCount) {
-        AffirmationGenerator.generate(prayer, confirmCount)
+    val total = remember(confirmCount) { confirmCount.coerceAtLeast(1) }
+    // Selected ONCE per session and locked for every attempt.
+    val phrase = rememberSaveable {
+        VerificationPhraseProvider.randomPhrase().also {
+            if (com.salahlock.app.BuildConfig.DEBUG) android.util.Log.d("VerifySession", "VOICE session phrase selected: \"$it\"")
+        }
     }
 
-    var currentIndex by remember { mutableIntStateOf(0) }
+    var currentAttempt by rememberSaveable { mutableIntStateOf(0) }
     var voiceState by remember { mutableStateOf(VoiceState.IDLE) }
     var lastHeard by remember { mutableStateOf("") }
     var startAfterGrant by remember { mutableStateOf(false) }
@@ -81,8 +87,6 @@ fun VoiceVerificationScreen(
     }
 
     var speechRecognizer: SpeechRecognizer? by remember { mutableStateOf(null) }
-
-    val currentAffirmation = affirmations.getOrNull(currentIndex) ?: return
 
     // Mic pulse animation when listening
     val micScale by rememberInfiniteTransition(label = "mic_pulse").animateFloat(
@@ -122,7 +126,7 @@ fun VoiceVerificationScreen(
                     .orEmpty()
                 lastHeard = matches.firstOrNull() ?: ""
 
-                if (AffirmationGenerator.validateSpoken(matches, currentAffirmation)) {
+                if (VerificationPhraseProvider.matchesSpoken(matches, phrase)) {
                     voiceState = VoiceState.ACCEPTED
                 } else {
                     voiceState = VoiceState.ERROR_NO_MATCH
@@ -147,7 +151,7 @@ fun VoiceVerificationScreen(
             }
         })
 
-        // Affirmations are English, so force an English recognition model —
+        // Phrases are English, so force an English recognition model —
         // otherwise the recognizer uses the device locale (ur, ar, hi, …)
         // and never returns matching text. Keep the user's English variant
         // (en-IN, en-GB) when they already have one.
@@ -173,14 +177,14 @@ fun VoiceVerificationScreen(
         }
     }
 
-    // Auto-advance after ACCEPTED
+    // Auto-advance after ACCEPTED — same phrase repeats until all attempts done.
     LaunchedEffect(voiceState) {
         if (voiceState == VoiceState.ACCEPTED) {
             kotlinx.coroutines.delay(800L)
-            if (currentIndex + 1 >= affirmations.size) {
+            if (currentAttempt + 1 >= total) {
                 onSuccess()
             } else {
-                currentIndex++
+                currentAttempt++
                 voiceState = VoiceState.IDLE
             }
         }
@@ -203,34 +207,25 @@ fun VoiceVerificationScreen(
             letterSpacing = 1.5.sp,
         )
         Spacer(Modifier.height(12.dp))
-        VerificationProgressDots(current = currentIndex, total = affirmations.size)
+        VerificationProgressDots(current = currentAttempt, total = total)
 
         Spacer(Modifier.weight(0.8f))
 
-        // Affirmation
-        AnimatedContent(
-            targetState = currentAffirmation,
-            transitionSpec = {
-                (fadeIn(tween(250)) + slideInVertically(tween(250)) { it / 4 })
-                    .togetherWith(fadeOut(tween(150)) + slideOutVertically(tween(150)) { -it / 4 })
-            },
-            label = "voice_affirmation",
+        // The single locked phrase (identical every attempt)
+        Text(
+            text = "\"$phrase\"",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+            lineHeight = 32.sp,
             modifier = Modifier.fillMaxWidth(),
-        ) { text ->
-            Text(
-                text = "\"$text\"",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-                lineHeight = 32.sp,
-            )
-        }
+        )
 
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = "Please say:  ${currentAffirmation}",
+            text = "Say the phrase aloud  ·  Attempt ${currentAttempt + 1} of $total",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -277,8 +272,8 @@ fun VoiceVerificationScreen(
             VoiceState.PROCESSING -> "Processing…"
             VoiceState.ACCEPTED -> "✓  Accepted"
             VoiceState.ERROR_NO_MATCH ->
-                if (lastHeard.isNotBlank()) "Heard: \"$lastHeard\" — tap to try again"
-                else "Didn't catch that — tap to try again"
+                if (lastHeard.isNotBlank()) "Heard: \"$lastHeard\" — I didn't quite catch that. Try once more."
+                else "I didn't quite catch that. Try once more."
             VoiceState.ERROR_UNAVAILABLE -> "Speech unavailable — use text instead"
         }
 

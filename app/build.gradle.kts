@@ -83,6 +83,12 @@ android {
         compose = true
         buildConfig = true
     }
+    testOptions {
+        // VerificationPhraseProvider emits debug-gated android.util.Log output;
+        // let unmocked android.* calls return defaults instead of throwing in
+        // JVM unit tests.
+        unitTests.isReturnDefaultValues = true
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
