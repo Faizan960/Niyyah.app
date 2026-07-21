@@ -58,6 +58,9 @@ fun VerificationFlowScreen(
     val reminder = remember {
         ReminderRepository.getRandom(reminderQuran, reminderHadith, reminderReflection)
     }
+    // BM-VERIFY-004 — one universal phrase for this session, personalised to the
+    // prayer being confirmed ("I prayed my Asr"). Same phrase for text and voice.
+    val phrase = remember(prayer) { VerificationPhraseProvider.phraseFor(prayer.displayName) }
     var step by remember { mutableStateOf(VerificationStep.REMINDER) }
     var chosenMethod by remember { mutableStateOf<VerificationMethod?>(null) }
 
@@ -101,6 +104,7 @@ fun VerificationFlowScreen(
 
                 VerificationStep.TEXT -> TextVerificationScreen(
                     confirmCount = confirmCount,
+                    phrase = phrase,
                     onSuccess = { step = VerificationStep.SUCCESS },
                     onBack = {
                         step = if (effective == VerificationMethod.ASK_EVERY_TIME)
@@ -110,6 +114,7 @@ fun VerificationFlowScreen(
 
                 VerificationStep.VOICE -> VoiceVerificationScreen(
                     confirmCount = confirmCount,
+                    phrase = phrase,
                     onSuccess = { step = VerificationStep.SUCCESS },
                     onBack = {
                         step = if (effective == VerificationMethod.ASK_EVERY_TIME)

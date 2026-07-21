@@ -38,15 +38,15 @@ import com.salahlock.app.verification.VerificationPhraseProvider
 @Composable
 fun TextVerificationScreen(
     confirmCount: Int,
+    phrase: String,
     onSuccess: () -> Unit,
     onBack: () -> Unit,
 ) {
     val total = remember(confirmCount) { confirmCount.coerceAtLeast(1) }
-    // Selected ONCE per session and locked for every attempt.
-    val phrase = rememberSaveable {
-        VerificationPhraseProvider.randomPhrase().also {
-            if (com.salahlock.app.BuildConfig.DEBUG) android.util.Log.d("VerifySession", "TEXT session phrase selected: \"$it\"")
-        }
+    // The phrase is chosen by the caller from the current prayer and is stable
+    // for the whole session — identical for every attempt.
+    LaunchedEffect(phrase) {
+        if (com.salahlock.app.BuildConfig.DEBUG) android.util.Log.d("VerifySession", "TEXT session phrase: \"$phrase\"")
     }
 
     var currentAttempt by rememberSaveable { mutableIntStateOf(0) }

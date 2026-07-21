@@ -319,6 +319,18 @@ fun MainAppContent() {
                 onBack = { navController.popBackStack() },
             )
         }
+
+        // BM-VERIFY-003 — DEBUG-ONLY route. Registered only in debug builds, so it
+        // never exists in release. Hosts the REAL VoiceVerificationScreen for
+        // manual mic QA without a Salah-time trigger and without mutating any
+        // prayer/lock data. Entry point is the debug-only Developer row in Profile.
+        if (BuildConfig.DEBUG) {
+            composable("debug/voice_verification") {
+                com.salahlock.app.ui.verification.DebugVoiceVerificationScreen(
+                    onExit = { navController.popBackStack() },
+                )
+            }
+        }
     }
 }
 

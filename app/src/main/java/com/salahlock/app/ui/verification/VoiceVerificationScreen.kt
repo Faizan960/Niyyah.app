@@ -53,17 +53,17 @@ private enum class VoiceState { IDLE, LISTENING, PROCESSING, ACCEPTED, ERROR_NO_
 @Composable
 fun VoiceVerificationScreen(
     confirmCount: Int,
+    phrase: String,
     onSuccess: () -> Unit,
     onBack: () -> Unit,
     onFallbackToText: () -> Unit,
 ) {
     val context = LocalContext.current
     val total = remember(confirmCount) { confirmCount.coerceAtLeast(1) }
-    // Selected ONCE per session and locked for every attempt.
-    val phrase = rememberSaveable {
-        VerificationPhraseProvider.randomPhrase().also {
-            if (com.salahlock.app.BuildConfig.DEBUG) android.util.Log.d("VerifySession", "VOICE session phrase selected: \"$it\"")
-        }
+    // The phrase is chosen by the caller from the current prayer and is stable
+    // for the whole session — identical for every attempt.
+    LaunchedEffect(phrase) {
+        if (com.salahlock.app.BuildConfig.DEBUG) android.util.Log.d("VerifySession", "VOICE session phrase: \"$phrase\"")
     }
 
     var currentAttempt by rememberSaveable { mutableIntStateOf(0) }
@@ -271,9 +271,9 @@ fun VoiceVerificationScreen(
             VoiceState.LISTENING -> "Listening…"
             VoiceState.PROCESSING -> "Processing…"
             VoiceState.ACCEPTED -> "✓  Accepted"
-            VoiceState.ERROR_NO_MATCH ->
-                if (lastHeard.isNotBlank()) "Heard: \"$lastHeard\" — I didn't quite catch that. Try once more."
-                else "I didn't quite catch that. Try once more."
+            // The raw transcript stays in DEBUG logs only — never surface it, so
+            // the user is never made to feel they mispronounced something.
+            VoiceState.ERROR_NO_MATCH -> "Almost there. Say it once more."
             VoiceState.ERROR_UNAVAILABLE -> "Speech unavailable — use text instead"
         }
 
