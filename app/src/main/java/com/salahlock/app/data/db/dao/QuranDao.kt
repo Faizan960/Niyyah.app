@@ -13,47 +13,48 @@ interface QuranDao {
 
     // ------------------------------------------------------------ bookmarks
 
+    // BM-013 — all bookmark/progress access is owner-scoped (WHERE ownerId = :owner).
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBookmark(bookmark: QuranBookmarkEntity): Long
 
-    @Query("DELETE FROM quran_bookmarks WHERE id = :id")
-    suspend fun deleteBookmark(id: Long)
+    @Query("DELETE FROM quran_bookmarks WHERE ownerId = :owner AND id = :id")
+    suspend fun deleteBookmark(owner: String, id: Long)
 
-    @Query("DELETE FROM quran_bookmarks WHERE surahNumber = :surah AND ayahNumber = :ayah")
-    suspend fun deleteAyahBookmark(surah: Int, ayah: Int)
+    @Query("DELETE FROM quran_bookmarks WHERE ownerId = :owner AND surahNumber = :surah AND ayahNumber = :ayah")
+    suspend fun deleteAyahBookmark(owner: String, surah: Int, ayah: Int)
 
-    @Query("DELETE FROM quran_bookmarks WHERE surahNumber = :surah AND ayahNumber IS NULL")
-    suspend fun deleteSurahBookmark(surah: Int)
+    @Query("DELETE FROM quran_bookmarks WHERE ownerId = :owner AND surahNumber = :surah AND ayahNumber IS NULL")
+    suspend fun deleteSurahBookmark(owner: String, surah: Int)
 
-    @Query("SELECT * FROM quran_bookmarks ORDER BY createdAtMs DESC")
-    fun getAllBookmarks(): Flow<List<QuranBookmarkEntity>>
+    @Query("SELECT * FROM quran_bookmarks WHERE ownerId = :owner ORDER BY createdAtMs DESC")
+    fun getAllBookmarks(owner: String): Flow<List<QuranBookmarkEntity>>
 
-    @Query("SELECT COUNT(*) FROM quran_bookmarks")
-    fun getBookmarkCount(): Flow<Int>
+    @Query("SELECT COUNT(*) FROM quran_bookmarks WHERE ownerId = :owner")
+    fun getBookmarkCount(owner: String): Flow<Int>
 
-    @Query("SELECT EXISTS(SELECT 1 FROM quran_bookmarks WHERE surahNumber = :surah AND ayahNumber = :ayah)")
-    fun isAyahBookmarked(surah: Int, ayah: Int): Flow<Boolean>
+    @Query("SELECT EXISTS(SELECT 1 FROM quran_bookmarks WHERE ownerId = :owner AND surahNumber = :surah AND ayahNumber = :ayah)")
+    fun isAyahBookmarked(owner: String, surah: Int, ayah: Int): Flow<Boolean>
 
-    @Query("SELECT EXISTS(SELECT 1 FROM quran_bookmarks WHERE surahNumber = :surah AND ayahNumber IS NULL)")
-    fun isSurahBookmarked(surah: Int): Flow<Boolean>
+    @Query("SELECT EXISTS(SELECT 1 FROM quran_bookmarks WHERE ownerId = :owner AND surahNumber = :surah AND ayahNumber IS NULL)")
+    fun isSurahBookmarked(owner: String, surah: Int): Flow<Boolean>
 
-    @Query("UPDATE quran_bookmarks SET collectionName = :collection WHERE id = :id")
-    suspend fun moveBookmarkToCollection(id: Long, collection: String)
+    @Query("UPDATE quran_bookmarks SET collectionName = :collection WHERE ownerId = :owner AND id = :id")
+    suspend fun moveBookmarkToCollection(owner: String, id: Long, collection: String)
 
     // ------------------------------------------------------------ progress
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertProgress(progress: QuranProgressEntity)
 
-    @Query("SELECT * FROM quran_progress WHERE surahNumber = :surah")
-    suspend fun getProgress(surah: Int): QuranProgressEntity?
+    @Query("SELECT * FROM quran_progress WHERE ownerId = :owner AND surahNumber = :surah")
+    suspend fun getProgress(owner: String, surah: Int): QuranProgressEntity?
 
-    @Query("SELECT * FROM quran_progress ORDER BY timestampMs DESC LIMIT 1")
-    fun getLastRead(): Flow<QuranProgressEntity?>
+    @Query("SELECT * FROM quran_progress WHERE ownerId = :owner ORDER BY timestampMs DESC LIMIT 1")
+    fun getLastRead(owner: String): Flow<QuranProgressEntity?>
 
-    @Query("SELECT * FROM quran_progress ORDER BY timestampMs DESC LIMIT :limit")
-    fun getRecentlyRead(limit: Int = 10): Flow<List<QuranProgressEntity>>
+    @Query("SELECT * FROM quran_progress WHERE ownerId = :owner ORDER BY timestampMs DESC LIMIT :limit")
+    fun getRecentlyRead(owner: String, limit: Int = 10): Flow<List<QuranProgressEntity>>
 
-    @Query("SELECT * FROM quran_progress")
-    fun getAllProgress(): Flow<List<QuranProgressEntity>>
+    @Query("SELECT * FROM quran_progress WHERE ownerId = :owner")
+    fun getAllProgress(owner: String): Flow<List<QuranProgressEntity>>
 }

@@ -31,6 +31,12 @@ import com.salahlock.app.data.db.entity.QuranProgressEntity
 import com.salahlock.app.data.db.dao.CollectionsDao
 import com.salahlock.app.data.db.entity.UserCollectionEntity
 import com.salahlock.app.data.db.entity.CollectionItemEntity
+import com.salahlock.app.data.db.dao.HadithUserStateDao
+import com.salahlock.app.data.db.dao.AzkarUserStateDao
+import com.salahlock.app.data.db.dao.LegacyOwnershipDao
+import com.salahlock.app.data.db.entity.HadithUserStateEntity
+import com.salahlock.app.data.db.entity.AzkarUserStateEntity
+import com.salahlock.app.data.db.entity.LegacyOwnershipEntity
 
 @Database(
     entities = [
@@ -49,8 +55,12 @@ import com.salahlock.app.data.db.entity.CollectionItemEntity
         QuranProgressEntity::class,
         UserCollectionEntity::class,
         CollectionItemEntity::class,
+        // BM-013 Checkpoint B — user-owned state (normalized off the corpus) + adoption ledger.
+        HadithUserStateEntity::class,
+        AzkarUserStateEntity::class,
+        LegacyOwnershipEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -66,6 +76,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun localMasjidDao(): LocalMasjidDao
     abstract fun quranDao(): QuranDao
     abstract fun collectionsDao(): CollectionsDao
+    abstract fun hadithUserStateDao(): HadithUserStateDao
+    abstract fun azkarUserStateDao(): AzkarUserStateDao
+    abstract fun legacyOwnershipDao(): LegacyOwnershipDao
+    abstract fun ownershipAdoptionDao(): com.salahlock.app.data.db.dao.OwnershipAdoptionDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -316,6 +330,137 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Migration 8 → 9 (BM-013 Checkpoint B — cloud-sync LOCAL FOUNDATION).
+         *
+         * Non-destructive. Establishes multi-account ownership, normalizes user
+         * state off the static corpus, and adds stable cross-device identities.
+         * NO user data is dropped; static corpus text is preserved in place.
+         *
+         *  1. Adds `ownerId` (default `__local__` = legacy/unclaimed) + `updatedAt`
+         *     to every genuinely user-owned table.
+         *  2. Adds `clientUuid` to collections (backfilled with a fresh UUID per row)
+         *     and mirrors it onto `collection_items.collectionUuid`.
+         *  3. Adds the static, deterministic `azkarRef` to the azkar corpus.
+         *  4. Creates `hadith_user_state` / `azkar_user_state` and MIGRATES the
+         *     existing bookmark/progress flags off the corpus into them (owner
+         *     `__local__`). Corpus flag columns are left dormant.
+         *  5. Creates the one-time `legacy_ownership` adoption ledger (unclaimed).
+         */
+        internal val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 1a ─ ownership + sync bookkeeping via ALTER (tables keeping their PK)
+                for (table in listOf("prayer_records", "emergency_overrides", "quran_bookmarks")) {
+                    db.execSQL("ALTER TABLE $table ADD COLUMN ownerId TEXT NOT NULL DEFAULT '__local__'")
+                    db.execSQL("ALTER TABLE $table ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+                }
+                // 1b ─ make unique keys owner-aware so multiple accounts can hold the
+                //      same natural key (date/prayer, month, ayah) without colliding.
+                db.execSQL("DROP INDEX IF EXISTS index_prayer_records_date_prayerName")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_prayer_records_ownerId_date_prayerName ON prayer_records (ownerId, date, prayerName)")
+                db.execSQL("DROP INDEX IF EXISTS index_quran_bookmarks_surahNumber_ayahNumber")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_quran_bookmarks_ownerId_surahNumber_ayahNumber ON quran_bookmarks (ownerId, surahNumber, ayahNumber)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_emergency_overrides_ownerId_monthYear ON emergency_overrides (ownerId, monthYear)")
+
+                // 1c ─ rebuild tables whose PRIMARY KEY must become owner-composite.
+                //      (SQLite can't alter a PK in place; copy → drop → rename.)
+                db.execSQL(
+                    "CREATE TABLE `quran_progress_new` (`surahNumber` INTEGER NOT NULL, " +
+                        "`lastAyah` INTEGER NOT NULL, `maxAyah` INTEGER NOT NULL, " +
+                        "`timestampMs` INTEGER NOT NULL, `ownerId` TEXT NOT NULL DEFAULT '__local__', " +
+                        "`updatedAt` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`ownerId`, `surahNumber`))"
+                )
+                db.execSQL(
+                    "INSERT INTO quran_progress_new (surahNumber, lastAyah, maxAyah, timestampMs, ownerId, updatedAt) " +
+                        "SELECT surahNumber, lastAyah, maxAyah, timestampMs, '__local__', 0 FROM quran_progress"
+                )
+                db.execSQL("DROP TABLE quran_progress")
+                db.execSQL("ALTER TABLE quran_progress_new RENAME TO quran_progress")
+
+                db.execSQL(
+                    "CREATE TABLE `streaks_new` (`id` INTEGER NOT NULL, " +
+                        "`currentStreak` INTEGER NOT NULL, `bestStreak` INTEGER NOT NULL, " +
+                        "`lastFullDay` TEXT NOT NULL, `lastMercyWeek` TEXT NOT NULL, " +
+                        "`mercyUsedThisWeek` INTEGER NOT NULL, `ownerId` TEXT NOT NULL DEFAULT '__local__', " +
+                        "`updatedAt` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`ownerId`))"
+                )
+                db.execSQL(
+                    "INSERT INTO streaks_new (id, currentStreak, bestStreak, lastFullDay, lastMercyWeek, mercyUsedThisWeek, ownerId, updatedAt) " +
+                        "SELECT id, currentStreak, bestStreak, lastFullDay, lastMercyWeek, mercyUsedThisWeek, '__local__', 0 FROM streaks"
+                )
+                db.execSQL("DROP TABLE streaks")
+                db.execSQL("ALTER TABLE streaks_new RENAME TO streaks")
+
+                // 2 ─ collections: stable UUID identity + scoping
+                db.execSQL("ALTER TABLE user_collections ADD COLUMN clientUuid TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE user_collections ADD COLUMN ownerId TEXT NOT NULL DEFAULT '__local__'")
+                db.execSQL("ALTER TABLE user_collections ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+                // Fresh random UUID (v4-shaped) per existing row — avoids cross-device
+                // collisions that a deterministic `legacy-<id>` would cause if the same
+                // user adopted legacy data on two devices.
+                db.execSQL(
+                    "UPDATE user_collections SET clientUuid = $UUID_SQL WHERE clientUuid = ''"
+                )
+                db.execSQL("ALTER TABLE collection_items ADD COLUMN collectionUuid TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE collection_items ADD COLUMN ownerId TEXT NOT NULL DEFAULT '__local__'")
+                db.execSQL("ALTER TABLE collection_items ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+                db.execSQL(
+                    "UPDATE collection_items SET collectionUuid = " +
+                        "(SELECT clientUuid FROM user_collections WHERE user_collections.id = collection_items.collectionId) " +
+                        "WHERE collectionUuid = ''"
+                )
+
+                // 3 ─ static deterministic azkar ref on the corpus (index within
+                //     category, computed without window functions for old SQLite).
+                db.execSQL("ALTER TABLE azkar_table ADD COLUMN azkarRef TEXT NOT NULL DEFAULT ''")
+                db.execSQL(
+                    "UPDATE azkar_table SET azkarRef = 'azkar:v1:' || replace(lower(trim(category)), ' ', '_') || ':' || " +
+                        "((SELECT COUNT(*) FROM azkar_table a2 WHERE a2.category = azkar_table.category AND a2.id <= azkar_table.id) - 1)"
+                )
+
+                // 4 ─ user-state tables + migrate flags off the corpus
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `hadith_user_state` (" +
+                        "`ownerId` TEXT NOT NULL, `hadithId` TEXT NOT NULL, " +
+                        "`isBookmarked` INTEGER NOT NULL, `bookmarkSource` TEXT NOT NULL, " +
+                        "`lastReadTimestamp` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`ownerId`, `hadithId`))"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `azkar_user_state` (" +
+                        "`ownerId` TEXT NOT NULL, `azkarRef` TEXT NOT NULL, " +
+                        "`isBookmarked` INTEGER NOT NULL, `completedCount` INTEGER NOT NULL, " +
+                        "`updatedAt` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`ownerId`, `azkarRef`))"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `legacy_ownership` (" +
+                        "`id` INTEGER NOT NULL, `adoptedBy` TEXT, `adoptedAtMs` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`id`))"
+                )
+                db.execSQL(
+                    "INSERT INTO hadith_user_state (ownerId, hadithId, isBookmarked, bookmarkSource, lastReadTimestamp, updatedAt) " +
+                        "SELECT '__local__', id, isBookmarked, bookmarkSource, lastReadTimestamp, 0 " +
+                        "FROM hadith_table WHERE isBookmarked = 1 OR lastReadTimestamp > 0"
+                )
+                db.execSQL(
+                    "INSERT INTO azkar_user_state (ownerId, azkarRef, isBookmarked, completedCount, updatedAt) " +
+                        "SELECT '__local__', azkarRef, isBookmarked, completedCount, 0 " +
+                        "FROM azkar_table WHERE (isBookmarked = 1 OR completedCount > 0) AND azkarRef <> ''"
+                )
+
+                // 5 ─ legacy-adoption ledger, unclaimed
+                db.execSQL("INSERT OR IGNORE INTO legacy_ownership (id, adoptedBy, adoptedAtMs) VALUES (1, NULL, 0)")
+            }
+        }
+
+        /** SQLite expression producing a fresh v4-shaped UUID string per row. */
+        private const val UUID_SQL =
+            "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || " +
+                "substr(hex(randomblob(2)), 2) || '-' || " +
+                "substr('89ab', abs(random()) % 4 + 1, 1) || substr(hex(randomblob(2)), 2) || '-' || " +
+                "hex(randomblob(6)))"
+
         fun getInstance(context: Context): AppDatabase =
             INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -323,7 +468,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "salahlock_db",
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                     .build().also { INSTANCE = it }
             }
     }

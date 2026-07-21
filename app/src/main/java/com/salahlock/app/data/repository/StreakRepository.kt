@@ -17,9 +17,14 @@ import java.util.Locale
 class StreakRepository(
     private val prayerRecordDao: PrayerRecordDao,
     private val streakDao: StreakDao,
+    // BM-013 — active owner seam; resolves to __local__ during the local foundation.
+    private val activeOwner: com.salahlock.app.data.sync.ActiveOwnerProvider =
+        com.salahlock.app.data.sync.ActiveOwnerProvider.shared,
 ) {
+    private val owner get() = activeOwner.ownerId()
+
     fun observeStreakInfo(): Flow<StreakInfo> =
-        streakDao.observeStreak().map { entity ->
+        streakDao.observeStreak(owner).map { entity ->
             val e = entity ?: StreakEntity()
             StreakInfo(
                 currentStreak = e.currentStreak,
@@ -41,6 +46,7 @@ class StreakRepository(
             verified = !wasOverride,
             overrideUsed = wasOverride,
             verificationType = verificationType.name,
+            ownerId = owner,
         )
         prayerRecordDao.upsert(record)
         android.util.Log.d("StreakRepo", "Recorded $prayer on $date as ${verificationType.name}")
@@ -50,11 +56,11 @@ class StreakRepository(
     private suspend fun recalculateStreak() {
         val today = LocalDate.now()
         val fromDate = today.minusDays(35).toString()
-        val records = prayerRecordDao.getRecentRecords(fromDate)
+        val records = prayerRecordDao.getRecentRecords(owner, fromDate)
         val byDay = records.groupBy { it.date }
 
         val currentStreak = calculateStreak(byDay, today)
-        val existingStreak = streakDao.getStreak() ?: StreakEntity()
+        val existingStreak = streakDao.getStreak(owner) ?: StreakEntity(ownerId = owner)
         val bestStreak = maxOf(existingStreak.bestStreak, currentStreak)
 
         val weekKey = isoWeekKey(today)
@@ -66,6 +72,7 @@ class StreakRepository(
                 bestStreak = bestStreak,
                 lastFullDay = today.toString(),
                 mercyUsedThisWeek = mercyUsed,
+                ownerId = owner,
             )
         )
     }

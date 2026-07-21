@@ -51,19 +51,49 @@ class SpiritualReportRepository(
     context: Context,
     private val prayerRecordDao: PrayerRecordDao,
     private val emergencyOverrideDao: EmergencyOverrideDao,
+    /**
+     * BM-013 — active owner scope for reflection files. Defaults to the legacy/
+     * unclaimed scope so existing behavior is unchanged during the local-foundation
+     * checkpoint; the sync slice supplies the adopted Clerk id after adoption.
+     */
+    private val ownerId: () -> String = { com.salahlock.app.data.db.entity.OwnerIds.LOCAL },
 ) {
     private val tag = "SpiritualReportRepo"
-    private val dir: File = File(context.filesDir, "reflections")
+    /** Root of all reflection storage; per-owner subdirectories live under it. */
+    private val root: File = File(context.filesDir, "reflections")
+
+    init {
+        // One-time: relocate pre-BM-013 loose top-level reflection json files into the
+        // legacy `__local__` namespace so they are never visible to another Clerk account.
+        adoptLegacyReflections()
+    }
+
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val generateMutex = Mutex()
 
     // ── Persistence ──────────────────────────────────────────────────────────
 
-    private fun fileFor(month: YearMonth) = File(dir, "$month.json")
+    /** The current owner's reflection directory (created on demand). */
+    private fun dir(): File = File(root, ownerId()).also { it.mkdirs() }
+
+    private fun fileFor(month: YearMonth) = File(dir(), "$month.json")
+
+    /**
+     * Moves any legacy loose top-level reflection json files (written before
+     * per-account namespacing) into the `__local__` subdirectory. Idempotent and
+     * safe: only touches top-level `.json` files, never another owner's subdirectory.
+     */
+    private fun adoptLegacyReflections() {
+        runCatching { com.salahlock.app.data.sync.ReflectionFiles.migrateLooseToLocal(root) }
+            .onFailure { Log.e(tag, "Legacy reflection relocation failed: ${it.message}") }
+    }
+
+    /** Exposes the storage root so adoption/recovery (LegacyAdoptionManager) can move files. */
+    fun reflectionRoot(): File = root
 
     /** Months that have a frozen report on disk, oldest first. */
     fun storedMonths(): List<YearMonth> =
-        dir.listFiles { f -> f.extension == "json" }
+        dir().listFiles { f -> f.extension == "json" }
             ?.mapNotNull { runCatching { YearMonth.parse(it.nameWithoutExtension) }.getOrNull() }
             ?.sorted()
             ?: emptyList()
@@ -76,7 +106,6 @@ class SpiritualReportRepository(
         }
 
     private fun save(reflection: StoredMonthlyReflection) {
-        dir.mkdirs()
         fileFor(YearMonth.parse(reflection.month)).writeText(json.encodeToString(reflection))
     }
 
@@ -100,7 +129,7 @@ class SpiritualReportRepository(
     suspend fun ensureReportsUpToDate(today: LocalDate = LocalDate.now()): Unit =
         withContext(Dispatchers.IO) {
             generateMutex.withLock {
-                val earliest = prayerRecordDao.getEarliestDate()
+                val earliest = prayerRecordDao.getEarliestDate(ownerId())
                     ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
                     ?: return@withLock
                 val firstMonth = YearMonth.from(earliest)
@@ -140,9 +169,9 @@ class SpiritualReportRepository(
 
     private suspend fun buildReflection(month: YearMonth, today: LocalDate): StoredMonthlyReflection {
         val records = prayerRecordDao.getRecordsBetween(
-            month.atDay(1).toString(), month.atEndOfMonth().toString(),
+            ownerId(), month.atDay(1).toString(), month.atEndOfMonth().toString(),
         )
-        val mercy = emergencyOverrideDao.getForMonth(monthKey(month))?.count ?: 0
+        val mercy = emergencyOverrideDao.getForMonth(ownerId(), monthKey(month))?.count ?: 0
         val stats = MonthlyStatsCalculator.calculate(month, records, mercy, today)
 
         val prev = getStored(month.minusMonths(1))
@@ -193,11 +222,11 @@ class SpiritualReportRepository(
     private suspend fun achievementContext(
         extraRank: Pair<YearMonth, MonthlyRank>? = null,
     ): AchievementEngine.Context {
-        val allRecords = prayerRecordDao.getAll()
+        val allRecords = prayerRecordDao.getAll(ownerId())
         val ranks = exportAll()
             .associate { YearMonth.parse(it.month) to rankOf(it.rank) }
             .let { if (extraRank != null) it + extraRank else it }
-        val mercyByMonth = emergencyOverrideDao.getAll().mapNotNull { o ->
+        val mercyByMonth = emergencyOverrideDao.getAll(ownerId()).mapNotNull { o ->
             runCatching { YearMonth.parse(o.monthYear) }.getOrNull()?.let { it to o.count }
         }.toMap()
         val dates = allRecords.mapNotNull { runCatching { LocalDate.parse(it.date) }.getOrNull() }

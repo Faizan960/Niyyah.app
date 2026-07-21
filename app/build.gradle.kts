@@ -30,6 +30,14 @@ val admobInterstitialId = signingProp("ADMOB_INTERSTITIAL_ID") ?: "ca-app-pub-39
 // on machines without it (Clerk simply won't initialize). Never read the secret key.
 val clerkPublishableKey = signingProp("CLERK_PUBLISHABLE_KEY") ?: ""
 
+// BM-013 Checkpoint A — Supabase (cloud DB only; Clerk remains the sole auth
+// authority). Both are PUBLIC/client-safe: project URL + sb_publishable key.
+// Read from local.properties so they stay out of VCS; empty fallback keeps the
+// build green on machines without them (the probe just reports "not configured").
+// Never read the service_role key, DB password, or any Supabase secret.
+val supabaseUrl = signingProp("SUPABASE_URL") ?: ""
+val supabasePublishableKey = signingProp("SUPABASE_PUBLISHABLE_KEY") ?: ""
+
 android {
     namespace = "com.salahlock.app"
     compileSdk = 36
@@ -40,6 +48,9 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        // BM-013 — instrumented tests (Room MigrationTestHelper runs on a device).
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
         manifestPlaceholders["admobAppId"] = admobAppId
         buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"$admobInterstitialId\"")
         // Sprint A.2 — master ad switch. Infra stays live (init + preload + cache),
@@ -48,6 +59,10 @@ android {
 
         // BM-AUTH-001 — Clerk publishable key exposed to app code via BuildConfig.
         buildConfigField("String", "CLERK_PUBLISHABLE_KEY", "\"$clerkPublishableKey\"")
+
+        // BM-013 Checkpoint A — public Supabase client config via BuildConfig.
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$supabasePublishableKey\"")
     }
 
     signingConfigs {
@@ -102,6 +117,12 @@ android {
     }
     room {
         schemaDirectory("$projectDir/schemas")
+    }
+    // BM-013 — expose exported Room schemas to instrumented migration tests.
+    sourceSets {
+        getByName("androidTest") {
+            assets.srcDirs(files("$projectDir/schemas"))
+        }
     }
 }
 
@@ -183,6 +204,8 @@ dependencies {
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    // BM-013 — Room MigrationTestHelper for v8→v9 migration tests.
+    androidTestImplementation("androidx.room:room-testing:2.7.1")
 
 
     // BM-AUTH-001: Google Sign-In is now handled by Clerk (clerk-android-api). The

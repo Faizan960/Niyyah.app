@@ -201,19 +201,21 @@ class KnowledgeRepository(private val context: Context) {
             val inputStream = context.assets.open("azkar.json")
             val text = BufferedReader(InputStreamReader(inputStream)).readText()
             val jsonArray = JSONArray(text)
-            val azkarList = mutableListOf<AzkarEntity>()
-
-            for (i in 0 until jsonArray.length()) {
-                val obj = jsonArray.getJSONObject(i)
-                azkarList.add(
-                    AzkarEntity(
-                        category = obj.getString("category"),
-                        arabic = obj.getString("arabic"),
-                        transliteration = obj.getString("transliteration"),
-                        translation = obj.getString("translation"),
-                        reference = obj.getString("reference"),
-                        targetCount = obj.getInt("count")
-                    )
+            val objects = (0 until jsonArray.length()).map { jsonArray.getJSONObject(it) }
+            // BM-013 — assign the deterministic stable ref in canonical (asset array)
+            // order, so a fresh seed produces byte-identical refs to a v8→v9 migration.
+            val refs = com.salahlock.app.data.sync.identity.AzkarRef.assign(
+                objects.map { it.getString("category") }
+            )
+            val azkarList = objects.mapIndexed { i, obj ->
+                AzkarEntity(
+                    category = obj.getString("category"),
+                    arabic = obj.getString("arabic"),
+                    transliteration = obj.getString("transliteration"),
+                    translation = obj.getString("translation"),
+                    reference = obj.getString("reference"),
+                    targetCount = obj.getInt("count"),
+                    azkarRef = refs[i],
                 )
             }
             azkarDao.insertAll(azkarList)
