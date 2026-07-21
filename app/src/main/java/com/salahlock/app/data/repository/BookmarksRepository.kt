@@ -59,7 +59,10 @@ class BookmarksRepository(
             BookmarkType.AZKAR ->
                 item.azkarId?.let { knowledgeRepository.toggleAzkarBookmark(it, false) }
         }
-        collectionsDao.deleteItemEverywhere(item.type.name, item.key)
+        collectionsDao.deleteItemEverywhere(
+            com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId(),
+            item.type.name, item.key,
+        )
     }
 
     // ------------------------------------------------------------- mapping

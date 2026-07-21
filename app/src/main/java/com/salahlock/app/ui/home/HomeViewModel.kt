@@ -238,7 +238,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private fun observeTodayRecords() {
         viewModelScope.launch {
             val today = LocalDate.now().toString()
-            app.database.prayerRecordDao().observeRecordsForDate(today).collect { records ->
+            val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+            app.database.prayerRecordDao().observeRecordsForDate(owner, today).collect { records ->
                 val byName = records.associateBy { PrayerName.valueOf(it.prayerName) }
                 _uiState.update { it.copy(todayRecords = byName) }
             }
@@ -317,7 +318,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             ) { blockedCount, _, profile -> Pair(blockedCount, profile) }
                 .collect { (blockedCount, profileName) ->
                     val today = LocalDate.now().toString()
-                    val todayRecords = app.database.prayerRecordDao().getRecordsForDate(today)
+                    val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+                    val todayRecords = app.database.prayerRecordDao().getRecordsForDate(owner, today)
                     val verifiedToday = todayRecords.filter { it.verified || it.overrideUsed }
                     val lastVerifiedLabel = if (verifiedToday.isEmpty()) "None today"
                         else "${verifiedToday.last().prayerName.lowercase().replaceFirstChar { it.uppercase() }} verified"

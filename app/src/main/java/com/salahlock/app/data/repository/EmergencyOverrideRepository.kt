@@ -18,7 +18,12 @@ enum class OverrideReason(val displayText: String) {
 
 class EmergencyOverrideRepository(
     private val dao: EmergencyOverrideDao,
+    // BM-013 — active owner seam; resolves to __local__ during the local foundation.
+    private val activeOwner: com.salahlock.app.data.sync.ActiveOwnerProvider =
+        com.salahlock.app.data.sync.ActiveOwnerProvider.shared,
 ) {
+    private val owner get() = activeOwner.ownerId()
+
     private fun currentMonthKey(): String {
         val now = LocalDate.now()
         return "${now.year}-${now.monthValue.toString().padStart(2, '0')}"
@@ -26,7 +31,7 @@ class EmergencyOverrideRepository(
 
     suspend fun getOverrideState(): OverrideState {
         val monthKey = currentMonthKey()
-        val record = dao.getForMonth(monthKey)
+        val record = dao.getForMonth(owner, monthKey)
         val used = record?.count ?: 0
         return OverrideState(
             usedThisMonth = used,
@@ -38,7 +43,7 @@ class EmergencyOverrideRepository(
     /** Records an override use and returns true if successful, false if limit reached. */
     suspend fun useOverride(reason: OverrideReason): Boolean {
         val monthKey = currentMonthKey()
-        val existing = dao.getForMonth(monthKey)
+        val existing = dao.getForMonth(owner, monthKey)
         val currentCount = existing?.count ?: 0
 
         if (currentCount >= MAX_OVERRIDES_PER_MONTH) return false
@@ -50,6 +55,7 @@ class EmergencyOverrideRepository(
                 count = currentCount + 1,
                 lastReason = reason.name,
                 lastUsedMs = System.currentTimeMillis(),
+                ownerId = owner,
             )
         )
         return true

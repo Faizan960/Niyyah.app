@@ -104,9 +104,11 @@ class BackupRepository(
     // ── Collect data ─────────────────────────────────────────────────────────
 
     private suspend fun collectPackage(): BackupPackage {
-        val records = db.prayerRecordDao().getAll()
-        val streak = db.streakDao().getStreak()
-        val overrides = db.emergencyOverrideDao().getAll()
+        // BM-013 — backup operates on the active owner's data (device-level migration).
+        val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+        val records = db.prayerRecordDao().getAll(owner)
+        val streak = db.streakDao().getStreak(owner)
+        val overrides = db.emergencyOverrideDao().getAll(owner)
         val localMasjid = db.localMasjidDao().get()
         val blockedApps = db.appBlacklistDao().getAllSync()
 
@@ -320,15 +322,16 @@ class BackupRepository(
     }
 
     private suspend fun applyRestore(pkg: BackupPackage) {
-        // Prayer history
-        db.prayerRecordDao().deleteAll()
+        // Prayer history — restore into the active owner's scope.
+        val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+        db.prayerRecordDao().deleteAllForOwner(owner)
         if (pkg.prayerHistory.isNotEmpty()) {
-            db.prayerRecordDao().insertAll(pkg.prayerHistory.map { it.toEntity() })
+            db.prayerRecordDao().insertAll(pkg.prayerHistory.map { it.toEntity().copy(ownerId = owner) })
         }
         // Streak
-        pkg.streak?.let { db.streakDao().upsert(it.toEntity()) }
+        pkg.streak?.let { db.streakDao().upsert(it.toEntity().copy(ownerId = owner)) }
         // Emergency overrides
-        pkg.emergencyOverrides.forEach { db.emergencyOverrideDao().upsert(it.toEntity()) }
+        pkg.emergencyOverrides.forEach { db.emergencyOverrideDao().upsert(it.toEntity().copy(ownerId = owner)) }
         // Local masjid
         pkg.localMasjid?.let { db.localMasjidDao().upsert(it.toEntity()) }
         // Blocked apps

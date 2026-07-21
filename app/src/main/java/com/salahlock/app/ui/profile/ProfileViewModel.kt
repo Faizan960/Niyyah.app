@@ -261,7 +261,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
         viewModelScope.launch {
             val today = java.time.LocalDate.now().toString()
-            app.database.prayerRecordDao().observeRecordsForDate(today).collect { records ->
+            val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+            app.database.prayerRecordDao().observeRecordsForDate(owner, today).collect { records ->
                 _extraState.update { it.copy(totalPrayers = records.count { r -> r.verified || r.overrideUsed }) }
             }
         }

@@ -62,6 +62,8 @@ class QuranRepository private constructor(context: Context) {
 
     private val appContext = context.applicationContext
     private val dao = AppDatabase.getInstance(appContext).quranDao()
+    // BM-013 — active owner seam; resolves to __local__ during the local foundation.
+    private val owner get() = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
 
     private val loadMutex = Mutex()
     @Volatile private var cachedSurahs: List<Surah>? = null
@@ -112,42 +114,43 @@ class QuranRepository private constructor(context: Context) {
 
     // ------------------------------------------------------------ bookmarks
 
-    fun getAllBookmarks(): Flow<List<QuranBookmarkEntity>> = dao.getAllBookmarks()
-    fun getBookmarkCount(): Flow<Int> = dao.getBookmarkCount()
-    fun isAyahBookmarked(surah: Int, ayah: Int): Flow<Boolean> = dao.isAyahBookmarked(surah, ayah)
-    fun isSurahBookmarked(surah: Int): Flow<Boolean> = dao.isSurahBookmarked(surah)
+    fun getAllBookmarks(): Flow<List<QuranBookmarkEntity>> = dao.getAllBookmarks(owner)
+    fun getBookmarkCount(): Flow<Int> = dao.getBookmarkCount(owner)
+    fun isAyahBookmarked(surah: Int, ayah: Int): Flow<Boolean> = dao.isAyahBookmarked(owner, surah, ayah)
+    fun isSurahBookmarked(surah: Int): Flow<Boolean> = dao.isSurahBookmarked(owner, surah)
 
     suspend fun toggleAyahBookmark(surah: Int, ayah: Int, bookmarked: Boolean) {
-        if (bookmarked) dao.insertBookmark(QuranBookmarkEntity(surahNumber = surah, ayahNumber = ayah))
-        else dao.deleteAyahBookmark(surah, ayah)
+        if (bookmarked) dao.insertBookmark(QuranBookmarkEntity(surahNumber = surah, ayahNumber = ayah, ownerId = owner))
+        else dao.deleteAyahBookmark(owner, surah, ayah)
     }
 
     suspend fun toggleSurahBookmark(surah: Int, bookmarked: Boolean) {
-        if (bookmarked) dao.insertBookmark(QuranBookmarkEntity(surahNumber = surah))
-        else dao.deleteSurahBookmark(surah)
+        if (bookmarked) dao.insertBookmark(QuranBookmarkEntity(surahNumber = surah, ownerId = owner))
+        else dao.deleteSurahBookmark(owner, surah)
     }
 
-    suspend fun deleteBookmark(id: Long) = dao.deleteBookmark(id)
+    suspend fun deleteBookmark(id: Long) = dao.deleteBookmark(owner, id)
 
     suspend fun moveBookmarkToCollection(id: Long, collection: String) =
-        dao.moveBookmarkToCollection(id, collection)
+        dao.moveBookmarkToCollection(owner, id, collection)
 
     // ------------------------------------------------------------ progress
 
-    fun getLastRead(): Flow<QuranProgressEntity?> = dao.getLastRead()
-    suspend fun getProgress(surah: Int): QuranProgressEntity? = dao.getProgress(surah)
-    fun getRecentlyRead(limit: Int = 10): Flow<List<QuranProgressEntity>> = dao.getRecentlyRead(limit)
-    fun getAllProgress(): Flow<List<QuranProgressEntity>> = dao.getAllProgress()
+    fun getLastRead(): Flow<QuranProgressEntity?> = dao.getLastRead(owner)
+    suspend fun getProgress(surah: Int): QuranProgressEntity? = dao.getProgress(owner, surah)
+    fun getRecentlyRead(limit: Int = 10): Flow<List<QuranProgressEntity>> = dao.getRecentlyRead(owner, limit)
+    fun getAllProgress(): Flow<List<QuranProgressEntity>> = dao.getAllProgress(owner)
 
     /** Records that the user is reading [surah] at [ayah]. */
     suspend fun saveReadingPosition(surah: Int, ayah: Int) {
-        val existing = dao.getProgress(surah)
+        val existing = dao.getProgress(owner, surah)
         dao.upsertProgress(
             QuranProgressEntity(
                 surahNumber = surah,
                 lastAyah = ayah,
                 maxAyah = maxOf(ayah, existing?.maxAyah ?: 1),
                 timestampMs = System.currentTimeMillis(),
+                ownerId = owner,
             ),
         )
     }

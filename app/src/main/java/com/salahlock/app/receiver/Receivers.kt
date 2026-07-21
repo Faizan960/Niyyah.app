@@ -105,7 +105,8 @@ class MissedPrayerReminderReceiver : BroadcastReceiver() {
             try {
                 val app = context.applicationContext as SalahLockApplication
                 val today = LocalDate.now().toString()
-                val record = app.database.prayerRecordDao().getRecord(today, prayer.name)
+                val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+                val record = app.database.prayerRecordDao().getRecord(owner, today, prayer.name)
                 val wasVerified = record != null && (record.verified || record.overrideUsed)
                 if (!wasVerified) {
                     NotificationHelper.showMissedPrayerReminder(context, prayer)

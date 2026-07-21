@@ -1,5 +1,6 @@
 package com.salahlock.app.data.db.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -12,10 +13,12 @@ import androidx.room.PrimaryKey
  */
 enum class VerificationType { NONE, LOCK_VERIFIED, SELF_REPORTED }
 
-/** One record per prayer per day. */
+/** One record per prayer per day, per owner. */
 @Entity(
     tableName = "prayer_records",
-    indices = [Index(value = ["date", "prayerName"], unique = true)],
+    // BM-013 — owner-aware unique key so two accounts can each have the same
+    // (date, prayer) without colliding; scoping is enforced at query time too.
+    indices = [Index(value = ["ownerId", "date", "prayerName"], unique = true)],
 )
 data class PrayerRecord(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -28,11 +31,16 @@ data class PrayerRecord(
     /** Stored as string to survive Room migrations without losing data. Default = "NONE" */
     val verificationType: String = VerificationType.NONE.name,
     val timestampMs: Long = System.currentTimeMillis(),
+    // BM-013 — ownership + sync bookkeeping (default = legacy/unclaimed).
+    @ColumnInfo(defaultValue = "__local__") val ownerId: String = OwnerIds.LOCAL,
+    @ColumnInfo(defaultValue = "0") val updatedAt: Long = 0L,
 )
 
-@Entity(tableName = "streaks")
+// BM-013 — one streak row PER OWNER (was a global singleton id=1). Streak stays a
+// derived cache recomputed from owner-scoped prayer_records; only bestStreak is durable.
+@Entity(tableName = "streaks", primaryKeys = ["ownerId"])
 data class StreakEntity(
-    @PrimaryKey val id: Int = 1,
+    val id: Int = 1,
     val currentStreak: Int = 0,
     val bestStreak: Int = 0,
     /** ISO date of the last fully verified day */
@@ -40,9 +48,17 @@ data class StreakEntity(
     /** ISO week string of last mercy used: "2025-W23" */
     val lastMercyWeek: String = "",
     val mercyUsedThisWeek: Boolean = false,
+    // BM-013 — streak is a derived cache recomputed from owner-scoped prayer_records;
+    // only bestStreak is durable. ownerId is carried for future per-account rows.
+    @ColumnInfo(defaultValue = "__local__") val ownerId: String = OwnerIds.LOCAL,
+    @ColumnInfo(defaultValue = "0") val updatedAt: Long = 0L,
 )
 
-@Entity(tableName = "emergency_overrides")
+@Entity(
+    tableName = "emergency_overrides",
+    // BM-013 — one row per (owner, month) so accounts don't share mercy counters.
+    indices = [Index(value = ["ownerId", "monthYear"], unique = true)],
+)
 data class EmergencyOverride(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     /** "2025-06" — month+year for monthly reset */
@@ -50,6 +66,9 @@ data class EmergencyOverride(
     val count: Int = 0,
     val lastReason: String = "",
     val lastUsedMs: Long = System.currentTimeMillis(),
+    // BM-013 — ownership + sync bookkeeping (default = legacy/unclaimed).
+    @ColumnInfo(defaultValue = "__local__") val ownerId: String = OwnerIds.LOCAL,
+    @ColumnInfo(defaultValue = "0") val updatedAt: Long = 0L,
 )
 
 @Entity(

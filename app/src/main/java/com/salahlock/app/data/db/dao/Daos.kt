@@ -10,51 +10,55 @@ import kotlinx.coroutines.flow.Flow
 // ── Prayer Records ──────────────────────────────────────────────────────────
 @Dao
 interface PrayerRecordDao {
-    @Query("SELECT * FROM prayer_records WHERE date = :date ORDER BY prayerName ASC")
-    fun observeRecordsForDate(date: String): Flow<List<PrayerRecord>>
+    // BM-013 — all reads/deletes owner-scoped (WHERE ownerId = :owner). Writes carry
+    // ownerId on the entity; REPLACE keys on the owner-aware unique index.
+    @Query("SELECT * FROM prayer_records WHERE ownerId = :owner AND date = :date ORDER BY prayerName ASC")
+    fun observeRecordsForDate(owner: String, date: String): Flow<List<PrayerRecord>>
 
-    @Query("SELECT * FROM prayer_records WHERE date = :date ORDER BY prayerName ASC")
-    suspend fun getRecordsForDate(date: String): List<PrayerRecord>
+    @Query("SELECT * FROM prayer_records WHERE ownerId = :owner AND date = :date ORDER BY prayerName ASC")
+    suspend fun getRecordsForDate(owner: String, date: String): List<PrayerRecord>
 
-    @Query("SELECT * FROM prayer_records WHERE date = :date AND prayerName = :prayerName LIMIT 1")
-    suspend fun getRecord(date: String, prayerName: String): PrayerRecord?
+    @Query("SELECT * FROM prayer_records WHERE ownerId = :owner AND date = :date AND prayerName = :prayerName LIMIT 1")
+    suspend fun getRecord(owner: String, date: String, prayerName: String): PrayerRecord?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(record: PrayerRecord)
 
-    @Query("SELECT * FROM prayer_records WHERE date >= :fromDate ORDER BY date DESC LIMIT 150")
-    suspend fun getRecentRecords(fromDate: String): List<PrayerRecord>
+    @Query("SELECT * FROM prayer_records WHERE ownerId = :owner AND date >= :fromDate ORDER BY date DESC LIMIT 150")
+    suspend fun getRecentRecords(owner: String, fromDate: String): List<PrayerRecord>
 
-    @Query("DELETE FROM prayer_records WHERE date < :cutoffDate")
-    suspend fun deleteOlderThan(cutoffDate: String)
+    @Query("DELETE FROM prayer_records WHERE ownerId = :owner AND date < :cutoffDate")
+    suspend fun deleteOlderThan(owner: String, cutoffDate: String)
 
     /** Monthly Reflection: all records inside one calendar month (ISO dates sort lexically). */
-    @Query("SELECT * FROM prayer_records WHERE date BETWEEN :fromDate AND :toDate ORDER BY date ASC")
-    suspend fun getRecordsBetween(fromDate: String, toDate: String): List<PrayerRecord>
+    @Query("SELECT * FROM prayer_records WHERE ownerId = :owner AND date BETWEEN :fromDate AND :toDate ORDER BY date ASC")
+    suspend fun getRecordsBetween(owner: String, fromDate: String, toDate: String): List<PrayerRecord>
 
     /** Monthly Reflection: first day of recorded history, to know which months to generate. */
-    @Query("SELECT MIN(date) FROM prayer_records")
-    suspend fun getEarliestDate(): String?
+    @Query("SELECT MIN(date) FROM prayer_records WHERE ownerId = :owner")
+    suspend fun getEarliestDate(owner: String): String?
 
-    /** Sprint E.2: full export for backup */
-    @Query("SELECT * FROM prayer_records ORDER BY date ASC, timestampMs ASC")
-    suspend fun getAll(): List<PrayerRecord>
+    /** Full export for backup (active owner). */
+    @Query("SELECT * FROM prayer_records WHERE ownerId = :owner ORDER BY date ASC, timestampMs ASC")
+    suspend fun getAll(owner: String): List<PrayerRecord>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(records: List<PrayerRecord>)
 
-    @Query("DELETE FROM prayer_records")
-    suspend fun deleteAll()
+    /** Owner-scoped clear (backup restore / future logout purge). */
+    @Query("DELETE FROM prayer_records WHERE ownerId = :owner")
+    suspend fun deleteAllForOwner(owner: String)
 }
 
 // ── Streak ──────────────────────────────────────────────────────────────────
 @Dao
 interface StreakDao {
-    @Query("SELECT * FROM streaks WHERE id = 1 LIMIT 1")
-    fun observeStreak(): Flow<StreakEntity?>
+    // BM-013 — one streak row per owner (WHERE ownerId = :owner).
+    @Query("SELECT * FROM streaks WHERE ownerId = :owner LIMIT 1")
+    fun observeStreak(owner: String): Flow<StreakEntity?>
 
-    @Query("SELECT * FROM streaks WHERE id = 1 LIMIT 1")
-    suspend fun getStreak(): StreakEntity?
+    @Query("SELECT * FROM streaks WHERE ownerId = :owner LIMIT 1")
+    suspend fun getStreak(owner: String): StreakEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(streak: StreakEntity)
@@ -63,15 +67,16 @@ interface StreakDao {
 // ── Emergency Override ──────────────────────────────────────────────────────
 @Dao
 interface EmergencyOverrideDao {
-    @Query("SELECT * FROM emergency_overrides WHERE monthYear = :monthYear LIMIT 1")
-    suspend fun getForMonth(monthYear: String): EmergencyOverride?
+    // BM-013 — owner-scoped (WHERE ownerId = :owner).
+    @Query("SELECT * FROM emergency_overrides WHERE ownerId = :owner AND monthYear = :monthYear LIMIT 1")
+    suspend fun getForMonth(owner: String, monthYear: String): EmergencyOverride?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(override: EmergencyOverride)
 
-    /** Sprint E.2: full export for backup */
-    @Query("SELECT * FROM emergency_overrides")
-    suspend fun getAll(): List<EmergencyOverride>
+    /** Full export for backup (active owner). */
+    @Query("SELECT * FROM emergency_overrides WHERE ownerId = :owner")
+    suspend fun getAll(owner: String): List<EmergencyOverride>
 }
 
 // ── App Blacklist ───────────────────────────────────────────────────────────
