@@ -40,6 +40,51 @@ data class Surah(
 /** Total ayahs in the Quran; denominator for overall reading progress. */
 const val TOTAL_AYAHS = 6236
 
+// ── BM-QURAN-PAGES — Mushaf page-view models (rendered from the SAME corpus) ──
+
+/** One ayah rendered on a Mushaf page. Canonical identity stays (surah, ayah). */
+data class PageAyah(
+    val surahNumber: Int,
+    val ayahNumber: Int,
+    val arabic: String,
+    val english: String,
+)
+
+/** A surah heading shown when a surah begins on a page. */
+data class PageSurahHeader(
+    val surahNumber: Int,
+    val transliteration: String,
+    val englishName: String,
+    val arabicName: String,
+    /** Fatiha's bismillah is ayah 1; Tawbah has none — both suppress the standalone line. */
+    val showBismillah: Boolean,
+)
+
+/** Ordered blocks that make up one page. */
+sealed interface PageBlock {
+    data class Header(val header: PageSurahHeader) : PageBlock
+    data class AyahLine(val ayah: PageAyah) : PageBlock
+}
+
+/** Full rendered content of a single Mushaf page. */
+data class QuranPageContent(
+    val page: Int,
+    val juz: Int,
+    /** Surah of the page's first ayah — shown in the reader chrome. */
+    val startSurahTransliteration: String,
+    /** First ayah on the page — the canonical position persisted for Continue Reading. */
+    val firstSurah: Int,
+    val firstAyah: Int,
+    val blocks: List<PageBlock>,
+)
+
+/** Lightweight row for the page browser list (no ayah text loaded). */
+data class PageListItem(
+    val page: Int,
+    val surahTransliteration: String,
+    val juz: Int,
+)
+
 /**
  * Case-insensitive surah filter across English name, transliteration,
  * Arabic name and surah number. Pure — unit-testable without Android.
@@ -82,6 +127,11 @@ class QuranRepository internal constructor(
     private val loadMutex = Mutex()
     @Volatile private var cachedSurahs: List<Surah>? = null
 
+    // BM-QURAN-PAGES — page mapping is derived once and cached. Separate mutex so
+    // getPageMapping() can call getSurahs() (which uses loadMutex) without deadlock.
+    private val pageMutex = Mutex()
+    @Volatile private var cachedMapping: QuranPageMapping? = null
+
     // ------------------------------------------------------------ text
 
     /** Loads (and memoizes) all 114 surahs. Safe to call repeatedly. */
@@ -103,6 +153,95 @@ class QuranRepository internal constructor(
     /** Surahs whose text intersects the given juz (1..30). */
     suspend fun getSurahsInJuz(juz: Int): List<Surah> =
         getSurahs().filter { s -> s.ayahs.any { it.juz == juz } }
+
+    // ------------------------------------------------------------ pages (Mushaf)
+
+    /**
+     * Canonical 604-page mapping, built once from the bundled page-starts asset +
+     * the loaded surah ayah counts (same corpus). Fully offline.
+     */
+    suspend fun getPageMapping(): QuranPageMapping {
+        cachedMapping?.let { return it }
+        val surahs = getSurahs() // acquires loadMutex first, OUTSIDE pageMutex
+        return pageMutex.withLock {
+            cachedMapping ?: withContext(Dispatchers.IO) {
+                val json = appContext.assets.open("quran_pages.json")
+                    .bufferedReader().use { it.readText() }
+                QuranPageMapping(QuranPageMapping.parsePageStarts(json), surahs.map { it.ayahCount })
+            }.also { cachedMapping = it }
+        }
+    }
+
+    /** Deterministic (surah, ayah) → page. Powers Surah↔Page interoperability. */
+    suspend fun pageForSurahAyah(surah: Int, ayah: Int): Int =
+        getPageMapping().pageForAyah(surah, ayah)
+
+    /** Total number of Mushaf pages (604). */
+    suspend fun pageCount(): Int = getPageMapping().pageCount
+
+    /** Lightweight browser list — one row per page, no ayah text loaded. */
+    suspend fun getPageList(): List<PageListItem> {
+        val m = getPageMapping()
+        val byNumber = getSurahs().associateBy { it.number }
+        return (1..m.pageCount).map { p ->
+            val (s, a) = m.pageStart(p)
+            val surah = byNumber[s]
+            PageListItem(
+                page = p,
+                surahTransliteration = surah?.transliteration ?: "",
+                juz = surah?.ayahs?.getOrNull(a - 1)?.juz ?: 1,
+            )
+        }
+    }
+
+    /** Starting page for each juz (index 0 = juz 1 … 29 = juz 30). */
+    suspend fun getJuzStartPages(): List<Int> {
+        val m = getPageMapping()
+        val firstOfJuz = arrayOfNulls<Pair<Int, Int>>(31)
+        for (surah in getSurahs()) {
+            for (ayah in surah.ayahs) {
+                if (firstOfJuz[ayah.juz] == null) firstOfJuz[ayah.juz] = surah.number to ayah.numberInSurah
+            }
+        }
+        return (1..30).map { j -> firstOfJuz[j]?.let { m.pageForAyah(it.first, it.second) } ?: 1 }
+    }
+
+    /** Fully rendered content for a single page — Arabic + translation from the corpus. */
+    suspend fun getPageContent(page: Int): QuranPageContent {
+        val m = getPageMapping()
+        val p = page.coerceIn(1, m.pageCount)
+        val byNumber = getSurahs().associateBy { it.number }
+        val refs = m.ayahRefsForPage(p)
+        val blocks = ArrayList<PageBlock>(refs.size + 4)
+        var lastSurah = -1
+        for ((s, a) in refs) {
+            val surah = byNumber[s] ?: continue
+            if (s != lastSurah && a == 1) {
+                blocks += PageBlock.Header(
+                    PageSurahHeader(
+                        surahNumber = s,
+                        transliteration = surah.transliteration,
+                        englishName = surah.englishName,
+                        arabicName = surah.arabicName,
+                        showBismillah = s != 1 && s != 9,
+                    ),
+                )
+            }
+            val ayah = surah.ayahs.getOrNull(a - 1) ?: continue
+            blocks += PageBlock.AyahLine(PageAyah(s, a, ayah.arabic, ayah.english))
+            lastSurah = s
+        }
+        val first = refs.first()
+        val firstSurah = byNumber[first.first]
+        return QuranPageContent(
+            page = p,
+            juz = firstSurah?.ayahs?.getOrNull(first.second - 1)?.juz ?: 1,
+            startSurahTransliteration = firstSurah?.transliteration ?: "",
+            firstSurah = first.first,
+            firstAyah = first.second,
+            blocks = blocks,
+        )
+    }
 
     private fun parseAsset(): List<Surah> {
         val text = appContext.assets.open("quran.json").bufferedReader().use { it.readText() }

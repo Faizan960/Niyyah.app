@@ -302,6 +302,17 @@ fun MainAppContent() {
                 onBack = { navController.popBackStack() },
             )
         }
+        // BM-QURAN-PAGES — Mushaf page (604) reader; shares the canonical Quran data.
+        composable("quran_page/{page}") { backStackEntry ->
+            val page = backStackEntry.arguments?.getString("page")?.toIntOrNull() ?: 1
+            com.salahlock.app.ui.quran.QuranPageReaderScreen(
+                initialPage = page,
+                onBack = { navController.popBackStack() },
+                onOpenSurahAyah = { surah, ayah ->
+                    navController.navigate("quran_reader/$surah?ayah=$ayah")
+                },
+            )
+        }
         composable("bookmarks") {
             com.salahlock.app.ui.bookmarks.BookmarksScreen(
                 onOpenBookmark = { item ->
@@ -430,6 +441,7 @@ private fun MainTabsContent(navController: androidx.navigation.NavController) {
                     },
                     onOpenBookmarks = { navController.navigate("bookmarks") },
                     onOpenCollections = { navController.navigate("collections") },
+                    onOpenPage = { page -> navController.navigate("quran_page/$page") },
                 )
                 // BM-011 — Hadith main tab
                 3 -> HadithMainScreen(
