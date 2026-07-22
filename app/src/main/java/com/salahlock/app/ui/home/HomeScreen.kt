@@ -36,7 +36,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.salahlock.app.R
+import com.salahlock.app.data.db.entity.PrayerRecord
+import com.salahlock.app.data.model.DailyPrayers
 import com.salahlock.app.data.model.PrayerName
+import com.salahlock.app.data.model.PrayerSource
+import com.salahlock.app.data.model.PrayerTime
 import com.salahlock.app.theme.*
 import java.time.Duration
 import java.time.LocalDateTime
@@ -74,13 +78,34 @@ fun HomeScreen(
         if (permissions.entries.any { it.value }) viewModel.triggerLocationFetch()
     }
 
+    // BM-HOME-PRAYER-UX — voluntary verification reuses the canonical VerificationFlow
+    // via PrayerVerificationActivity. Completion arrives back through the prayer-records
+    // Flow (todayRecords), so Home refreshes with no manual result handling.
+    val verifyLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { /* no-op — todayRecords Flow updates the UI on return */ }
+    val launchVerify: (PrayerName) -> Unit = { prayer ->
+        verifyLauncher.launch(
+            com.salahlock.app.ui.verification.PrayerVerificationActivity.intent(context, prayer)
+        )
+    }
+
+    var sheetPrayer by remember { mutableStateOf<PrayerName?>(null) }
+    var showSourceSheet by remember { mutableStateOf(false) }
+
     val now = LocalDateTime.now()
-    val currentPrayer = state.todayPrayers?.currentPrayer(now)
+    val daily = state.todayPrayers
+    // The prayer currently "in play" (adhan called, before the next one starts).
+    val currentPrayer = daily?.currentPrayer(now)
     val inWindow = currentPrayer != null &&
-        state.todayPrayers?.isWithinWindow(currentPrayer.name, now) == true
-    val heroPrayer = if (inWindow) currentPrayer else state.nextPrayer
-    val heroVerified = inWindow && state.todayRecords[currentPrayer!!.name]
-        ?.let { it.verified || it.overrideUsed } == true
+        daily?.isWithinWindow(currentPrayer.name, now) == true
+    val currentVerified = currentPrayer?.let {
+        state.todayRecords[it.name]?.let { r -> r.verified || r.overrideUsed }
+    } == true
+    // The prayer the hero CTA verifies: the ongoing in-window prayer, only while
+    // unverified. Never a future prayer — so a next-prayer countdown of 1h can't be
+    // "verified" early.
+    val verifiablePrayer = if (inWindow && !currentVerified) currentPrayer else null
 
     Column(
         modifier = Modifier
@@ -99,30 +124,31 @@ fun HomeScreen(
         ) {
             GreetingBlock(userName = state.userName)
 
-            heroPrayer?.let { prayer ->
+            // Hero always shows the true NEXT upcoming prayer + countdown. The Verify
+            // CTA is a SEPARATE concept — it names and verifies the ongoing prayer.
+            state.nextPrayer?.let { prayer ->
                 NextPrayerHero(
                     isLight = isLight,
                     prayerName = prayer.name.displayName,
                     timeString = prayer.time.toClock(),
-                    remaining = formatTimeRemaining(state.currentTimeMs, state.nextPrayer?.time ?: prayer.time),
-                    locationLine = state.activeMasjidName.ifBlank { state.cityName },
+                    remaining = formatTimeRemaining(state.currentTimeMs, prayer.time),
+                    sourceLabel = sourceLabel(state),
                     progress = intervalProgress(state, now),
-                    untilLabel = state.nextPrayer?.let {
-                        "Until ${it.name.displayName}  •  ${it.time.toClock()}"
-                    },
-                    showVerify = inWindow && !heroVerified,
-                    verified = heroVerified,
-                    onVerify = { currentPrayer?.let { viewModel.verifyPrayer(it.name) } },
+                    verifyPrayerName = verifiablePrayer?.name?.displayName,
+                    showVerifiedBadge = inWindow && currentVerified,
+                    onVerify = { verifiablePrayer?.let { launchVerify(it.name) } },
+                    onSourceClick = { showSourceSheet = true },
                 )
             }
 
-            state.todayPrayers?.let { daily ->
+            daily?.let {
                 PrayerTimeline(
                     isLight = isLight,
-                    items = daily.toList(),
+                    items = it.toList(),
                     records = state.todayRecords,
+                    now = now,
                     currentName = if (inWindow) currentPrayer?.name else null,
-                    nextName = state.nextPrayer?.name,
+                    onPrayerClick = { name -> sheetPrayer = name },
                 )
             }
 
@@ -138,12 +164,15 @@ fun HomeScreen(
 
             LocalMasjidCard(
                 isLight = isLight,
-                masjidName = state.activeMasjidName,
-                jamaatLabel = if (state.activeMasjidName.isNotBlank()) {
-                    state.nextPrayer?.let {
-                        "${it.name.displayName} Jamaat  •  ${it.time.toClock()}"
-                    }
-                } else null,
+                masjidName = state.savedMasjidName,
+                jamaatLabel = when {
+                    state.prayerSource == PrayerSource.LOCAL_MASJID && state.localMasjidConfigured ->
+                        state.nextPrayer?.let {
+                            "${it.name.displayName} Jamaat  •  ${it.time.toClock()}"
+                        }
+                    state.localMasjidConfigured -> "Jamaat timings saved · GPS active"
+                    else -> null
+                },
                 onOpen = onNavigateToLocalMasjid,
             )
 
@@ -201,6 +230,34 @@ fun HomeScreen(
                 )
             }
         }
+    }
+
+    // ── Today's-prayer detail sheet (tap any prayer in the timeline) ──────────────
+    sheetPrayer?.let { name ->
+        PrayerStatusSheet(
+            prayer = name,
+            daily = daily,
+            record = state.todayRecords[name],
+            now = now,
+            onVerify = {
+                sheetPrayer = null
+                launchVerify(name)
+            },
+            onDismiss = { sheetPrayer = null },
+        )
+    }
+
+    // ── Prayer-time source sheet (tap the source row on the hero) ────────────────
+    if (showSourceSheet) {
+        com.salahlock.app.ui.masjid.PrayerSourceBottomSheet(
+            source = state.prayerSource,
+            cityName = state.cityName,
+            savedMasjidName = state.savedMasjidName,
+            masjidConfigured = state.localMasjidConfigured,
+            onSelectSource = { viewModel.setPrayerSource(it) },
+            onConfigureMasjid = onNavigateToLocalMasjid,
+            onDismiss = { showSourceSheet = false },
+        )
     }
 }
 
@@ -283,12 +340,12 @@ private fun NextPrayerHero(
     prayerName: String,
     timeString: String,
     remaining: String,
-    locationLine: String,
+    sourceLabel: String,
     progress: Float,
-    untilLabel: String?,
-    showVerify: Boolean,
-    verified: Boolean,
+    verifyPrayerName: String?,
+    showVerifiedBadge: Boolean,
     onVerify: () -> Unit,
+    onSourceClick: () -> Unit,
 ) {
     val accent = if (isLight) EmeraldPrimary else StitchDarkPrimaryBright
     val heroBg = if (isLight) Color(0xFFFBF8F1) else Color(0xFF0F1714)
@@ -355,22 +412,33 @@ private fun NextPrayerHero(
                             color = accent,
                         )
                     }
-                    if (locationLine.isNotBlank()) {
-                        Spacer(Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Outlined.LocationOn,
-                                contentDescription = null,
-                                tint = muted,
-                                modifier = Modifier.size(15.dp),
-                            )
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                locationLine,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = muted,
-                            )
-                        }
+                    // Tappable prayer-time source control (GPS ⇄ Local Masjid).
+                    Spacer(Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(onClick = onSourceClick)
+                            .padding(vertical = 2.dp, horizontal = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Outlined.LocationOn,
+                            contentDescription = null,
+                            tint = muted,
+                            modifier = Modifier.size(15.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            sourceLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = muted,
+                        )
+                        Icon(
+                            Icons.Outlined.ArrowDropDown,
+                            contentDescription = "Change prayer-time source",
+                            tint = muted,
+                            modifier = Modifier.size(18.dp),
+                        )
                     }
                 }
             }
@@ -398,16 +466,16 @@ private fun NextPrayerHero(
                         color = muted,
                     )
                 }
-                if (verified) {
+                if (showVerifiedBadge) {
                     VerifyPill(
                         label = "Verified",
                         filled = false,
                         accent = accent,
                         onClick = null,
                     )
-                } else if (showVerify) {
+                } else if (verifyPrayerName != null) {
                     VerifyPill(
-                        label = "Verify Salah",
+                        label = "Verify $verifyPrayerName",
                         filled = true,
                         accent = accent,
                         onClick = onVerify,
@@ -431,15 +499,6 @@ private fun NextPrayerHero(
                     contentDescription = null,
                     tint = sunColor,
                     modifier = Modifier.size(20.dp),
-                )
-            }
-            if (untilLabel != null) {
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    untilLabel,
-                    style = MaterialTheme.typography.labelMedium,
-                    letterSpacing = 0.5.sp,
-                    color = muted,
                 )
             }
         }
@@ -511,133 +570,243 @@ private fun HeroProgressBar(
 }
 
 // ── Today's prayers timeline ─────────────────────────────────────────────────
+/**
+ * Interactive prayer timeline. Each prayer is tappable (opens [PrayerStatusSheet]).
+ *
+ * Status comes from ACTUAL prayer records, never from time-of-day, so a past prayer
+ * is only shown "completed" when it was really verified. States:
+ *   • completed   — verified/overridden → emerald check
+ *   • current     — in the active window → emerald active ring
+ *   • past-unverified — time passed, not verified → amber "needs attention" ring
+ *   • upcoming    — neutral hollow
+ * There is deliberately no emerald "elapsed" connector: time progression and prayer
+ * completion are different concepts.
+ */
 @Composable
 private fun PrayerTimeline(
     isLight: Boolean,
-    items: List<com.salahlock.app.data.model.PrayerTime>,
-    records: Map<PrayerName, com.salahlock.app.data.db.entity.PrayerRecord>,
+    items: List<PrayerTime>,
+    records: Map<PrayerName, PrayerRecord>,
+    now: LocalDateTime,
     currentName: PrayerName?,
-    nextName: PrayerName?,
+    onPrayerClick: (PrayerName) -> Unit,
 ) {
     val accent = if (isLight) EmeraldPrimary else StitchDarkPrimaryBright
     val track = MaterialTheme.colorScheme.outline
-    val gold = if (isLight) GoldAccent else StitchGold
-    val currentIndex = items.indexOfFirst { it.name == currentName }
+    val attention = if (isLight) GoldAccent else StitchGold
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
 
     Column(Modifier.fillMaxWidth()) {
         Text(
             "TODAY'S PRAYERS",
             style = MaterialTheme.typography.labelMedium,
             letterSpacing = 1.5.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = muted,
         )
         Spacer(Modifier.height(16.dp))
 
-        // Names
         Row(Modifier.fillMaxWidth()) {
             items.forEach { p ->
+                val completed = records[p.name]?.let { it.verified || it.overrideUsed } == true
                 val isCurrent = p.name == currentName
-                Text(
-                    text = p.name.displayName,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (isCurrent) accent else MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-        Spacer(Modifier.height(10.dp))
-
-        // Node row with connecting line + gold transition dot behind the nodes
-        Box(Modifier.fillMaxWidth().height(28.dp)) {
-            Canvas(Modifier.matchParentSize()) {
-                val y = size.height / 2f
-                val cell = size.width / items.size
-                val firstX = cell * 0.5f
-                val lastX = size.width - cell * 0.5f
-                drawLine(
-                    color = track.copy(alpha = 0.5f),
-                    start = Offset(firstX, y),
-                    end = Offset(lastX, y),
-                    strokeWidth = 3f,
-                    cap = StrokeCap.Round,
-                )
-                if (currentIndex >= 0) {
-                    val curX = cell * (currentIndex + 0.5f)
-                    // Emerald leading segment up to the current node
-                    drawLine(
-                        color = accent,
-                        start = Offset(firstX, y),
-                        end = Offset(curX, y),
-                        strokeWidth = 3f,
-                        cap = StrokeCap.Round,
+                val pastUnverified = p.time.isBefore(now) && !completed && !isCurrent
+                val labelColor = when {
+                    completed || isCurrent -> accent
+                    pastUnverified -> attention
+                    else -> muted
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(14.dp))
+                        .clickable { onPrayerClick(p.name) }
+                        .padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = p.name.displayName,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = labelColor,
+                        fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Medium,
+                        textAlign = TextAlign.Center,
                     )
-                    // Warm-gold "next transition" dot just after the current node
-                    if (currentIndex < items.size - 1) {
-                        drawCircle(
-                            color = gold,
-                            radius = 5f,
-                            center = Offset(curX + cell * 0.5f, y),
-                        )
-                    }
+                    Spacer(Modifier.height(10.dp))
+                    TimelineNode(
+                        completed = completed,
+                        isCurrent = isCurrent,
+                        pastUnverified = pastUnverified,
+                        accent = accent,
+                        attention = attention,
+                        track = track,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = p.time.toClock(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isCurrent) accent else muted,
+                        textAlign = TextAlign.Center,
+                    )
                 }
-            }
-            Row(Modifier.matchParentSize()) {
-                items.forEach { p ->
-                    val record = records[p.name]
-                    val completed = record?.let { it.verified || it.overrideUsed } == true
-                    val isCurrent = p.name == currentName
-                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        TimelineNode(completed = completed, isCurrent = isCurrent, accent = accent, track = track)
-                    }
-                }
-            }
-        }
-        Spacer(Modifier.height(10.dp))
-
-        // Times
-        Row(Modifier.fillMaxWidth()) {
-            items.forEach { p ->
-                val isCurrent = p.name == currentName
-                Text(
-                    text = p.time.toClock(),
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isCurrent) accent else MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
             }
         }
     }
 }
 
 @Composable
-private fun TimelineNode(completed: Boolean, isCurrent: Boolean, accent: Color, track: Color) {
+private fun TimelineNode(
+    completed: Boolean,
+    isCurrent: Boolean,
+    pastUnverified: Boolean,
+    accent: Color,
+    attention: Color,
+    track: Color,
+) {
     when {
-        isCurrent -> Box(
-            Modifier
-                .size(22.dp)
-                .background(accent, CircleShape)
-                .border(3.dp, accent.copy(alpha = 0.25f), CircleShape)
-        )
         completed -> Box(
             Modifier.size(20.dp).background(accent, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 Icons.Filled.Check,
-                contentDescription = "completed",
+                contentDescription = "verified",
                 tint = Color.White,
                 modifier = Modifier.size(13.dp),
             )
         }
+        isCurrent -> Box(
+            Modifier
+                .size(22.dp)
+                .background(accent, CircleShape)
+                .border(3.dp, accent.copy(alpha = 0.25f), CircleShape)
+        )
+        pastUnverified -> Box(
+            Modifier
+                .size(16.dp)
+                .background(attention.copy(alpha = 0.15f), CircleShape)
+                .border(2.dp, attention, CircleShape)
+        )
         else -> Box(
             Modifier
                 .size(16.dp)
                 .background(MaterialTheme.colorScheme.background, CircleShape)
                 .border(2.dp, track.copy(alpha = 0.7f), CircleShape)
         )
+    }
+}
+
+// ── Prayer detail / verify sheet ─────────────────────────────────────────────
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PrayerStatusSheet(
+    prayer: PrayerName,
+    daily: DailyPrayers?,
+    record: PrayerRecord?,
+    now: LocalDateTime,
+    onVerify: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val time = daily?.toList()?.firstOrNull { it.name == prayer }?.time
+    val completed = record?.let { it.verified || it.overrideUsed } == true
+    // Verifiable once the prayer's time has arrived — never a future prayer.
+    val hasArrived = time != null && !time.isAfter(now)
+    val sheetState = rememberModalBottomSheetState()
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 28.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = prayer.displayName,
+                fontFamily = NiyyahSerif,
+                fontWeight = FontWeight.Medium,
+                fontSize = 30.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            if (time != null) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = time.toClock(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.height(24.dp))
+
+            when {
+                completed -> {
+                    StatusChip(
+                        text = "Salah Verified",
+                        icon = Icons.Filled.CheckCircle,
+                        color = EmeraldPrimary,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "May Allah accept it.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                hasArrived -> {
+                    StatusChip(
+                        text = "Not yet verified",
+                        icon = Icons.Outlined.Schedule,
+                        color = GoldAccent,
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    Button(
+                        onClick = onVerify,
+                        modifier = Modifier.fillMaxWidth().height(54.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = EmeraldPrimary,
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Icon(Icons.Outlined.TaskAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Verify Salah", fontWeight = FontWeight.SemiBold)
+                    }
+                }
+                else -> {
+                    StatusChip(
+                        text = "Upcoming",
+                        icon = Icons.Outlined.Schedule,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "This prayer hasn't begun yet. You can verify it once its time arrives.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusChip(text: String, icon: ImageVector, color: Color) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(color.copy(alpha = 0.12f))
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(text, style = MaterialTheme.typography.labelLarge, color = color)
     }
 }
 
@@ -891,6 +1060,14 @@ private fun AlertHairlineCard(
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+/** Label for the hero source control: masjid name when active, else "City · GPS". */
+private fun sourceLabel(state: HomeUiState): String = when {
+    state.prayerSource == PrayerSource.LOCAL_MASJID && state.activeMasjidName.isNotBlank() ->
+        state.activeMasjidName
+    state.cityName.isNotBlank() -> "${state.cityName} · GPS"
+    else -> "Set prayer times"
+}
+
 /** Fraction elapsed through the current prayer interval (most-recent past → next). */
 private fun intervalProgress(state: HomeUiState, now: LocalDateTime): Float {
     val start = state.todayPrayers?.toList()?.lastOrNull { !it.time.isAfter(now) }?.time ?: return 0f

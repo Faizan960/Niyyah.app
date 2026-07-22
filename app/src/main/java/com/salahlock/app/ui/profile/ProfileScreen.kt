@@ -110,6 +110,9 @@ fun ProfileScreen(
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
                     SettingsRowItem(icon = Icons.Outlined.Tune, title = "App Settings", subtitle = "Calculation, adhan, lock duration", onClick = { onNavigate("settings/app") })
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+                    // BM-HOME-PRAYER-UX — Prayer time source (GPS ⇄ Local Masjid).
+                    SettingsRowItem(icon = Icons.Outlined.LocationOn, title = "Prayer Time Source", subtitle = "GPS or Local Masjid", onClick = { onNavigate("settings/prayer_source") })
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
                     // SL-006 — Lock Per Prayer relocated from the App Blocker tab.
                     SettingsRowItem(icon = Icons.Outlined.Lock, title = "Lock Per Prayer", subtitle = "Enable locking per prayer", onClick = { onNavigate("settings/lock_per_prayer") })
                 }

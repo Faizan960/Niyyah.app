@@ -54,6 +54,13 @@ data class HomeUiState(
     val qiblaBearing: Int = 0,
     /** SL-004 — Jumma 1 time "HH:mm" for the masjid card (blank = not set) */
     val jummaTime: String = "",
+    /** BM-HOME-PRAYER-UX — the active prayer-time source preference */
+    val prayerSource: com.salahlock.app.data.model.PrayerSource =
+        com.salahlock.app.data.model.PrayerSource.API,
+    /** BM-HOME-PRAYER-UX — saved masjid name regardless of active source (blank = none) */
+    val savedMasjidName: String = "",
+    /** BM-HOME-PRAYER-UX — whether a Local Masjid timetable has been configured */
+    val localMasjidConfigured: Boolean = false,
 ) {
     val isPaused: Boolean get() = pauseUntilMs > currentTimeMs
 }
@@ -118,24 +125,43 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Marks [prayer] as prayed for today directly from Home.
-     * Reuses [StreakRepository.recordVerification] — the exact same path the lock
-     * overlay records through — so verification stays single-source-of-truth (Room).
+     * BM-HOME-PRAYER-UX — switches the active prayer-time source.
+     *
+     * One authoritative preference ([PrayerSourceRepository]); switching never deletes
+     * the saved masjid or the GPS/calculation config. Lock alarms are refreshed
+     * immediately so Home, Next Prayer, Today's Prayers and Salah Lock scheduling all
+     * consume the same effective schedule (no GPS-here / Masjid-there mismatch).
      */
-    fun verifyPrayer(prayer: PrayerName) {
+    fun setPrayerSource(source: com.salahlock.app.data.model.PrayerSource) {
         viewModelScope.launch {
-            app.streakRepository.recordVerification(
-                date = LocalDate.now().toString(),
-                prayer = prayer,
-                wasOverride = false,
-            )
+            app.prayerSourceRepository.setPrayerSource(source)
+            com.salahlock.app.work.AlarmRefreshWorker.runNow(app)
         }
     }
 
     private fun observeMasjidName() {
+        // Home header / hero location line — masjid name only when LOCAL_MASJID is active.
         viewModelScope.launch {
             app.prayerSourceRepository.getActiveMasjidName().collect { name ->
                 _uiState.update { it.copy(activeMasjidName = name ?: "") }
+            }
+        }
+        // Saved masjid + configured flag — independent of the active source, so the
+        // Local Masjid card and source sheet can show it even while GPS is active.
+        viewModelScope.launch {
+            app.prayerSourceRepository.getLocalMasjid().collect { masjid ->
+                _uiState.update {
+                    it.copy(
+                        savedMasjidName = masjid?.masjidName ?: "",
+                        localMasjidConfigured = !masjid?.masjidName.isNullOrBlank(),
+                    )
+                }
+            }
+        }
+        // The active source preference itself.
+        viewModelScope.launch {
+            app.prayerSourceRepository.getPrayerSource().collect { source ->
+                _uiState.update { it.copy(prayerSource = source) }
             }
         }
     }

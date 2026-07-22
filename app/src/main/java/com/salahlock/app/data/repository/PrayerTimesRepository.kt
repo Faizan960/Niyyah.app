@@ -19,6 +19,7 @@ import com.salahlock.app.data.preferences.UserPreferences
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -231,9 +232,13 @@ class PrayerTimesRepository(
         var cachedCount = 0
         var offlineCount = 0
 
-        // If local masjid is active, repeat today's local times across 30 days
+        // Lock scheduling MUST consume the same active source as Home / Next Prayer.
+        // Decide on the authoritative [PrayerSource] preference — NOT masjid.enabled —
+        // so a user on GPS never gets lock alarms scheduled from stale masjid times
+        // (and vice versa).
+        val source = PrayerSource.fromString(prefs.prayerSource.first())
         val localMasjid = localMasjidDao.get()
-        if (localMasjid?.enabled == true) {
+        if (source == PrayerSource.LOCAL_MASJID && localMasjid != null) {
             Log.d("PrayerSync", "calculateUpcoming: using LOCAL_MASJID timings for all 30 days.")
             return (0 until 30).map { offset ->
                 localMasjid.toDailyPrayers(today.plusDays(offset.toLong()))
