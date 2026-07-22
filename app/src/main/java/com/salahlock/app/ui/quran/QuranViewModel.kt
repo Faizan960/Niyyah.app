@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.salahlock.app.SalahLockApplication
+import com.salahlock.app.data.repository.PageListItem
 import com.salahlock.app.data.repository.Surah
 import com.salahlock.app.data.repository.TOTAL_AYAHS
 import com.salahlock.app.data.repository.filterSurahs
@@ -12,10 +13,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/** BM-QURAN-PAGES — the two presentations of the ONE canonical Quran position. */
+enum class ReadingMode { SURAH, PAGES }
+
 /** "Continue reading" target — newest quran_progress row joined with its surah. */
 data class ContinueReading(
     val surah: Surah,
     val lastAyah: Int,
+)
+
+/** Page-mode Continue Reading — the same canonical position resolved to a page. */
+data class PageContinue(
+    val page: Int,
+    val surahTransliteration: String,
+    val juz: Int,
 )
 
 /** Real revelation-place filter (dataset field), surfaced by the Quran search filter icon. */
@@ -35,6 +46,14 @@ data class QuranHubState(
     val continueReading: ContinueReading? = null,
     /** Ayahs ever reached across all surahs, out of [TOTAL_AYAHS]. */
     val ayahsRead: Int = 0,
+    // ── BM-QURAN-PAGES ──
+    val readingMode: ReadingMode = ReadingMode.SURAH,
+    /** All 604 pages (lightweight rows) for the page browser; loaded lazily. */
+    val pageList: List<PageListItem> = emptyList(),
+    /** Starting page for each juz (index 0 = juz 1). */
+    val juzStartPages: List<Int> = emptyList(),
+    /** Page-mode Continue Reading derived from the same canonical position. */
+    val pageContinue: PageContinue? = null,
 ) {
     val progressPercent: Int
         get() = if (ayahsRead <= 0) 0 else (ayahsRead * 100 / TOTAL_AYAHS).coerceIn(0, 100)
@@ -47,13 +66,41 @@ data class QuranHubState(
  */
 class QuranViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository = (application as SalahLockApplication).quranRepository
+    private val app = application as SalahLockApplication
+    private val repository = app.quranRepository
+    private val prefs = app.userPreferences
 
     private val _uiState = MutableStateFlow(QuranHubState())
     val uiState: StateFlow<QuranHubState> = _uiState.asStateFlow()
 
     init {
         loadSurahs()
+        observeReadingMode()
+        loadPageIndex()
+    }
+
+    private fun observeReadingMode() {
+        viewModelScope.launch {
+            prefs.quranReadingMode.collect { m ->
+                val mode = runCatching { ReadingMode.valueOf(m) }.getOrDefault(ReadingMode.SURAH)
+                _uiState.value = _uiState.value.copy(readingMode = mode)
+            }
+        }
+    }
+
+    /** Builds the 604-page browser index + juz jump targets once (offline, cached). */
+    private fun loadPageIndex() {
+        viewModelScope.launch {
+            runCatching {
+                val pages = repository.getPageList()
+                val juz = repository.getJuzStartPages()
+                _uiState.value = _uiState.value.copy(pageList = pages, juzStartPages = juz)
+            }
+        }
+    }
+
+    fun setReadingMode(mode: ReadingMode) {
+        viewModelScope.launch { prefs.setQuranReadingMode(mode.name) }
     }
 
     fun loadSurahs() {
@@ -83,7 +130,20 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
                 val target = last?.let { p ->
                     byNumber[p.surahNumber]?.let { ContinueReading(it, p.lastAyah) }
                 }
-                _uiState.value = _uiState.value.copy(continueReading = target)
+                // Same canonical (surah, ayah) resolved to its Mushaf page for page mode.
+                val pageTarget = last?.let { p ->
+                    runCatching {
+                        val page = repository.pageForSurahAyah(p.surahNumber, p.lastAyah)
+                        val item = _uiState.value.pageList.getOrNull(page - 1)
+                        PageContinue(
+                            page = page,
+                            surahTransliteration = item?.surahTransliteration
+                                ?: byNumber[p.surahNumber]?.transliteration ?: "",
+                            juz = item?.juz ?: 1,
+                        )
+                    }.getOrNull()
+                }
+                _uiState.value = _uiState.value.copy(continueReading = target, pageContinue = pageTarget)
             }
         }
         viewModelScope.launch {

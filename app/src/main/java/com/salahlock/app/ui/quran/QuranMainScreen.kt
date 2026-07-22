@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.salahlock.app.data.repository.PageListItem
 import com.salahlock.app.data.repository.Surah
 import com.salahlock.app.theme.EmeraldPrimary
 import com.salahlock.app.theme.GoldAccent
@@ -48,6 +50,7 @@ fun QuranMainScreen(
     onOpenSurah: (surah: Int, ayah: Int?) -> Unit,
     onOpenBookmarks: () -> Unit,
     onOpenCollections: () -> Unit,
+    onOpenPage: (page: Int) -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
@@ -89,7 +92,22 @@ fun QuranMainScreen(
             ) {
                 item(key = "header") {
                     QuranHeader()
+                    Spacer(Modifier.height(16.dp))
+                }
+                item(key = "mode_switch") {
+                    ReadingModeSwitch(
+                        mode = state.readingMode,
+                        onSelect = { viewModel.setReadingMode(it) },
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                    )
                     Spacer(Modifier.height(20.dp))
+                }
+
+                // BM-QURAN-PAGES — Page (Mushaf) mode reuses the SAME data; the Surah
+                // content below runs only in Surah mode.
+                if (state.readingMode == ReadingMode.PAGES) {
+                    pagesSection(state, onOpenPage)
+                    return@LazyColumn
                 }
 
                 item(key = "search") {
@@ -433,6 +451,229 @@ private fun SurahListItem(surah: Surah, onClick: () -> Unit) {
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 modifier = Modifier.padding(start = 4.dp),
+            )
+        }
+        HorizontalDivider(
+            modifier = Modifier.padding(start = 84.dp, end = 24.dp),
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+            thickness = 0.5.dp,
+        )
+    }
+}
+
+// ── BM-QURAN-PAGES — reading-mode switch + page browser ─────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReadingModeSwitch(
+    mode: ReadingMode,
+    onSelect: (ReadingMode) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val options = listOf(ReadingMode.SURAH to "Surahs", ReadingMode.PAGES to "Pages")
+    SingleChoiceSegmentedButtonRow(modifier = modifier.fillMaxWidth()) {
+        options.forEachIndexed { index, (value, label) ->
+            SegmentedButton(
+                selected = mode == value,
+                onClick = { onSelect(value) },
+                shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = EmeraldPrimary.copy(alpha = 0.14f),
+                    activeContentColor = EmeraldPrimary,
+                ),
+            ) {
+                Text(label, fontWeight = if (mode == value) FontWeight.SemiBold else FontWeight.Medium)
+            }
+        }
+    }
+}
+
+/** Page-mode content: Continue Reading (page), Jump to page, Juz shortcuts, page list. */
+private fun LazyListScope.pagesSection(
+    state: QuranHubState,
+    onOpenPage: (page: Int) -> Unit,
+) {
+    item(key = "page_continue_header") {
+        LibrarySectionHeader(title = "Continue Reading", modifier = Modifier.padding(horizontal = 24.dp))
+        Spacer(Modifier.height(12.dp))
+    }
+    item(key = "page_continue_card") {
+        PageContinueCard(
+            target = state.pageContinue,
+            onClick = { onOpenPage(state.pageContinue?.page ?: 1) },
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+        Spacer(Modifier.height(24.dp))
+    }
+    item(key = "jump_to_page") {
+        JumpToPageInline(
+            pageCount = state.pageList.size.coerceAtLeast(604),
+            onGo = onOpenPage,
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+        Spacer(Modifier.height(20.dp))
+    }
+    if (state.juzStartPages.isNotEmpty()) {
+        item(key = "juz_header") {
+            LibrarySectionHeader(title = "Juz", modifier = Modifier.padding(horizontal = 24.dp))
+            Spacer(Modifier.height(12.dp))
+        }
+        item(key = "juz_row") {
+            JuzShortcutRow(state.juzStartPages, onOpenPage)
+            Spacer(Modifier.height(24.dp))
+        }
+    }
+    item(key = "pages_header") {
+        LibrarySectionHeader(title = "Pages", modifier = Modifier.padding(horizontal = 24.dp))
+        Spacer(Modifier.height(4.dp))
+    }
+    items(state.pageList, key = { "page_${it.page}" }) { item ->
+        PageBrowserRow(item, onClick = { onOpenPage(item.page) })
+    }
+}
+
+@Composable
+private fun PageContinueCard(
+    target: PageContinue?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    val gradient = if (isLight) {
+        Brush.linearGradient(listOf(EmeraldPrimary.copy(alpha = 0.12f), EmeraldPrimary.copy(alpha = 0.05f)))
+    } else {
+        Brush.linearGradient(listOf(EmeraldPrimary.copy(alpha = 0.35f), EmeraldPrimary.copy(alpha = 0.12f)))
+    }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(gradient)
+            .border(1.dp, EmeraldPrimary.copy(alpha = 0.25f), RoundedCornerShape(24.dp))
+            .clickable(onClick = onClick)
+            .padding(20.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    if (target != null) "Page ${target.page}" else "Start reading",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    if (target != null) "${target.surahTransliteration} · Juz ${target.juz}"
+                    else "Open page 1 and read the Mushaf. Your place is saved automatically.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    if (target != null) "CONTINUE →" else "OPEN PAGE 1 →",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = EmeraldPrimary,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(GoldAccent.copy(alpha = 0.14f))
+                    .border(1.dp, GoldAccent.copy(alpha = 0.4f), CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Outlined.MenuBook, contentDescription = null, tint = GoldAccent)
+            }
+        }
+    }
+}
+
+@Composable
+private fun JumpToPageInline(
+    pageCount: Int,
+    onGo: (page: Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var input by remember { mutableStateOf("") }
+    val valid = input.toIntOrNull()?.let { it in 1..pageCount } == true
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        OutlinedTextField(
+            value = input,
+            onValueChange = { s -> input = s.filter { it.isDigit() }.take(3) },
+            label = { Text("Jump to page (1–$pageCount)") },
+            singleLine = true,
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+            ),
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(16.dp),
+        )
+        Spacer(Modifier.width(12.dp))
+        Button(
+            onClick = { input.toIntOrNull()?.let(onGo) },
+            enabled = valid,
+            modifier = Modifier.height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary, contentColor = androidx.compose.ui.graphics.Color.White),
+        ) { Text("Go", fontWeight = FontWeight.SemiBold) }
+    }
+}
+
+@Composable
+private fun JuzShortcutRow(juzStartPages: List<Int>, onOpenPage: (Int) -> Unit) {
+    androidx.compose.foundation.lazy.LazyRow(
+        contentPadding = PaddingValues(horizontal = 24.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        items((1..juzStartPages.size).toList()) { juz ->
+            Box(
+                Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(EmeraldPrimary.copy(alpha = 0.10f))
+                    .border(1.dp, EmeraldPrimary.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
+                    .clickable { juzStartPages.getOrNull(juz - 1)?.let(onOpenPage) }
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+            ) {
+                Text("Juz $juz", color = EmeraldPrimary, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PageBrowserRow(item: PageListItem, onClick: () -> Unit) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(EmeraldPrimary.copy(alpha = 0.10f))
+                    .border(1.dp, EmeraldPrimary.copy(alpha = 0.30f), RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(item.page.toString(), style = MaterialTheme.typography.titleSmall, color = EmeraldPrimary, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    item.surahTransliteration,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text("Juz ${item.juz}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             )
         }
         HorizontalDivider(

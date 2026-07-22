@@ -50,6 +50,10 @@ class UserPreferences(private val context: Context) {
         // Sprint E.1 — local masjid prayer source
         val KEY_PRAYER_SOURCE = stringPreferencesKey("prayer_source")
 
+        // BM-QURAN-PAGES — Quran reading-mode + page-view display prefs (device-local)
+        val KEY_QURAN_READING_MODE = stringPreferencesKey("quran_reading_mode") // SURAH | PAGES
+        val KEY_QURAN_PAGE_TRANSLATION = booleanPreferencesKey("quran_page_translation")
+
         // Sprint E — spiritual accountability verification
         val KEY_VERIFICATION_METHOD = stringPreferencesKey("verification_method")
         val KEY_VERIFICATION_CONFIRM_COUNT = intPreferencesKey("verification_confirm_count")
@@ -273,6 +277,21 @@ class UserPreferences(private val context: Context) {
 
     suspend fun setPrayerSource(source: String) {
         context.dataStore.edit { it[KEY_PRAYER_SOURCE] = source }
+    }
+
+    // --- BM-QURAN-PAGES: Quran reading mode + page translation (device-local) ---
+    val quranReadingMode: Flow<String> = context.dataStore.data
+        .map { it[KEY_QURAN_READING_MODE] ?: "SURAH" }
+
+    suspend fun setQuranReadingMode(mode: String) {
+        context.dataStore.edit { it[KEY_QURAN_READING_MODE] = mode }
+    }
+
+    val quranPageTranslation: Flow<Boolean> = context.dataStore.data
+        .map { it[KEY_QURAN_PAGE_TRANSLATION] ?: false }
+
+    suspend fun setQuranPageTranslation(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_QURAN_PAGE_TRANSLATION] = enabled }
     }
 
     // --- Sprint E: Verification Preferences ---
