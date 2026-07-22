@@ -48,8 +48,11 @@ class PrayerTimesRepository(
     fun getTodayPrayers(): Flow<DailyPrayers?> =
         prefs.prayerSource.flatMapLatest { sourceStr ->
             when (PrayerSource.fromString(sourceStr)) {
+                // The active SOURCE preference is the sole authority — a saved masjid is
+                // used whenever LOCAL_MASJID is selected, regardless of the legacy
+                // `enabled` flag. Existence of a masjid never decides the active source.
                 PrayerSource.LOCAL_MASJID -> localMasjidDao.observe().map { masjid ->
-                    masjid?.takeIf { it.enabled }?.toTodayDailyPrayers()
+                    masjid?.toTodayDailyPrayers()
                 }
                 PrayerSource.API -> getApiTodayPrayers()
             }
@@ -60,7 +63,7 @@ class PrayerTimesRepository(
         prefs.prayerSource.flatMapLatest { sourceStr ->
             when (PrayerSource.fromString(sourceStr)) {
                 PrayerSource.LOCAL_MASJID -> localMasjidDao.observe().map { masjid ->
-                    masjid?.takeIf { it.enabled }?.toDailyPrayers(LocalDate.now().plusDays(1))
+                    masjid?.toDailyPrayers(LocalDate.now().plusDays(1))
                 }
                 PrayerSource.API -> getApiTomorrowPrayers()
             }

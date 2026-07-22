@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,10 +31,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.salahlock.app.theme.EmeraldPrimary
@@ -53,6 +58,10 @@ data class LocalMasjidUiState(
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
     val errorMessage: String? = null,
+    /** True once a masjid has been persisted — gates the explicit Delete action. */
+    val hasExisting: Boolean = false,
+    /** Set after an explicit, confirmed delete so the screen can navigate back. */
+    val deleted: Boolean = false,
 )
 
 /** Validates "HH:mm" format (24-hour). */
@@ -86,6 +95,7 @@ class LocalMasjidViewModel(application: Application) : AndroidViewModel(applicat
                     isha = existing?.isha ?: it.isha,
                     jumma1 = j1,
                     jumma2 = j2,
+                    hasExisting = existing != null,
                 )
             }
         }
@@ -146,6 +156,19 @@ class LocalMasjidViewModel(application: Application) : AndroidViewModel(applicat
     fun clearError() = _state.update { it.copy(errorMessage = null) }
 
     /**
+     * Explicit, destructive removal of the saved masjid. Only reached from the
+     * confirmed "Delete saved masjid" action — switching source to GPS never calls
+     * this. [PrayerSourceRepository.clearLocalMasjid] deletes the row and resets the
+     * active source to API so GPS keeps working afterwards.
+     */
+    fun deleteMasjid() {
+        viewModelScope.launch {
+            repo.clearLocalMasjid()
+            _state.update { it.copy(deleted = true) }
+        }
+    }
+
+    /**
      * QoL: pre-fills the five prayer times from the current calculated/API times.
      * Reuses [PrayerTimesRepository.getTodayPrayers] — the user then tweaks only the
      * jamaat differences. No new repository or model.
@@ -191,9 +214,9 @@ fun LocalMasjidScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    // Auto-navigate back on save success
-    LaunchedEffect(state.saveSuccess) {
-        if (state.saveSuccess) onBack()
+    // Auto-navigate back on save success or after an explicit delete.
+    LaunchedEffect(state.saveSuccess, state.deleted) {
+        if (state.saveSuccess || state.deleted) onBack()
     }
 
     Scaffold(
@@ -319,10 +342,11 @@ fun LocalMasjidScreen(
                 )
             }
 
-            // Wheel time picker sheet (SL-011) — stores 24-hour "HH:mm".
+            // BM-HOME-PRAYER-UX — official Material 3 Time Picker. Value is committed to
+            // state only on OK; Cancel preserves the previous value. Stored as "HH:mm".
             editingKey?.let { key ->
                 val entry = (fields + jummaFields).first { it.third == key }
-                TimePickerSheet(
+                M3TimePickerDialog(
                     label = entry.first,
                     initial = entry.second,
                     onConfirm = { h, m ->
@@ -349,6 +373,47 @@ fun LocalMasjidScreen(
                 Text("Save Masjid Timings", fontWeight = FontWeight.SemiBold)
             }
 
+            // Explicit destructive action (separate from switching source to GPS).
+            // Only shown once a masjid is actually persisted.
+            if (state.hasExisting) {
+                var showDeleteConfirm by remember { mutableStateOf(false) }
+                Spacer(Modifier.height(4.dp))
+                TextButton(
+                    onClick = { showDeleteConfirm = true },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        Icons.Outlined.DeleteOutline,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Delete saved masjid", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold)
+                }
+
+                if (showDeleteConfirm) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteConfirm = false },
+                        title = { Text("Delete saved masjid?") },
+                        text = {
+                            Text(
+                                "This permanently removes “${state.masjidName.ifBlank { "your masjid" }}” and its saved prayer times. " +
+                                    "Niyyah will switch to GPS / calculated times. This cannot be undone."
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showDeleteConfirm = false; viewModel.deleteMasjid() }) {
+                                Text("Delete", color = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
+                        },
+                    )
+                }
+            }
+
             Spacer(Modifier.height(48.dp))
         }
     }
@@ -363,6 +428,7 @@ private fun PrayerTimeRow(
     value: String,
     onClick: () -> Unit,
 ) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
@@ -393,7 +459,7 @@ private fun PrayerTimeRow(
             // Animate the displayed value when it changes
             Crossfade(targetState = value, label = "time_$label") { v ->
                 Text(
-                    text = if (v.isBlank()) "Set time" else displayTime(v),
+                    text = if (v.isBlank()) "Set time" else displayTime(context, v),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = if (v.isBlank()) MutedSage else EmeraldPrimary,
@@ -415,87 +481,93 @@ private fun prayerEmoji(label: String): String = when (label) {
 }
 
 /**
- * iOS-style wheel time picker in a bottom sheet (SL-011 — replaces the +/− steppers).
- * Three snapping wheels: hour (1–12), minute (00–59), AM/PM. Reuses the shared
- * [com.salahlock.app.ui.components.WheelPicker]. AMOLED-friendly (theme surfaces only).
- * Confirms a 24-hour (hour, minute); storage stays "HH:mm".
+ * BM-HOME-PRAYER-UX — official Material 3 Time Picker in a themed dialog.
+ *
+ * Uses [TimePicker]/[rememberTimePickerState] with a dial ⇄ keyboard ([TimeInput])
+ * toggle, exactly as documented for M3. Behaviour is deliberately unmodified:
+ *  - [is24Hour] follows the device convention ([DateFormat.is24HourFormat]).
+ *  - the value is emitted to the caller ONLY on OK; Cancel/dismiss preserves the old one.
+ *  - vertical scroll + capped width keep the dial usable under large font/display scaling
+ *    and portrait insets. Surface uses the app theme so light/dark/AMOLED are correct.
+ * Storage stays canonical "HH:mm" (24h) — see [LocalMasjidViewModel.update].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TimePickerSheet(
+private fun M3TimePickerDialog(
     label: String,
     initial: String,
     onConfirm: (hour: Int, minute: Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val (init24, initMin) = parseHHmm(initial)
-    var hourIndex by remember { mutableStateOf(((init24 + 11) % 12)) }      // 0..11 → hour 1..12
-    var minuteIndex by remember { mutableStateOf(initMin) }                 // 0..59
-    var amPmIndex by remember { mutableStateOf(if (init24 >= 12) 1 else 0) } // 0=AM 1=PM
-    val sheetState = rememberModalBottomSheetState()
+    val context = LocalContext.current
+    val (initHour, initMinute) = parseHHmm(initial)
+    val state = rememberTimePickerState(
+        initialHour = initHour,
+        initialMinute = initMinute,
+        is24Hour = android.text.format.DateFormat.is24HourFormat(context),
+    )
+    var keyboardEntry by remember { mutableStateOf(false) }
 
-    val hours = remember { (1..12).map { "%02d".format(it) } }
-    val minutes = remember { (0..59).map { "%02d".format(it) } }
-    val amPm = remember { listOf("AM", "PM") }
-
-    ModalBottomSheet(
+    Dialog(
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp,
+            modifier = Modifier
+                .padding(24.dp)
+                .widthIn(max = 360.dp),
         ) {
-            Text(
-                "Set $label Time",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(Modifier.height(20.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                com.salahlock.app.ui.components.WheelPicker(
-                    items = hours,
-                    initialIndex = hourIndex,
-                    onSelected = { hourIndex = it },
+                Text(
+                    text = "Set $label time",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.fillMaxWidth(),
                 )
-                Text(":", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MutedSage)
-                com.salahlock.app.ui.components.WheelPicker(
-                    items = minutes,
-                    initialIndex = minuteIndex,
-                    onSelected = { minuteIndex = it },
-                )
-                Spacer(Modifier.width(8.dp))
-                com.salahlock.app.ui.components.WheelPicker(
-                    items = amPm,
-                    initialIndex = amPmIndex,
-                    onSelected = { amPmIndex = it },
-                )
-            }
-            Spacer(Modifier.height(24.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("Cancel") }
-                Button(
-                    onClick = { onConfirm(to24Hour(hourIndex + 1, amPmIndex == 1), minuteIndex) },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary, contentColor = Color.White),
-                ) { Text("Save", fontWeight = FontWeight.SemiBold) }
+                Spacer(Modifier.height(20.dp))
+
+                if (keyboardEntry) TimeInput(state = state) else TimePicker(state = state)
+
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = { keyboardEntry = !keyboardEntry }) {
+                        Icon(
+                            imageVector = if (keyboardEntry) Icons.Outlined.Schedule else Icons.Outlined.Keyboard,
+                            contentDescription = if (keyboardEntry) "Switch to clock" else "Switch to keyboard",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.weight(1f))
+                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    Spacer(Modifier.width(4.dp))
+                    TextButton(onClick = { onConfirm(state.hour, state.minute) }) {
+                        Text("OK", color = EmeraldPrimary, fontWeight = FontWeight.SemiBold)
+                    }
+                }
             }
         }
     }
 }
 
-/** (hour 1..12, isPm) → 24-hour. 12 AM → 0, 12 PM → 12. */
-private fun to24Hour(hour12: Int, isPm: Boolean): Int =
-    if (isPm) (hour12 % 12) + 12 else (hour12 % 12)
-
-/** "HH:mm" (24h) → "h:mm a" for display. Returns the raw value on parse failure. */
-private fun displayTime(hhmm: String): String = runCatching {
-    java.time.LocalTime.parse(hhmm).format(java.time.format.DateTimeFormatter.ofPattern("h:mm a"))
+/**
+ * "HH:mm" (24h) → localized display, respecting the device 12/24-hour convention.
+ * Formatting is presentation-only; storage stays canonical "HH:mm".
+ */
+private fun displayTime(context: android.content.Context, hhmm: String): String = runCatching {
+    val pattern = if (android.text.format.DateFormat.is24HourFormat(context)) "HH:mm" else "h:mm a"
+    java.time.LocalTime.parse(hhmm).format(java.time.format.DateTimeFormatter.ofPattern(pattern))
 }.getOrDefault(hhmm)
 
 /** "HH:mm" → (hour, minute); defaults to 05:00 when blank/invalid. */
