@@ -183,6 +183,10 @@ private fun AyahCard(
             Text(
                 text = ayah.arabic,
                 style = MaterialTheme.typography.headlineSmall,
+                // BM-TYPOGRAPHY §15 — Quran Arabic is pinned to the platform Arabic font
+                // and its original weight, never the Latin Manrope migration.
+                fontFamily = com.salahlock.app.theme.ArabicUi,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
                 lineHeight = 44.sp,
                 textAlign = TextAlign.End,

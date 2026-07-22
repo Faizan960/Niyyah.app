@@ -107,6 +107,9 @@ private fun AzkarCard(
             Text(
                 text = azkar.arabic,
                 style = MaterialTheme.typography.headlineMedium,
+                // BM-TYPOGRAPHY §14 — dhikr Arabic pinned to the platform Arabic font.
+                fontFamily = com.salahlock.app.theme.ArabicUi,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
                 lineHeight = 40.sp,
                 textAlign = TextAlign.Right,

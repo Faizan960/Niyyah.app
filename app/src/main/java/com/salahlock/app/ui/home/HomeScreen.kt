@@ -282,8 +282,9 @@ private fun HomeHeader(isLight: Boolean, onAvatarClick: () -> Unit) {
         Text(
             text = "NIYYAH",
             modifier = Modifier.weight(1f),
-            fontFamily = NiyyahSerif,
-            fontWeight = FontWeight.Medium,
+            // §5 — brand wordmark: Manrope, but keeps its uppercase, emerald + wide tracking.
+            fontFamily = NiyyahDisplay,
+            fontWeight = FontWeight.SemiBold,
             fontSize = 22.sp,
             letterSpacing = 4.sp,
             color = if (isLight) EmeraldPrimary else StitchDarkPrimaryBright,
@@ -317,8 +318,9 @@ private fun GreetingBlock(userName: String) {
     Column(Modifier.fillMaxWidth()) {
         Text(
             text = if (firstName.isBlank()) "Assalamu Alaikum." else "Assalamu Alaikum, $firstName.",
-            fontFamily = NiyyahSerif,
-            fontWeight = FontWeight.Medium,
+            // §4 — the greeting is the primary display moment: confident Manrope Bold.
+            fontFamily = NiyyahDisplay,
+            fontWeight = FontWeight.Bold,
             fontSize = 34.sp,
             lineHeight = 40.sp,
             letterSpacing = (-0.5).sp,
@@ -389,8 +391,9 @@ private fun NextPrayerHero(
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = prayerName,
-                        fontFamily = NiyyahSerif,
-                        fontWeight = FontWeight.Medium,
+                        // §7 — prayer name is the card headline: Manrope Bold.
+                        fontFamily = NiyyahDisplay,
+                        fontWeight = FontWeight.Bold,
                         fontSize = 34.sp,
                         lineHeight = 38.sp,
                         letterSpacing = (-0.5).sp,
@@ -453,8 +456,9 @@ private fun NextPrayerHero(
                 Column {
                     Text(
                         text = remaining,
-                        fontFamily = NiyyahSerif,
-                        fontWeight = FontWeight.Medium,
+                        // §7 — large numeric countdown emphasis: Manrope ExtraBold.
+                        fontFamily = NiyyahDisplay,
+                        fontWeight = FontWeight.ExtraBold,
                         fontSize = 40.sp,
                         lineHeight = 44.sp,
                         letterSpacing = (-1).sp,
@@ -861,9 +865,9 @@ private fun DailyIntentionCard(isLight: Boolean) {
             Spacer(Modifier.height(14.dp))
             Text(
                 text = "“$intention”",
-                fontFamily = NiyyahSerif,
-                fontStyle = FontStyle.Italic,
-                fontWeight = FontWeight.Normal,
+                // §13 — Manrope has no true italic; render upright Medium (no faked slant).
+                fontFamily = NiyyahDisplay,
+                fontWeight = FontWeight.Medium,
                 fontSize = 21.sp,
                 lineHeight = 30.sp,
                 color = MaterialTheme.colorScheme.onSurface,

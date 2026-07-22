@@ -358,6 +358,7 @@ private fun ContinueReadingCard(
                     Text(
                         target.surah.arabicName.take(6),
                         style = MaterialTheme.typography.titleMedium,
+                        fontFamily = com.salahlock.app.theme.ArabicUi,
                         color = GoldAccent,
                         maxLines = 1,
                         overflow = TextOverflow.Clip,
@@ -416,6 +417,8 @@ private fun SurahListItem(surah: Surah, onClick: () -> Unit) {
                 Text(
                     surah.arabicName,
                     style = MaterialTheme.typography.titleMedium,
+                    // BM-TYPOGRAPHY §14 — surah Arabic name uses the platform Arabic font.
+                    fontFamily = com.salahlock.app.theme.ArabicUi,
                     color = GoldAccent.copy(alpha = 0.9f),
                     maxLines = 1,
                 )
