@@ -59,8 +59,11 @@ import com.salahlock.app.data.db.entity.LegacyOwnershipEntity
         HadithUserStateEntity::class,
         AzkarUserStateEntity::class,
         LegacyOwnershipEntity::class,
+        // BM-013 Checkpoint C — transactional sync outbox + per-user sync progress.
+        com.salahlock.app.data.db.entity.SyncOutboxEntity::class,
+        com.salahlock.app.data.db.entity.SyncStateEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -80,6 +83,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun azkarUserStateDao(): AzkarUserStateDao
     abstract fun legacyOwnershipDao(): LegacyOwnershipDao
     abstract fun ownershipAdoptionDao(): com.salahlock.app.data.db.dao.OwnershipAdoptionDao
+    abstract fun syncOutboxDao(): com.salahlock.app.data.db.dao.SyncOutboxDao
+    abstract fun syncStateDao(): com.salahlock.app.data.db.dao.SyncStateDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -454,6 +459,34 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Migration 9 → 10 (BM-013 Checkpoint C — Quran-bookmark cloud sync).
+         * Adds the generic sync_outbox change journal and per-user sync_state.
+         * Structure-only; NO existing user data touched.
+         */
+        internal val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sync_outbox` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`ownerId` TEXT NOT NULL, `domain` TEXT NOT NULL, " +
+                        "`entityKey` TEXT NOT NULL, `operation` TEXT NOT NULL, " +
+                        "`payload` TEXT NOT NULL, `createdAtMs` INTEGER NOT NULL, " +
+                        "`attemptCount` INTEGER NOT NULL, `lastAttemptMs` INTEGER NOT NULL, " +
+                        "`lastError` TEXT)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_sync_outbox_ownerId_domain_entityKey " +
+                        "ON sync_outbox (ownerId, domain, entityKey)"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sync_state` (" +
+                        "`ownerId` TEXT NOT NULL, `firstSyncDone` INTEGER NOT NULL, " +
+                        "`pullWatermark` TEXT NOT NULL, PRIMARY KEY(`ownerId`))"
+                )
+            }
+        }
+
         /** SQLite expression producing a fresh v4-shaped UUID string per row. */
         private const val UUID_SQL =
             "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || " +
@@ -468,7 +501,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "salahlock_db",
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
                     .build().also { INSTANCE = it }
             }
     }

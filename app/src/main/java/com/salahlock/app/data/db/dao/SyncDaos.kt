@@ -7,6 +7,8 @@ import androidx.room.Query
 import com.salahlock.app.data.db.entity.AzkarUserStateEntity
 import com.salahlock.app.data.db.entity.HadithUserStateEntity
 import com.salahlock.app.data.db.entity.LegacyOwnershipEntity
+import com.salahlock.app.data.db.entity.SyncOutboxEntity
+import com.salahlock.app.data.db.entity.SyncStateEntity
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -84,4 +86,42 @@ interface LegacyOwnershipDao {
      */
     @Query("UPDATE legacy_ownership SET adoptedBy = :userId, adoptedAtMs = :ts WHERE id = 1 AND adoptedBy IS NULL")
     suspend fun claimIfUnclaimed(userId: String, ts: Long): Int
+}
+
+/**
+ * BM-013 Checkpoint C — transactional outbox access. Enqueue happens INSIDE the
+ * same Room transaction as the local mutation (see QuranRepository); the REPLACE
+ * strategy + unique (ownerId, domain, entityKey) index coalesce to the newest
+ * operation per entity. The worker clears rows strictly by id, so an entity
+ * re-mutated mid-push keeps its fresh event.
+ */
+@Dao
+interface SyncOutboxDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun enqueue(event: SyncOutboxEntity): Long
+
+    @Query("SELECT * FROM sync_outbox WHERE ownerId = :owner AND domain = :domain ORDER BY id ASC LIMIT :limit")
+    suspend fun pending(owner: String, domain: String, limit: Int = 200): List<SyncOutboxEntity>
+
+    @Query("SELECT COUNT(*) FROM sync_outbox WHERE ownerId = :owner")
+    suspend fun countForOwner(owner: String): Int
+
+    @Query("SELECT EXISTS(SELECT 1 FROM sync_outbox WHERE ownerId = :owner AND domain = :domain AND entityKey = :key)")
+    suspend fun hasPending(owner: String, domain: String, key: String): Boolean
+
+    @Query("DELETE FROM sync_outbox WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<Long>)
+
+    @Query("UPDATE sync_outbox SET attemptCount = attemptCount + 1, lastAttemptMs = :nowMs, lastError = :error WHERE id IN (:ids)")
+    suspend fun recordAttempt(ids: List<Long>, nowMs: Long, error: String?)
+}
+
+/** BM-013 Checkpoint C — per-user sync progress (first-sync flag + pull watermark). */
+@Dao
+interface SyncStateDao {
+    @Query("SELECT * FROM sync_state WHERE ownerId = :owner LIMIT 1")
+    suspend fun get(owner: String): SyncStateEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(state: SyncStateEntity)
 }
