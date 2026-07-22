@@ -42,6 +42,24 @@ class SalahLockApplication : Application(), Configuration.Provider {
      */
     val authRepository by lazy { AuthRepository(appScope) }
 
+    /**
+     * BM-013 Checkpoint C — drives ownership + cloud sync from the Clerk lifecycle:
+     * adoption-on-first-sign-in, active-owner activation, sign-out visibility
+     * isolation, and background sync scheduling. Started once in [onCreate].
+     */
+    val accountSyncCoordinator by lazy {
+        com.salahlock.app.data.sync.AccountSyncCoordinator(
+            appContext = this,
+            db = database,
+            authRepository = authRepository,
+            activeOwner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared,
+            adoptionManager = com.salahlock.app.data.sync.LegacyAdoptionManager(
+                database, com.salahlock.app.data.sync.ActiveOwnerProvider.shared,
+            ),
+            reflectionRoot = spiritualReportRepository.reflectionRoot(),
+        )
+    }
+
     val prayerSourceRepository by lazy {
         PrayerSourceRepository(userPreferences, database.localMasjidDao())
     }
@@ -112,6 +130,11 @@ class SalahLockApplication : Application(), Configuration.Provider {
         } else {
             Log.w("SalahLockApp", "Clerk publishable key missing — auth disabled.")
         }
+
+        // BM-013 Checkpoint C — auth-driven ownership + sync lifecycle (adoption on
+        // sign-in, isolation on sign-out, background bookmark sync). Must start after
+        // Clerk.initialize so session restoration flows into it.
+        accountSyncCoordinator.start(appScope)
 
         // Register all notification channels at startup — MUST happen before any alarm fires
         NotificationHelper.createChannels(this)

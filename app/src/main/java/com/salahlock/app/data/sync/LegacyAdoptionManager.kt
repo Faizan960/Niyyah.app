@@ -2,6 +2,7 @@ package com.salahlock.app.data.sync
 
 import androidx.room.withTransaction
 import com.salahlock.app.data.db.AppDatabase
+import com.salahlock.app.data.db.entity.LegacyOwnershipEntity
 import java.io.File
 
 /**
@@ -40,6 +41,12 @@ class LegacyAdoptionManager(
         // Step 1 — Room claim + re-stamp ALL owner-scoped datasets, atomically. Commits
         // first so User B can never re-claim, even if step 2 is interrupted.
         val claimed = db.withTransaction {
+            // A fresh install builds the schema via Room's onCreate path, which never
+            // runs MIGRATION_8_9's seed — so the singleton ledger row (id=1) can be
+            // absent here. Seed it idempotently before the conditional claim, else
+            // `claimIfUnclaimed` updates 0 rows and adoption silently never happens
+            // (leaving logout stuck in LegacyUnclaimed instead of SignedOutNoUser).
+            db.legacyOwnershipDao().insertIfAbsent(LegacyOwnershipEntity())
             val didClaim = db.legacyOwnershipDao().claimIfUnclaimed(clerkUserId, nowMs) == 1
             if (didClaim) {
                 val a = db.ownershipAdoptionDao()
@@ -61,6 +68,30 @@ class LegacyAdoptionManager(
             activeOwner.onAuthenticated(clerkUserId)
         }
         return claimed
+    }
+
+    /**
+     * Checkpoint C — idempotent straggler sweep for the user who ALREADY owns the
+     * legacy dataset. Closes the tiny startup window where a mutation lands while
+     * Clerk is still restoring the session (scope transiently LegacyUnclaimed →
+     * row stamped `__local__` even though adoption happened earlier): re-running
+     * the re-stamp folds such rows into their rightful owner. Strictly guarded —
+     * a DIFFERENT user can never sweep data adopted by someone else.
+     */
+    suspend fun reclaimStragglers(clerkUserId: String) {
+        db.withTransaction {
+            if (db.legacyOwnershipDao().get()?.adoptedBy != clerkUserId) return@withTransaction
+            val a = db.ownershipAdoptionDao()
+            a.adoptPrayerRecords(clerkUserId)
+            a.adoptStreaks(clerkUserId)
+            a.adoptOverrides(clerkUserId)
+            a.adoptQuranBookmarks(clerkUserId)
+            a.adoptQuranProgress(clerkUserId)
+            a.adoptCollections(clerkUserId)
+            a.adoptCollectionItems(clerkUserId)
+            a.adoptHadithState(clerkUserId)
+            a.adoptAzkarState(clerkUserId)
+        }
     }
 
     /**

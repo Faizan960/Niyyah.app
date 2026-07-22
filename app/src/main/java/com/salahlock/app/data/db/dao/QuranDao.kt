@@ -29,6 +29,13 @@ interface QuranDao {
     @Query("SELECT * FROM quran_bookmarks WHERE ownerId = :owner ORDER BY createdAtMs DESC")
     fun getAllBookmarks(owner: String): Flow<List<QuranBookmarkEntity>>
 
+    // BM-013 Checkpoint C — one-shot reads for the sync engine (snapshot / outbox keying).
+    @Query("SELECT * FROM quran_bookmarks WHERE ownerId = :owner")
+    suspend fun getAllBookmarksOnce(owner: String): List<QuranBookmarkEntity>
+
+    @Query("SELECT * FROM quran_bookmarks WHERE ownerId = :owner AND id = :id LIMIT 1")
+    suspend fun getBookmarkById(owner: String, id: Long): QuranBookmarkEntity?
+
     @Query("SELECT COUNT(*) FROM quran_bookmarks WHERE ownerId = :owner")
     fun getBookmarkCount(owner: String): Flow<Int>
 

@@ -97,4 +97,65 @@ class AdoptionCoverageTest {
         assertEquals(0, db.prayerRecordDao().getAll(B).size)
         assertEquals(A, db.legacyOwnershipDao().get()!!.adoptedBy)
     }
+
+    /**
+     * Regression (BM-013 Checkpoint C): a FRESH install has no singleton ledger row —
+     * Room's onCreate path never runs MIGRATION_8_9's seed. Adoption must still seed
+     * the row and claim; otherwise `claimIfUnclaimed` updates 0 rows and adoptedBy
+     * stays null forever, breaking the logout→SignedOutNoUser transition. Uses its own
+     * DB that, unlike setUp, deliberately does NOT pre-seed the singleton.
+     */
+    @Test
+    fun adoption_seedsSingleton_onFreshInstallWithNoLedgerRow() = runBlocking {
+        val ctx = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val fresh = Room.inMemoryDatabaseBuilder(ctx, AppDatabase::class.java)
+            .allowMainThreadQueries().build()
+        try {
+            val freshManager = LegacyAdoptionManager(fresh, ActiveOwnerProvider())
+            assertEquals("fresh install has no ledger row", null, fresh.legacyOwnershipDao().get())
+
+            val claimed = freshManager.adoptLegacyDataOnce(A, nowMs = 1000)
+            assertTrue("adoption seeds the singleton then claims it", claimed)
+            assertEquals(A, fresh.legacyOwnershipDao().get()!!.adoptedBy)
+
+            // Still one-time: a second account cannot re-claim.
+            assertFalse(freshManager.adoptLegacyDataOnce(B, nowMs = 2000))
+            assertEquals(A, fresh.legacyOwnershipDao().get()!!.adoptedBy)
+        } finally {
+            fresh.close()
+        }
+    }
+
+    /**
+     * Regression (BM-013 Checkpoint C): reclaimStragglers must not crash when a
+     * `__local__` straggler shares a natural key with a row the owner ALREADY has.
+     * A plain UPDATE re-stamp threw SQLITE_CONSTRAINT_PRIMARYKEY and aborted the whole
+     * adoption. Policy: the authenticated owner's existing row wins, the colliding
+     * straggler is dropped, and non-colliding stragglers are still adopted.
+     */
+    @Test
+    fun reclaimStragglers_ownerWinsOnCollision_dropsColliding_adoptsRest() = runBlocking {
+        val ctx = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val d = Room.inMemoryDatabaseBuilder(ctx, AppDatabase::class.java).allowMainThreadQueries().build()
+        try {
+            d.legacyOwnershipDao().insertIfAbsent(LegacyOwnershipEntity(adoptedBy = A, adoptedAtMs = 1))
+            // A already owns surah-18 progress and bookmark 2:255.
+            d.quranDao().upsertProgress(QuranProgressEntity(surahNumber = 18, lastAyah = 50, ownerId = A))
+            d.quranDao().insertBookmark(QuranBookmarkEntity(surahNumber = 2, ayahNumber = 255, ownerId = A))
+            // Stragglers: colliding surah-18 progress, plus non-colliding surah-2 progress and bookmark 1:1.
+            d.quranDao().upsertProgress(QuranProgressEntity(surahNumber = 18, lastAyah = 3, ownerId = OwnerIds.LOCAL))
+            d.quranDao().upsertProgress(QuranProgressEntity(surahNumber = 2, lastAyah = 7, ownerId = OwnerIds.LOCAL))
+            d.quranDao().insertBookmark(QuranBookmarkEntity(surahNumber = 1, ayahNumber = 1, ownerId = OwnerIds.LOCAL))
+
+            LegacyAdoptionManager(d, ActiveOwnerProvider()).reclaimStragglers(A) // must NOT throw
+
+            assertEquals("owner's existing surah-18 progress preserved", 50, d.quranDao().getProgress(A, 18)!!.lastAyah)
+            assertEquals("non-colliding straggler progress adopted", 7, d.quranDao().getProgress(A, 2)!!.lastAyah)
+            assertEquals("non-colliding straggler bookmark adopted (2:255 + 1:1)", 2, d.quranDao().getAllBookmarks(A).first().size)
+            assertEquals("no leftover __local__ progress", 0, d.quranDao().getAllProgress(OwnerIds.LOCAL).first().size)
+            assertEquals("no leftover __local__ bookmarks", 0, d.quranDao().getAllBookmarks(OwnerIds.LOCAL).first().size)
+        } finally {
+            d.close()
+        }
+    }
 }
