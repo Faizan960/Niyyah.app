@@ -185,6 +185,9 @@ private fun ReminderScreen(
             Text(
                 text = reminder.arabic,
                 style = MaterialTheme.typography.headlineMedium,
+                // BM-TYPOGRAPHY §14 — Arabic reminder pinned to the platform Arabic font.
+                fontFamily = com.salahlock.app.theme.ArabicUi,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
                 lineHeight = 46.sp,

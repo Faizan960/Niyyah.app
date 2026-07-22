@@ -392,6 +392,10 @@ private fun FlashcardFront(
                     Text(
                         text = hadith.arabicText,
                         style = MaterialTheme.typography.headlineLarge,
+                        // BM-TYPOGRAPHY §14 — Arabic hadith pinned to the platform Arabic
+                        // font + original weight, isolated from the Latin Manrope migration.
+                        fontFamily = com.salahlock.app.theme.ArabicUi,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 52.sp,
                         textAlign = TextAlign.End,
