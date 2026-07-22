@@ -5,6 +5,7 @@ import com.salahlock.app.data.db.entity.LocalMasjidEntity
 import com.salahlock.app.data.model.PrayerSource
 import com.salahlock.app.data.preferences.UserPreferences
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 /**
@@ -40,12 +41,26 @@ class PrayerSourceRepository(
 
     /**
      * Returns the display name for the home screen header.
-     * Shows masjid name when LOCAL_MASJID is active; null otherwise (city name is used).
+     *
+     * Keyed on the ACTIVE source preference — NOT on whether a masjid row exists.
+     * A saved masjid and the active source are separate concepts: with GPS active
+     * the masjid stays stored but this returns null so Home shows the city instead.
      */
     fun getActiveMasjidName(): Flow<String?> =
-        localMasjidDao.observe().map { masjid ->
-            if (masjid?.enabled == true) masjid.masjidName.ifBlank { null } else null
+        combine(prefs.prayerSource, localMasjidDao.observe()) { sourceStr, masjid ->
+            if (PrayerSource.fromString(sourceStr) == PrayerSource.LOCAL_MASJID)
+                masjid?.masjidName?.ifBlank { null }
+            else null
         }
+
+    /**
+     * Switches to GPS / calculated times WITHOUT deleting the saved masjid, so the
+     * user can return to Local Masjid later without reconfiguring.
+     */
+    suspend fun useGps() = setPrayerSource(PrayerSource.API)
+
+    /** Activates the saved Local Masjid timetable as the prayer-time source. */
+    suspend fun useLocalMasjid() = setPrayerSource(PrayerSource.LOCAL_MASJID)
 
     /** Deletes the local masjid configuration and resets source to API. */
     suspend fun clearLocalMasjid() {

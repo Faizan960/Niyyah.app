@@ -113,6 +113,17 @@
             android:exported="false"
             android:screenOrientation="portrait" />
 
+        <!-- ── PRAYER VERIFICATION ACTIVITY ── -->
+        <!-- BM-HOME-PRAYER-UX — voluntary verification launched from Home / Today's Prayers.
+             Reuses the same VerificationFlowScreen as the lock overlay; no lock involved. -->
+        <activity
+            android:name=".ui.verification.PrayerVerificationActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- ── USAGE STATS POLLING SERVICE ── -->
         <!-- Active ONLY during prayer lock windows — not 24/7 -->
         <service

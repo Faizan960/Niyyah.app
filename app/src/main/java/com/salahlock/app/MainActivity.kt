@@ -232,6 +232,13 @@ fun MainAppContent() {
         composable("local_masjid_setup") {
             LocalMasjidScreen(onBack = { navController.popBackStack() })
         }
+        // BM-HOME-PRAYER-UX — Prayer time source settings (GPS ⇄ Local Masjid).
+        composable("settings/prayer_source") {
+            com.salahlock.app.ui.masjid.PrayerSourceSettingsScreen(
+                onBack = { navController.popBackStack() },
+                onConfigureMasjid = { navController.navigate("local_masjid_setup") },
+            )
+        }
         // Qibla — folded out of the tab bar (Sprint N.3); opened from the Home card.
         composable(Screen.Qibla.route) {
             QiblaScreen()
