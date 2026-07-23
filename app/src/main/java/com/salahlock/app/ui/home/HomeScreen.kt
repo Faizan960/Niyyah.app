@@ -229,6 +229,14 @@ fun HomeScreen(
                     text = "Niyyah is protecting your prayer time.",
                 )
             }
+
+            // Home-only adaptive banner. Renders nothing unless ads are enabled and
+            // UMP consent allows a request; never appears in readers/lock/verification.
+            com.salahlock.app.ads.HomeAdBanner(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentWidth(Alignment.CenterHorizontally),
+            )
         }
     }
 

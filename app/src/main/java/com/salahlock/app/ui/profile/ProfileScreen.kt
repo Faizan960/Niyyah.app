@@ -957,12 +957,28 @@ fun VerificationSection(state: ProfileUiState, viewModel: ProfileViewModel) {
 
 @Composable
 fun SupportSection(onFeedback: () -> Unit = {}, onHelp: () -> Unit = {}) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     SectionTitle("Support")
     CardGroup {
         SettingsRowItem(icon = Icons.Outlined.Feedback, title = "Send Feedback", subtitle = "Email or share your thoughts", onClick = onFeedback)
         HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
         SettingsRowItem(icon = Icons.Outlined.HelpOutline, title = "Help Center", subtitle = "FAQ and common questions", onClick = onHelp)
         HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+        // Shown only when Google UMP reports privacy options are required for this
+        // user/region. Opens the UMP-managed consent form (no custom consent UI).
+        if (com.salahlock.app.ads.ConsentManager.privacyOptionsRequired) {
+            SettingsRowItem(
+                icon = Icons.Outlined.PrivacyTip,
+                title = "Privacy choices",
+                subtitle = "Manage ad consent & privacy options",
+                onClick = {
+                    (context as? android.app.Activity)?.let {
+                        com.salahlock.app.ads.ConsentManager.showPrivacyOptionsForm(it)
+                    }
+                },
+            )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+        }
         SettingsRowItem(icon = Icons.Outlined.Info, title = "About Niyyah", subtitle = "Version ${com.salahlock.app.BuildConfig.VERSION_NAME}", onClick = {})
     }
 }

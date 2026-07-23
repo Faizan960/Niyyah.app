@@ -60,6 +60,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Gather UMP consent first (needs an Activity). Once resolved, and only if
+        // ads may be requested, initialize AdMob + warm the daily interstitial.
+        // Fail-open: any consent/init error leaves the app fully functional.
+        com.salahlock.app.ads.ConsentManager.gatherConsent(this) { canRequestAds ->
+            if (canRequestAds) {
+                com.salahlock.app.ads.DailyInterstitialManager.preload(applicationContext)
+            }
+        }
+
         setContent {
             val app = LocalContext.current.applicationContext as SalahLockApplication
             val themePreference by app.userPreferences.themePreference.collectAsStateWithLifecycle(
@@ -126,17 +135,10 @@ fun SalahLockApp() {
                 }
             )
             true -> {
-                // Sprint A.1 — show the daily interstitial when the user voluntarily
-                // reaches Home. Fail-open + 24h-gated inside the manager. Never runs
-                // for onboarding (different branch) or lock/verification (separate Activity).
-                val activity = LocalContext.current as? android.app.Activity
-                LaunchedEffect(Unit) {
-                    // Sprint A.2 — infra stays live (init + preload), but display is
-                    // gated by the master flag. ADS_ENABLED=false ⇒ no ad ever shown.
-                    if (BuildConfig.ADS_ENABLED && activity != null) {
-                        com.salahlock.app.ads.DailyInterstitialManager.maybeShow(activity, app)
-                    }
-                }
+                // The daily interstitial is NOT shown on cold launch / Home landing.
+                // It triggers on a natural, non-worship transition (returning to the
+                // Home tab after the user has actively navigated the app) — see
+                // MainTabsContent.
                 MainAppContent()
             }
         }
@@ -370,6 +372,25 @@ private fun bookmarkRoute(item: com.salahlock.app.data.model.BookmarkItem): Stri
 private fun MainTabsContent(navController: androidx.navigation.NavController) {
     val pagerState = rememberPagerState(pageCount = { BottomNavItems.size })
     val scope = rememberCoroutineScope()
+
+    // ── Daily interstitial trigger ────────────────────────────────────────────
+    // Natural, non-worship transition: fires only when the user SETTLES back on the
+    // Home tab AFTER having actively navigated to another tab this session. This is
+    // never a cold launch (initial page is Home with hasLeftHome=false), never a
+    // Home landing on open, and never fires around lock/verification/reading (those
+    // are separate Activities/deep screens). The manager enforces the 24h cap, the
+    // lock-window guard, consent, and fail-open behaviour.
+    val app = LocalContext.current.applicationContext as SalahLockApplication
+    val adActivity = LocalContext.current as? android.app.Activity
+    var hasLeftHome by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(pagerState.settledPage) {
+        val settled = pagerState.settledPage
+        if (settled != 0) {
+            hasLeftHome = true
+        } else if (hasLeftHome && BuildConfig.ADS_ENABLED && adActivity != null) {
+            com.salahlock.app.ads.DailyInterstitialManager.maybeShow(adActivity, app)
+        }
+    }
 
     // Left-edge swipe → open Profile (Gmail / Google Drive style).
     // Only arms when the gesture STARTS within 32dp of the left edge, and consumes
