@@ -93,7 +93,6 @@ class LockViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * Records the prayer as verified — called after successful spiritual accountability verification.
-     * The camera architecture hook (VerificationProviderFactory) remains intact for future ML use.
      */
     suspend fun recordPrayerCompleted() {
         app.streakRepository.recordVerification(

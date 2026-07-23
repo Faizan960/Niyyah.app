@@ -28,10 +28,6 @@
     <!-- Battery optimization exemption -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
-    <!-- Camera: prayer mat verification (reserved for future ML integration) -->
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
-
     <!-- Microphone: voice verification (optional — app falls back to text if denied) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
@@ -105,13 +101,6 @@
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.SalahLock.Overlay" />
-
-        <!-- ── CAMERA VERIFICATION ACTIVITY ── -->
-        <!-- Reserved for future ML verification integration — not active in current build -->
-        <activity
-            android:name=".ui.camera.CameraVerificationActivity"
-            android:exported="false"
-            android:screenOrientation="portrait" />
 
         <!-- ── PRAYER VERIFICATION ACTIVITY ── -->
         <!-- BM-HOME-PRAYER-UX — voluntary verification launched from Home / Today's Prayers.

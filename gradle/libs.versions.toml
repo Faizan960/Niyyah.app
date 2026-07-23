@@ -17,7 +17,6 @@ lifecycleViewmodelNav3 = "2.10.0"
 room = "2.7.1"
 datastore = "1.1.7"
 workmanager = "2.10.1"
-camerax = "1.4.2"
 adhan = "0.0.7"
 kotlinxSerializationJson = "1.8.1"
 playServicesLocation = "21.3.0"
@@ -67,11 +66,6 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 # WorkManager
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workmanager" }
 
-# CameraX
-androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
-androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
-androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camerax" }
-androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "camerax" }
 
 # Adhan (prayer times)
 adhan = { module = "com.batoulapps.adhan:adhan2", version.ref = "adhan" }

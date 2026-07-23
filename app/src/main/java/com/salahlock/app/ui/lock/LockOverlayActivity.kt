@@ -4,11 +4,9 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -17,40 +15,17 @@ import com.salahlock.app.data.model.PrayerName
 import com.salahlock.app.service.UsageStatsPollingService
 import com.salahlock.app.theme.SalahLockTheme
 import com.salahlock.app.theme.ThemeMode
-import com.salahlock.app.ui.camera.CameraVerificationActivity
 import com.salahlock.app.ui.verification.VerificationFlowScreen
-import com.salahlock.app.verification.VerificationMethod
-import com.salahlock.app.verification.VerificationMethod.Companion.effective
 import kotlinx.coroutines.launch
 
 /**
  * The full-screen lock overlay shown when a blacklisted app is detected.
  *
  * Production verification is handled by [VerificationFlowScreen] (text / voice).
- *
- * The [cameraLauncher] is preserved as dormant infrastructure for Sprint ML.3+.
- * It is only activated when [VerificationMethod.CAMERA_AI_FUTURE] is the active method —
- * which is not exposed in any v1 UI.
  */
 class LockOverlayActivity : ComponentActivity() {
 
     private val viewModel: LockViewModel by viewModels()
-
-    // ── DORMANT CAMERA INFRASTRUCTURE ─────────────────────────────────────────
-    // Preserved for Sprint ML.3+ (TFLite prayer environment verification).
-    // Not reachable from any v1 UI — VerificationMethod.CAMERA_AI_FUTURE is never
-    // selectable by the user in this release.
-    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            lifecycleScope.launch {
-                viewModel.recordPrayerCompleted()
-                Toast.makeText(this@LockOverlayActivity, "May Allah accept your prayer.", Toast.LENGTH_LONG).show()
-                finish()
-            }
-        } else {
-            Toast.makeText(this, "Verification didn't complete. You can try again anytime.", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,18 +93,7 @@ class LockOverlayActivity : ComponentActivity() {
                     )
                 } else {
                     LockOverlayScreen(
-                        onVerifyPrayer = {
-                            when (state.verificationMethod.effective()) {
-                                VerificationMethod.CAMERA_AI_FUTURE -> {
-                                    // Future ML path — dormant in v1
-                                    val intent = Intent(this@LockOverlayActivity, CameraVerificationActivity::class.java).apply {
-                                        putExtra(UsageStatsPollingService.EXTRA_PRAYER_NAME, state.prayer.name)
-                                    }
-                                    cameraLauncher.launch(intent)
-                                }
-                                else -> inVerification = true
-                            }
-                        },
+                        onVerifyPrayer = { inVerification = true },
                         onOverrideGranted = { finish() },
                         onLockExpired = { finish() },
                         viewModel = viewModel,

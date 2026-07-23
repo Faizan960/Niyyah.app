@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.salahlock.app.SalahLockApplication
 import com.salahlock.app.auth.AuthState
 import com.salahlock.app.util.PermissionHelper
+import com.salahlock.app.verification.VerificationMethod
 import com.salahlock.app.data.preferences.UserPreferences.ThemePreference
 import com.salahlock.app.work.AutoBackupWorker
 import kotlinx.coroutines.flow.*
@@ -330,7 +331,10 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             ) { method, count, quran, hadith, reflection ->
                 _extraState.update {
                     it.copy(
-                        verificationMethod = method,
+                        // Normalize through fromString so any legacy persisted value
+                        // (e.g. an old CAMERA_DISABLED / CAMERA_AI_FUTURE) resolves to a
+                        // supported option instead of leaving no radio selected.
+                        verificationMethod = VerificationMethod.fromString(method).name,
                         verificationConfirmCount = count,
                         reminderQuranEnabled = quran,
                         reminderHadithEnabled = hadith,

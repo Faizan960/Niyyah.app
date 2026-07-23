@@ -129,23 +129,6 @@ fun ProfileScreen(
                     SettingsRowItem(icon = Icons.Outlined.AdminPanelSettings, title = "Permission Status", subtitle = "Usage, overlay, notifications, battery", onClick = { onNavigate("settings/permissions") })
                 }
             }
-            // BM-VERIFY-003 — DEBUG-ONLY developer/QA section. Compiled out of
-            // release builds entirely (BuildConfig.DEBUG is a compile-time const,
-            // so R8 strips this block from production). Lets us exercise the REAL
-            // VoiceVerificationScreen without waiting for a Salah-time app-lock.
-            if (com.salahlock.app.BuildConfig.DEBUG) {
-                item {
-                    SectionTitle("Developer (debug only)")
-                    CardGroup {
-                        SettingsRowItem(
-                            icon = Icons.Outlined.Mic,
-                            title = "Test Voice Verification",
-                            subtitle = "Opens the real voice flow — no prayer data is changed",
-                            onClick = { onNavigate("debug/voice_verification") },
-                        )
-                    }
-                }
-            }
         }
     }
 }

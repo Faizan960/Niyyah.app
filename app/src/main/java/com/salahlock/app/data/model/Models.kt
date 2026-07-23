@@ -85,14 +85,6 @@ data class LockWindowState(
     val endTimeMs: Long = 0L,
 )
 
-/** Result from camera/image verifier — kept for future ML integration */
-sealed class VerificationResult {
-    data object Verified : VerificationResult()
-    data object TooDark : VerificationResult()
-    data object NotPointingDown : VerificationResult()
-    data object NoTexture : VerificationResult()
-    data class Error(val message: String) : VerificationResult()
-}
 
 data class StreakInfo(
     val currentStreak: Int = 0,

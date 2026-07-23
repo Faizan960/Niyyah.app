@@ -45,11 +45,6 @@ object PermissionHelper {
             true // Always available below Android 12
         }
 
-    /** Check camera permission */
-    fun hasCameraPermission(context: Context): Boolean =
-        context.checkSelfPermission(Manifest.permission.CAMERA) ==
-                PackageManager.PERMISSION_GRANTED
-
     /** Check location permission (coarse is sufficient for prayer time calculation) */
     fun hasLocationPermission(context: Context): Boolean =
         context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) ==
