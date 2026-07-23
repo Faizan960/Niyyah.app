@@ -165,8 +165,9 @@ dependencies {
     // Location (SL-021: legacy play-services-auth removed — sign-in uses
     // Credential Manager + googleid below; no GoogleSignIn API references exist)
     implementation(libs.play.services.location)
-    // SL-021: fragment ≥1.3 was previously transitive via play-services-auth;
-    // ActivityResult APIs (LockOverlayActivity camera launcher) require it.
+    // SL-021: fragment ≥1.3 was previously transitive via play-services-auth (since
+    // removed). Kept as an explicit pin required by Credential Manager / ActivityResult
+    // integration on some devices.
     implementation("androidx.fragment:fragment-ktx:1.8.5")
 
     // Room
@@ -180,12 +181,6 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
-
-    // CameraX
-    implementation(libs.androidx.camera.core)
-    implementation(libs.androidx.camera.camera2)
-    implementation(libs.androidx.camera.lifecycle)
-    implementation(libs.androidx.camera.view)
 
     // Adhan (prayer times)
     implementation(libs.adhan)

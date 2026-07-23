@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.sp
 import com.salahlock.app.data.model.PrayerName
 import com.salahlock.app.theme.*
 import com.salahlock.app.verification.*
-import com.salahlock.app.verification.VerificationMethod.Companion.effective
 import kotlinx.coroutines.delay
 
 private enum class VerificationStep { REMINDER, SELECTION, TEXT, VOICE, SUCCESS }
@@ -54,7 +53,7 @@ fun VerificationFlowScreen(
     onSuccess: () -> Unit,
     onBack: () -> Unit,
 ) {
-    val effective = verificationMethod.effective()
+    val effective = verificationMethod
     val reminder = remember {
         ReminderRepository.getRandom(reminderQuran, reminderHadith, reminderReflection)
     }

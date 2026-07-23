@@ -25,7 +25,13 @@ class KnowledgeRepository(private val context: Context) {
     private val azkarDao = db.azkarDao()
 
     private val apiService: HadithApiService by lazy {
-        val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
+        // HTTP logging must never run in release. OkHttp's interceptor uses its own
+        // logger (not android.util.Log), so the ProGuard log-stripping rule does not
+        // remove it — gate it explicitly on DEBUG like ApiClient does.
+        val logging = HttpLoggingInterceptor().apply {
+            level = if (com.salahlock.app.BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC
+                    else HttpLoggingInterceptor.Level.NONE
+        }
         val client = OkHttpClient.Builder()
             .addInterceptor(logging)
             .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
