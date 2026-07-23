@@ -3,7 +3,6 @@ package com.salahlock.app.ads
 import android.app.Activity
 import android.content.Context
 import android.util.Log
-import com.salahlock.app.BuildConfig
 import com.salahlock.app.SalahLockApplication
 import com.salahlock.app.service.UsageStatsPollingService
 import com.google.android.gms.ads.AdError
@@ -13,6 +12,7 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /**
  * One interstitial per user per 24h, shown only when the user voluntarily opens
@@ -32,11 +32,13 @@ object DailyInterstitialManager {
 
     /** Preloads (and caches) the next interstitial. Safe to call repeatedly. */
     fun preload(context: Context) {
+        // Never request an ad without a master switch + resolved UMP consent.
+        if (!AdConfig.adsEnabled || !ConsentManager.canRequestAds) return
         if (ad != null || loading) return
         loading = true
         InterstitialAd.load(
             context.applicationContext,
-            BuildConfig.ADMOB_INTERSTITIAL_ID,
+            AdConfig.interstitialId,
             AdRequest.Builder().build(),
             object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(loaded: InterstitialAd) {
@@ -53,14 +55,19 @@ object DailyInterstitialManager {
 
     /**
      * Shows the daily interstitial iff eligible. Eligibility:
-     *  - 24h elapsed since last shown
+     *  - ads enabled + UMP consent allows ad requests
+     *  - 24h elapsed since the last SUCCESSFULLY DISPLAYED ad
      *  - an ad is cached (else fail open + preload for next time)
      *  - no lock window is active (never interrupt the prayer/lock flow)
      *
-     * Records the timestamp before showing so a missed/aborted show still counts
-     * for the day (we never want to risk showing twice).
+     * The 24h timestamp is recorded in [FullScreenContentCallback.onAdShowedFullScreenContent]
+     * — i.e. only when the ad is actually presented on screen. A failed/no-fill/offline
+     * ad (which is handled up-front by the null cache check, or by onAdFailedToShow)
+     * never consumes the daily opportunity.
      */
     suspend fun maybeShow(activity: Activity, app: SalahLockApplication) {
+        // Master switch + UMP consent must both allow ads.
+        if (!AdConfig.adsEnabled || !ConsentManager.canRequestAds) return
         // Never during an active prayer-lock window.
         if (UsageStatsPollingService.isRunning) return
 
@@ -71,15 +78,20 @@ object DailyInterstitialManager {
 
         val current = ad ?: run {
             // Fail open — continue immediately and warm the cache for next launch.
+            // No timestamp is written, so the daily opportunity is preserved.
             preload(app)
             return
         }
 
         current.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdShowedFullScreenContent() {
+                // Record only on actual display, so a show that never surfaces does
+                // not consume the 24h window.
+                app.appScope.launch { prefs.setLastInterstitialShown(System.currentTimeMillis()) }
+            }
             override fun onAdDismissedFullScreenContent() { ad = null; preload(app) }
             override fun onAdFailedToShowFullScreenContent(error: AdError) { ad = null; preload(app) }
         }
-        prefs.setLastInterstitialShown(now)
         ad = null
         current.show(activity)
     }

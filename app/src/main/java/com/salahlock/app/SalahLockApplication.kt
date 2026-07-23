@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 class SalahLockApplication : Application(), Configuration.Provider {
 
     // Application-scoped coroutine scope for one-time init work
-    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    internal val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // Manual dependency injection — no Hilt for MVP
     val database by lazy { AppDatabase.getInstance(this) }
@@ -140,17 +140,9 @@ class SalahLockApplication : Application(), Configuration.Provider {
         NotificationHelper.createChannels(this)
         Log.d("SalahLockApp", "Notification channels registered.")
 
-        // Initialize AdMob and preload the single daily interstitial (Sprint A.1).
-        // Fails open — if init/load fails the app is unaffected.
-        // SL-021: moved off the main thread — MobileAds.initialize() officially
-        // supports background-thread init and costs 100ms+ of cold start otherwise.
-        appScope.launch {
-            runCatching {
-                com.google.android.gms.ads.MobileAds.initialize(this@SalahLockApplication) {
-                    com.salahlock.app.ads.DailyInterstitialManager.preload(this@SalahLockApplication)
-                }
-            }
-        }
+        // AdMob is NOT initialized here anymore. Per Google's UMP guidance, consent
+        // is gathered first (needs an Activity) and the Mobile Ads SDK is initialized
+        // only after consent resolves — see ConsentManager, driven from MainActivity.
 
         // Schedule the periodic alarm refresh worker
         AlarmRefreshWorker.schedule(this)

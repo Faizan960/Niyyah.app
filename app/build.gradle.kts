@@ -19,11 +19,28 @@ fun signingProp(key: String): String? = rootProject.file("local.properties")
 
 val hasReleaseSigning = signingProp("KEYSTORE_PATH") != null
 
-// Sprint A.1 — AdMob IDs. Default to Google's official TEST IDs; override in
-// local.properties (ADMOB_APP_ID / ADMOB_INTERSTITIAL_ID) for production. Never
-// hardcode production unit IDs in the repo.
-val admobAppId = signingProp("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
-val admobInterstitialId = signingProp("ADMOB_INTERSTITIAL_ID") ?: "ca-app-pub-3940256099942544/1033173712"
+// ── AdMob configuration (single source of truth) ────────────────────────────
+// Ad-unit IDs and the App ID are client-side, non-secret values (they ship in the
+// APK/manifest), so production unit IDs live here. Per build type:
+//   DEBUG   → Google's official TEST units + TEST app id (never bills/serves prod).
+//   RELEASE → NIYYAH production units. The production App ID is NOT derivable from
+//             the unit IDs, so it must be supplied via local.properties:
+//                 ADMOB_APP_ID=ca-app-pub-9308348424075904~XXXXXXXXXX
+//             If absent, release falls back to the TEST app id and logs a warning,
+//             so the build stays green but production ads will NOT serve until set.
+object Ad {
+    // Google official sample/test IDs — safe for development & automated QA.
+    const val TEST_APP_ID = "ca-app-pub-3940256099942544~3347511713"
+    const val TEST_BANNER = "ca-app-pub-3940256099942544/9214589741"
+    const val TEST_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712"
+    // NIYYAH production ad units (provided by the app owner).
+    const val PROD_BANNER = "ca-app-pub-9308348424075904/2489589627"
+    const val PROD_INTERSTITIAL = "ca-app-pub-9308348424075904/1385311385"
+}
+val prodAdmobAppId: String = signingProp("ADMOB_APP_ID") ?: ""
+if (prodAdmobAppId.isBlank()) {
+    logger.warn("ADMOB_APP_ID not set in local.properties — RELEASE will use the TEST AdMob app id and production ads will NOT serve. Add: ADMOB_APP_ID=ca-app-pub-9308348424075904~XXXXXXXXXX")
+}
 
 // BM-AUTH-001 — Clerk publishable key (public/client-safe key). Read from
 // local.properties so it stays out of VCS; empty fallback lets the build succeed
@@ -51,11 +68,9 @@ android {
         // BM-013 — instrumented tests (Room MigrationTestHelper runs on a device).
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        manifestPlaceholders["admobAppId"] = admobAppId
-        buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"$admobInterstitialId\"")
-        // Sprint A.2 — master ad switch. Infra stays live (init + preload + cache),
-        // but ads are never DISPLAYED while false. Flip to true to monetize (one line).
-        buildConfigField("Boolean", "ADS_ENABLED", "false")
+        // AdMob IDs (App ID placeholder + BuildConfig ad-unit fields + ADS_ENABLED)
+        // are configured per build type below so DEBUG can never request production
+        // units. See the `Ad` object above.
 
         // BM-AUTH-001 — Clerk publishable key exposed to app code via BuildConfig.
         buildConfigField("String", "CLERK_PUBLISHABLE_KEY", "\"$clerkPublishableKey\"")
@@ -85,9 +100,23 @@ android {
             // Use the real upload key when configured; otherwise stays unsigned so the
             // build still succeeds in CI / on machines without the keystore.
             signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else null
+
+            // Production AdMob config. Ads are enabled; UMP consent still gates every
+            // ad request at runtime. App id falls back to TEST if not provided (warns above).
+            manifestPlaceholders["admobAppId"] = prodAdmobAppId.ifBlank { Ad.TEST_APP_ID }
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"${Ad.PROD_BANNER}\"")
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"${Ad.PROD_INTERSTITIAL}\"")
+            buildConfigField("Boolean", "ADS_ENABLED", "true")
         }
         debug {
             isMinifyEnabled = false
+
+            // DEBUG/QA uses Google TEST units only — production units are never
+            // requested during development or automated tests.
+            manifestPlaceholders["admobAppId"] = Ad.TEST_APP_ID
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"${Ad.TEST_BANNER}\"")
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"${Ad.TEST_INTERSTITIAL}\"")
+            buildConfigField("Boolean", "ADS_ENABLED", "true")
         }
     }
     compileOptions {
@@ -211,8 +240,10 @@ dependencies {
     // small footprint; the only remote-image need in the app.
     implementation("io.coil-kt:coil-compose:2.7.0")
 
-    // AdMob — single daily interstitial (Sprint A.1). No mediation, no analytics.
+    // AdMob — daily interstitial + Home banner. No mediation, no analytics.
     implementation("com.google.android.gms:play-services-ads:24.5.0")
+    // Google User Messaging Platform (UMP) — GDPR/UMP consent gathering before ads.
+    implementation("com.google.android.ump:user-messaging-platform:3.2.0")
 
     // BM-AUTH-001 — Clerk native Android SDK (custom/API-driven flow; no prebuilt
     // -ui artifact, since we keep the existing restored Profile UI). Resolves from
