@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,6 +55,7 @@ class LockOverlayActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         configureWindowFlags()
         blockBackGesture()
         applyIntentState(intent)
@@ -130,7 +132,9 @@ class LockOverlayActivity : ComponentActivity() {
                                 else -> inVerification = true
                             }
                         },
-                        onOverrideGranted = { finish() },
+                        onOverrideGranted = {
+                            lifecycleScope.launch { finish() }
+                        },
                         onLockExpired = { finish() },
                         viewModel = viewModel,
                     )

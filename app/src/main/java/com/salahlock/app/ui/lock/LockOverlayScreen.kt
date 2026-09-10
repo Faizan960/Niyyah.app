@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.salahlock.app.theme.*
+import android.widget.Toast
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -53,6 +54,7 @@ fun LockOverlayScreen(
     val scope = rememberCoroutineScope()
     var showOverrideConfirm by remember { mutableStateOf(false) }
     var overrideCountdown by remember { mutableStateOf(5) }
+    var overrideProcessing by remember { mutableStateOf(false) }
 
     LaunchedEffect(showOverrideConfirm) {
         if (showOverrideConfirm) {
@@ -302,16 +304,27 @@ fun LockOverlayScreen(
                 confirmButton = {
                     Button(
                         onClick = {
+                            if (overrideProcessing) return@Button
+                            overrideProcessing = true
                             showOverrideConfirm = false
                             scope.launch {
-                                viewModel.useOverride(com.salahlock.app.data.repository.OverrideReason.OTHER)
-                                onOverrideGranted()
+                                val granted = viewModel.useOverride(com.salahlock.app.data.repository.OverrideReason.OTHER)
+                                if (granted) {
+                                    onOverrideGranted()
+                                } else {
+                                    overrideProcessing = false
+                                    Toast.makeText(
+                                        context,
+                                        "Monthly emergency limit reached (${state.overrideState.maxPerMonth}/${state.overrideState.maxPerMonth} used)",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                }
                             }
                         },
-                        enabled = overrideCountdown == 0,
+                        enabled = overrideCountdown == 0 && !overrideProcessing,
                         colors = ButtonDefaults.buttonColors(containerColor = EmeraldSecondary)
                     ) {
-                        Text(if (overrideCountdown > 0) "Wait ${overrideCountdown}s" else "Continue")
+                        Text(if (overrideProcessing) "Processing…" else if (overrideCountdown > 0) "Wait ${overrideCountdown}s" else "Continue")
                     }
                 },
                 dismissButton = {

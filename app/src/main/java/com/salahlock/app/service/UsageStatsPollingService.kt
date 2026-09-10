@@ -163,7 +163,18 @@ class UsageStatsPollingService : Service() {
             // Initial load
             blockedPackages = app.blacklistRepository.getBlockedPackages().toSet()
             lockWindowActive = true
-            handler.post(pollingRunnable)
+
+            // BUG-2 FIX: Perform an IMMEDIATE foreground check before entering the
+            // recurring poll loop. Without this, the first check is deferred to whenever
+            // the main looper processes the posted runnable — potentially hundreds of ms
+            // later. If a blocked app is already foreground when the lock window starts,
+            // the overlay must appear immediately.
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                checkForegroundApp()
+            }
+
+            // Now schedule the recurring poll (first tick fires 500ms after the immediate check)
+            handler.postDelayed(pollingRunnable, 500L)
             Log.d(TAG, "Polling started. Blocked packages: ${blockedPackages.size}")
 
             // Keep blocked list in sync for the duration of the lock window.
