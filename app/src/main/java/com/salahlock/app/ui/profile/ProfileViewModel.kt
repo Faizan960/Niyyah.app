@@ -244,9 +244,14 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                         )
                     }
                     is AuthState.Error -> _extraState.update { it.copy(signInError = state.message) }
-                    AuthState.SignedOut, AuthState.Loading -> _extraState.update {
+                    AuthState.SignedOut -> _extraState.update {
                         it.copy(isSignedIn = false, userName = "", userEmail = "", userPhotoUrl = null)
                     }
+                    // Loading = Clerk still restoring the session on cold start. Do NOT
+                    // blank identity here: treating Loading as signed-out caused a
+                    // true→false→true flash that read to users as an "auto sign-out".
+                    // Hold the current identity until Clerk resolves to a real state.
+                    AuthState.Loading -> Unit
                 }
             }
         }
@@ -262,7 +267,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
         viewModelScope.launch {
             val today = java.time.LocalDate.now().toString()
-            val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+            // Prayer records are device-local & auth-independent — always read __local__.
+            val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
             app.database.prayerRecordDao().observeRecordsForDate(owner, today).collect { records ->
                 _extraState.update { it.copy(totalPrayers = records.count { r -> r.verified || r.overrideUsed }) }
             }

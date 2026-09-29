@@ -152,7 +152,8 @@ class UsageStatsPollingService : Service() {
             // that occurs AFTER the prayer was verified never shows the overlay: the
             // poller is only posted if this prayer is still unverified.
             val today = LocalDate.now().toString()
-            val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+            // Prayer records are device-local & auth-independent — always read __local__.
+            val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
             val existing = app.database.prayerRecordDao().getRecord(owner, today, prayerName.name)
             if (existing != null && (existing.verified || existing.overrideUsed)) {
                 prayerVerified = true
@@ -186,7 +187,8 @@ class UsageStatsPollingService : Service() {
         // prevents re-locking when the user reopens a blocked app.
         val lockedPrayer = prayerName
         serviceScope.launch {
-            val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+            // Prayer records are device-local & auth-independent — always read __local__.
+            val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
             app.database.prayerRecordDao()
                 .observeRecordsForDate(owner, LocalDate.now().toString())
                 .collect { records ->

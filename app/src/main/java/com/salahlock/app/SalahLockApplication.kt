@@ -56,7 +56,6 @@ class SalahLockApplication : Application(), Configuration.Provider {
             adoptionManager = com.salahlock.app.data.sync.LegacyAdoptionManager(
                 database, com.salahlock.app.data.sync.ActiveOwnerProvider.shared,
             ),
-            reflectionRoot = spiritualReportRepository.reflectionRoot(),
         )
     }
 

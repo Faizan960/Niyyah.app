@@ -63,7 +63,7 @@ import com.salahlock.app.data.db.entity.LegacyOwnershipEntity
         com.salahlock.app.data.db.entity.SyncOutboxEntity::class,
         com.salahlock.app.data.db.entity.SyncStateEntity::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -487,6 +487,55 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Migration 10 → 11 (fix/local-persistence-auth — device-local prayer recovery).
+         *
+         * Prayer tracking is DEVICE-LOCAL and auth-independent by product requirement:
+         * prayer_records, streaks, and emergency_overrides must always live under
+         * [OwnerIds.LOCAL][com.salahlock.app.data.db.entity.OwnerIds.LOCAL] ('__local__')
+         * so they survive sign-in, sign-out, and every auth-state change. Earlier builds
+         * (BM-013 Checkpoint B/C) adopted these tables to the Clerk account on first
+         * sign-in and/or let signed-out writes land under '__none__' — which made prayer
+         * history "disappear" after logout and left rows orphaned after re-login.
+         *
+         * This migration folds every prayer_records / streaks / emergency_overrides row
+         * back to '__local__' so existing installs recover their data in place. It is
+         * NON-DESTRUCTIVE (data-only, no schema change) and idempotent:
+         *
+         *  - prayer_records / emergency_overrides: re-stamp every non-local row to
+         *    '__local__' (`UPDATE OR IGNORE` preserves an already-present local row on a
+         *    natural-key collision — both represent the same completion), then drop any
+         *    leftover colliding non-local duplicate. Full history is preserved.
+         *  - streaks (single-row aggregate, PK = ownerId): keep the row with the greatest
+         *    bestStreak (then currentStreak, then updatedAt) so the user's best achievement
+         *    is never lost, re-stamp it '__local__', and drop the rest.
+         *
+         * Cloud-synced tables (quran_*, collections, hadith/azkar state) are intentionally
+         * left under their adopted owner — they remain per-account.
+         */
+        internal val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // prayer_records — re-stamp all non-local rows to __local__, keeping full
+                // history; a natural-key (ownerId, date, prayerName) collision keeps the
+                // existing __local__ row and the duplicate is removed below.
+                db.execSQL("UPDATE OR IGNORE prayer_records SET ownerId = '__local__' WHERE ownerId <> '__local__'")
+                db.execSQL("DELETE FROM prayer_records WHERE ownerId <> '__local__'")
+
+                // emergency_overrides — same fold on (ownerId, monthYear).
+                db.execSQL("UPDATE OR IGNORE emergency_overrides SET ownerId = '__local__' WHERE ownerId <> '__local__'")
+                db.execSQL("DELETE FROM emergency_overrides WHERE ownerId <> '__local__'")
+
+                // streaks — one aggregate row. Keep the single best row (highest bestStreak,
+                // then currentStreak, then most recently updated) so no achievement is lost,
+                // then make it the local row. Uses rowid (table is not WITHOUT ROWID).
+                db.execSQL(
+                    "DELETE FROM streaks WHERE rowid NOT IN (" +
+                        "SELECT rowid FROM streaks ORDER BY bestStreak DESC, currentStreak DESC, updatedAt DESC LIMIT 1)"
+                )
+                db.execSQL("UPDATE streaks SET ownerId = '__local__' WHERE ownerId <> '__local__'")
+            }
+        }
+
         /** SQLite expression producing a fresh v4-shaped UUID string per row. */
         private const val UUID_SQL =
             "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || " +
@@ -501,7 +550,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "salahlock_db",
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
                     .build().also { INSTANCE = it }
             }
     }

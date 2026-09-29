@@ -17,11 +17,13 @@ import java.util.Locale
 class StreakRepository(
     private val prayerRecordDao: PrayerRecordDao,
     private val streakDao: StreakDao,
-    // BM-013 — active owner seam; resolves to __local__ during the local foundation.
-    private val activeOwner: com.salahlock.app.data.sync.ActiveOwnerProvider =
-        com.salahlock.app.data.sync.ActiveOwnerProvider.shared,
 ) {
-    private val owner get() = activeOwner.ownerId()
+    // Prayer tracking is DEVICE-LOCAL and auth-independent by design: it must survive
+    // sign-in, sign-out, and every auth-state change. So streaks/records are always
+    // scoped to the fixed local owner — never to the Clerk-driven ActiveOwnerProvider
+    // (whose SignedOutNoUser scope resolves to "__none__" and would hide all rows).
+    // Only cloud-synced data (Quran bookmarks/collections) is per-account.
+    private val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
 
     fun observeStreakInfo(): Flow<StreakInfo> =
         streakDao.observeStreak(owner).map { entity ->

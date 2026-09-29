@@ -105,7 +105,8 @@ class MissedPrayerReminderReceiver : BroadcastReceiver() {
             try {
                 val app = context.applicationContext as SalahLockApplication
                 val today = LocalDate.now().toString()
-                val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+                // Prayer records are device-local & auth-independent — always read __local__.
+                val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
                 val record = app.database.prayerRecordDao().getRecord(owner, today, prayer.name)
                 val wasVerified = record != null && (record.verified || record.overrideUsed)
                 if (!wasVerified) {

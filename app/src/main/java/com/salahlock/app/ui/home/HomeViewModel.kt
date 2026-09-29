@@ -264,7 +264,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private fun observeTodayRecords() {
         viewModelScope.launch {
             val today = LocalDate.now().toString()
-            val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+            // Prayer records are device-local & auth-independent — always read __local__.
+            val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
             app.database.prayerRecordDao().observeRecordsForDate(owner, today).collect { records ->
                 val byName = records.associateBy { PrayerName.valueOf(it.prayerName) }
                 _uiState.update { it.copy(todayRecords = byName) }
@@ -344,7 +345,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             ) { blockedCount, _, profile -> Pair(blockedCount, profile) }
                 .collect { (blockedCount, profileName) ->
                     val today = LocalDate.now().toString()
-                    val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+                    // Prayer records are device-local & auth-independent — always read __local__.
+                    val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
                     val todayRecords = app.database.prayerRecordDao().getRecordsForDate(owner, today)
                     val verifiedToday = todayRecords.filter { it.verified || it.overrideUsed }
                     val lastVerifiedLabel = if (verifiedToday.isEmpty()) "None today"

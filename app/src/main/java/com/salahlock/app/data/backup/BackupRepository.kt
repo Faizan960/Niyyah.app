@@ -104,8 +104,9 @@ class BackupRepository(
     // ── Collect data ─────────────────────────────────────────────────────────
 
     private suspend fun collectPackage(): BackupPackage {
-        // BM-013 — backup operates on the active owner's data (device-level migration).
-        val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+        // Prayer tracking is device-local & auth-independent — back up the __local__
+        // dataset regardless of sign-in state (matches where the app reads/writes it).
+        val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
         val records = db.prayerRecordDao().getAll(owner)
         val streak = db.streakDao().getStreak(owner)
         val overrides = db.emergencyOverrideDao().getAll(owner)
@@ -322,8 +323,10 @@ class BackupRepository(
     }
 
     private suspend fun applyRestore(pkg: BackupPackage) {
-        // Prayer history — restore into the active owner's scope.
-        val owner = com.salahlock.app.data.sync.ActiveOwnerProvider.shared.ownerId()
+        // Prayer history — device-local & auth-independent, so restore into __local__
+        // (the fixed scope the whole app reads/writes). Explicit user-initiated restore
+        // is the ONLY path that deletes existing prayer data; see confirmRestore().
+        val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
         db.prayerRecordDao().deleteAllForOwner(owner)
         if (pkg.prayerHistory.isNotEmpty()) {
             db.prayerRecordDao().insertAll(pkg.prayerHistory.map { it.toEntity().copy(ownerId = owner) })

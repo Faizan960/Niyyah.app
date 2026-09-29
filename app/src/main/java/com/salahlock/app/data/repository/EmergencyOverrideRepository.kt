@@ -18,11 +18,11 @@ enum class OverrideReason(val displayText: String) {
 
 class EmergencyOverrideRepository(
     private val dao: EmergencyOverrideDao,
-    // BM-013 — active owner seam; resolves to __local__ during the local foundation.
-    private val activeOwner: com.salahlock.app.data.sync.ActiveOwnerProvider =
-        com.salahlock.app.data.sync.ActiveOwnerProvider.shared,
 ) {
-    private val owner get() = activeOwner.ownerId()
+    // Emergency overrides are part of DEVICE-LOCAL prayer tracking: auth-independent,
+    // must survive sign-in/out. Always scoped to the fixed local owner (never the
+    // Clerk-driven ActiveOwnerProvider, whose signed-out scope hides all rows).
+    private val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
 
     private fun currentMonthKey(): String {
         val now = LocalDate.now()

@@ -29,8 +29,11 @@ import org.junit.runner.RunWith
 import java.io.File
 
 /**
- * BM-013 Checkpoint B — proves one-time legacy adoption re-stamps EVERY owner-scoped
- * table (all 9) + moves legacy reflections, and that a second account can never
+ * BM-013 Checkpoint B — proves one-time legacy adoption re-stamps every CLOUD-SYNCED
+ * owner-scoped table (Quran bookmarks/progress, collections, Hadith/Azkar state) to the
+ * signing-in account, while DEVICE-LOCAL prayer tracking (prayer_records, streaks,
+ * emergency_overrides) and reflection files are deliberately left under `__local__` so
+ * they survive sign-in/out auth-independently. Also proves a second account can never
  * re-claim.
  */
 @RunWith(AndroidJUnit4::class)
@@ -69,15 +72,11 @@ class AdoptionCoverageTest {
     }
 
     @Test
-    fun adoption_reStampsAllTables_movesReflections_andIsOneTime() = runBlocking {
-        val claimed = manager.adoptLegacyDataOnce(A, nowMs = 1000, reflectionRoot = root)
+    fun adoption_reStampsCloudSyncedTables_leavesPrayerDataLocal_andIsOneTime() = runBlocking {
+        val claimed = manager.adoptLegacyDataOnce(A, nowMs = 1000)
         assertTrue("first claim succeeds", claimed)
 
-        // Every owner-scoped dataset now belongs to A, and nothing remains under __local__.
-        assertEquals(1, db.prayerRecordDao().getAll(A).size)
-        assertEquals(0, db.prayerRecordDao().getAll(OwnerIds.LOCAL).size)
-        assertEquals(5, db.streakDao().getStreak(A)!!.bestStreak)
-        assertEquals(1, db.emergencyOverrideDao().getAll(A).size)
+        // Cloud-synced datasets now belong to A, and nothing remains under __local__.
         assertEquals(1, db.quranDao().getAllBookmarks(A).first().size)
         assertEquals(1, db.quranDao().getAllProgress(A).first().size)
         assertEquals(1, db.collectionsDao().observeCollections(A).first().size)
@@ -86,15 +85,25 @@ class AdoptionCoverageTest {
         assertEquals(1, db.hadithUserStateDao().getAllForOwner(A).size)
         assertEquals(1, db.azkarUserStateDao().getAllForOwner(A).size)
 
-        // Reflection file moved to A.
-        assertTrue(File(File(root, A), "2026-06.json").exists())
-        assertFalse(File(File(root, OwnerIds.LOCAL), "2026-06.json").exists())
+        // CORE INVARIANT — device-local prayer tracking is NOT adopted: it stays under
+        // __local__ and is never exposed under the Clerk account. Prayer data therefore
+        // survives sign-in unchanged and remains auth-independent.
+        assertEquals(0, db.prayerRecordDao().getAll(A).size)
+        assertEquals(1, db.prayerRecordDao().getAll(OwnerIds.LOCAL).size)
+        assertEquals("streak stays local, not adopted", null, db.streakDao().getStreak(A))
+        assertEquals(5, db.streakDao().getStreak(OwnerIds.LOCAL)!!.bestStreak)
+        assertEquals(0, db.emergencyOverrideDao().getAll(A).size)
+        assertEquals(1, db.emergencyOverrideDao().getAll(OwnerIds.LOCAL).size)
+
+        // Reflection files are NOT moved — they remain device-local under __local__.
+        assertTrue(File(File(root, OwnerIds.LOCAL), "2026-06.json").exists())
+        assertFalse(File(File(root, A), "2026-06.json").exists())
 
         // Ledger records the adopter; a second account can NOT re-claim.
         assertEquals(A, db.legacyOwnershipDao().get()!!.adoptedBy)
-        val second = manager.adoptLegacyDataOnce(B, nowMs = 2000, reflectionRoot = root)
+        val second = manager.adoptLegacyDataOnce(B, nowMs = 2000)
         assertFalse("legacy data already adopted → B cannot claim", second)
-        assertEquals(0, db.prayerRecordDao().getAll(B).size)
+        assertEquals(0, db.quranDao().getAllBookmarks(B).first().size)
         assertEquals(A, db.legacyOwnershipDao().get()!!.adoptedBy)
     }
 
