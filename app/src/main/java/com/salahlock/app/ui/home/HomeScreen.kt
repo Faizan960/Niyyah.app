@@ -126,12 +126,20 @@ fun HomeScreen(
 
             // Hero always shows the true NEXT upcoming prayer + countdown. The Verify
             // CTA is a SEPARATE concept — it names and verifies the ongoing prayer.
-            state.nextPrayer?.let { prayer ->
+            state.nextPrayer?.let { next ->
+                // The hero focuses on whichever prayer the user must act on: the ongoing,
+                // unverified current prayer (label "CURRENT PRAYER" + Verify CTA); otherwise
+                // the true next upcoming prayer (label "NEXT PRAYER"). This removes the old
+                // mismatch where the card read "NEXT PRAYER / Dhuhr" while the CTA said
+                // "Verify Fajr". The countdown always tracks the next boundary (next.time),
+                // which — while a prayer is in-window — is the time left to pray it.
+                val heroFocus = verifiablePrayer ?: next
                 NextPrayerHero(
                     isLight = isLight,
-                    prayerName = prayer.name.displayName,
-                    timeString = prayer.time.toClock(),
-                    remaining = formatTimeRemaining(state.currentTimeMs, prayer.time),
+                    label = if (verifiablePrayer != null) "CURRENT PRAYER" else "NEXT PRAYER",
+                    prayerName = heroFocus.name.displayName,
+                    timeString = heroFocus.time.toClock(),
+                    remaining = formatTimeRemaining(state.currentTimeMs, next.time),
                     sourceLabel = sourceLabel(state),
                     progress = intervalProgress(state, now),
                     verifyPrayerName = verifiablePrayer?.name?.displayName,
@@ -347,6 +355,7 @@ private fun GreetingBlock(userName: String) {
 @Composable
 private fun NextPrayerHero(
     isLight: Boolean,
+    label: String,
     prayerName: String,
     timeString: String,
     remaining: String,
@@ -391,7 +400,7 @@ private fun NextPrayerHero(
                 Spacer(Modifier.width(16.dp))
                 Column {
                     Text(
-                        "NEXT PRAYER",
+                        label,
                         style = MaterialTheme.typography.labelMedium,
                         letterSpacing = 1.5.sp,
                         color = accent,
@@ -664,6 +673,29 @@ private fun PrayerTimeline(
     }
 }
 
+/**
+ * The four visually-distinct states a timeline node can render.
+ *
+ * Priority is intentional and completion ALWAYS wins: a prayer that is both current and
+ * verified renders as [COMPLETED], never as [CURRENT_UNVERIFIED]. Crucially, a current
+ * but *unverified* prayer is [CURRENT_UNVERIFIED] — a hollow emerald ring — and never the
+ * solid filled node reserved for [COMPLETED], so "current" can never be mistaken for
+ * "done". See [timelineNodeState].
+ */
+internal enum class TimelineNodeState { COMPLETED, CURRENT_UNVERIFIED, PAST_UNVERIFIED, UPCOMING }
+
+/** Pure mapping of the node booleans to a single [TimelineNodeState]; unit-tested. */
+internal fun timelineNodeState(
+    completed: Boolean,
+    isCurrent: Boolean,
+    pastUnverified: Boolean,
+): TimelineNodeState = when {
+    completed -> TimelineNodeState.COMPLETED
+    isCurrent -> TimelineNodeState.CURRENT_UNVERIFIED
+    pastUnverified -> TimelineNodeState.PAST_UNVERIFIED
+    else -> TimelineNodeState.UPCOMING
+}
+
 @Composable
 private fun TimelineNode(
     completed: Boolean,
@@ -673,8 +705,9 @@ private fun TimelineNode(
     attention: Color,
     track: Color,
 ) {
-    when {
-        completed -> Box(
+    when (timelineNodeState(completed, isCurrent, pastUnverified)) {
+        // STATE 1 — verified/completed: the ONLY solid emerald node, carrying a white check.
+        TimelineNodeState.COMPLETED -> Box(
             Modifier.size(20.dp).background(accent, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
@@ -685,19 +718,24 @@ private fun TimelineNode(
                 modifier = Modifier.size(13.dp),
             )
         }
-        isCurrent -> Box(
+        // STATE 2 — current but NOT verified: a prominent HOLLOW emerald ring (subtle
+        // tint + solid ring, no fill, no check) so it demands action without ever
+        // reading as completed.
+        TimelineNodeState.CURRENT_UNVERIFIED -> Box(
             Modifier
                 .size(22.dp)
-                .background(accent, CircleShape)
-                .border(3.dp, accent.copy(alpha = 0.25f), CircleShape)
+                .background(accent.copy(alpha = 0.12f), CircleShape)
+                .border(2.5.dp, accent, CircleShape)
         )
-        pastUnverified -> Box(
+        // Past & unverified: gold attention ring (unchanged).
+        TimelineNodeState.PAST_UNVERIFIED -> Box(
             Modifier
                 .size(16.dp)
                 .background(attention.copy(alpha = 0.15f), CircleShape)
                 .border(2.dp, attention, CircleShape)
         )
-        else -> Box(
+        // STATE 3 — upcoming / neutral outlined node (unchanged).
+        TimelineNodeState.UPCOMING -> Box(
             Modifier
                 .size(16.dp)
                 .background(MaterialTheme.colorScheme.background, CircleShape)
