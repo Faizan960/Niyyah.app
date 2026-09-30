@@ -7,6 +7,7 @@ import com.salahlock.app.SalahLockApplication
 import com.salahlock.app.data.model.OverrideState
 import com.salahlock.app.data.model.PrayerName
 import com.salahlock.app.data.repository.OverrideReason
+import com.salahlock.app.data.repository.OverrideResult
 import com.salahlock.app.verification.VerificationMethod
 import com.salahlock.app.verification.VerificationMethod.Companion.fromString
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -102,17 +103,21 @@ class LockViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    /** Returns true if override was granted */
-    suspend fun useOverride(reason: OverrideReason): Boolean {
-        val success = app.overrideRepository.useOverride(reason)
-        if (success) {
-            app.streakRepository.recordVerification(
-                date = LocalDate.now().toString(),
-                prayer = _state.value.prayer,
-                wasOverride = true,
-            )
-        }
-        loadOverrideState()
-        return success
+    /**
+     * Atomically applies an emergency override to the CURRENTLY LOCKED prayer
+     * ([LockUiState.prayer]) for today. The repository consumes exactly one allowance,
+     * marks the prayer, and recomputes the streak in one transaction — or nothing at all
+     * when the monthly limit is reached (no unlock in that case). Idempotent against
+     * repeated taps. Returns the [OverrideResult] so the overlay knows whether to dismiss.
+     */
+    suspend fun useOverride(reason: OverrideReason): OverrideResult {
+        val result = app.overrideRepository.useOverrideForPrayer(
+            date = LocalDate.now().toString(),
+            prayer = _state.value.prayer,
+            reason = reason,
+        )
+        // Reflect the (possibly unchanged) remaining count in the sheet immediately.
+        _state.update { it.copy(overrideState = result.state) }
+        return result
     }
 }

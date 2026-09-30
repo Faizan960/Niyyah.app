@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -29,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.salahlock.app.data.repository.OverrideReason
+import com.salahlock.app.data.repository.OverrideResult
 import com.salahlock.app.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -53,10 +56,17 @@ fun LockOverlayScreen(
     val scope = rememberCoroutineScope()
     var showOverrideConfirm by remember { mutableStateOf(false) }
     var overrideCountdown by remember { mutableStateOf(5) }
+    var selectedReason by remember { mutableStateOf(OverrideReason.OTHER) }
+    var submitting by remember { mutableStateOf(false) }
+    var overrideError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(showOverrideConfirm) {
         if (showOverrideConfirm) {
+            // Reset the sheet each time it opens so a prior attempt can't leak state.
             overrideCountdown = 5
+            submitting = false
+            overrideError = null
+            selectedReason = OverrideReason.OTHER
             while (overrideCountdown > 0) {
                 delay(1000L)
                 overrideCountdown--
@@ -295,28 +305,123 @@ fun LockOverlayScreen(
         }
 
         if (showOverrideConfirm) {
+            val override = state.overrideState
+            val remaining = (override.maxPerMonth - override.usedThisMonth).coerceAtLeast(0)
+            val hasAllowance = override.canOverride && remaining > 0
+
             AlertDialog(
-                onDismissRequest = { showOverrideConfirm = false },
+                onDismissRequest = { if (!submitting) showOverrideConfirm = false },
                 title = { Text("Emergency Override") },
-                text = { Text("Prayer protection will pause temporarily. Use this only when truly needed.") },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            showOverrideConfirm = false
-                            scope.launch {
-                                viewModel.useOverride(com.salahlock.app.data.repository.OverrideReason.OTHER)
-                                onOverrideGranted()
+                text = {
+                    Column {
+                        DetailRow("Prayer", prayer.displayName)
+                        DetailRow("Overrides remaining", "$remaining / ${override.maxPerMonth}")
+                        Spacer(Modifier.height(12.dp))
+
+                        if (hasAllowance) {
+                            Text(
+                                "Prayer protection will pause for this prayer only. Use this " +
+                                    "just when you truly cannot verify normally.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Text(
+                                "REASON",
+                                style = MaterialTheme.typography.labelMedium,
+                                letterSpacing = 1.5.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            OverrideReason.entries.forEach { reason ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable(enabled = !submitting) { selectedReason = reason }
+                                        .padding(vertical = 2.dp),
+                                ) {
+                                    RadioButton(
+                                        selected = selectedReason == reason,
+                                        onClick = { selectedReason = reason },
+                                        enabled = !submitting,
+                                        colors = RadioButtonDefaults.colors(selectedColor = EmeraldSecondary),
+                                    )
+                                    Text(
+                                        reason.displayText,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
                             }
-                        },
-                        enabled = overrideCountdown == 0,
-                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldSecondary)
-                    ) {
-                        Text(if (overrideCountdown > 0) "Wait ${overrideCountdown}s" else "Continue")
+                        } else {
+                            Text(
+                                "No emergency overrides remaining this month. Prayer protection " +
+                                    "will stay active — please verify your prayer to continue.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+
+                        overrideError?.let {
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    if (hasAllowance) {
+                        Button(
+                            // Gated on the countdown (accidental-use guard) AND a submitting
+                            // latch so a rapid double-tap can only ever launch ONE attempt.
+                            onClick = {
+                                if (submitting) return@Button
+                                submitting = true
+                                overrideError = null
+                                scope.launch {
+                                    when (viewModel.useOverride(selectedReason)) {
+                                        is OverrideResult.Consumed,
+                                        is OverrideResult.AlreadyHandled -> {
+                                            showOverrideConfirm = false
+                                            onOverrideGranted()
+                                        }
+                                        is OverrideResult.NoAllowance -> {
+                                            // Allowance ran out (e.g. used elsewhere) — do NOT
+                                            // unlock; surface the state and let the user verify.
+                                            submitting = false
+                                            overrideError =
+                                                "No emergency overrides remaining this month."
+                                        }
+                                    }
+                                }
+                            },
+                            enabled = overrideCountdown == 0 && !submitting,
+                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldSecondary),
+                        ) {
+                            Text(
+                                when {
+                                    submitting -> "Please wait…"
+                                    overrideCountdown > 0 -> "Wait ${overrideCountdown}s"
+                                    else -> "Confirm Emergency Override"
+                                }
+                            )
+                        }
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showOverrideConfirm = false }) {
-                        Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(
+                        onClick = { showOverrideConfirm = false },
+                        enabled = !submitting,
+                    ) {
+                        Text(
+                            if (hasAllowance) "Cancel" else "Close",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
             )
