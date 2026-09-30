@@ -8,6 +8,7 @@ import com.salahlock.app.data.db.entity.OwnerIds
 import com.salahlock.app.data.model.PrayerName
 import com.salahlock.app.data.repository.EmergencyOverrideRepository
 import com.salahlock.app.data.repository.OverrideReason
+import com.salahlock.app.data.repository.OverrideResult
 import com.salahlock.app.data.repository.StreakRepository
 import com.salahlock.app.data.sync.ActiveOwnerProvider
 import kotlinx.coroutines.flow.first
@@ -15,6 +16,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,7 +41,9 @@ class LocalPrayerPersistenceTest {
         val ctx = ApplicationProvider.getApplicationContext<android.content.Context>()
         db = Room.inMemoryDatabaseBuilder(ctx, AppDatabase::class.java).allowMainThreadQueries().build()
         streakRepo = StreakRepository(db.prayerRecordDao(), db.streakDao())
-        overrideRepo = EmergencyOverrideRepository(db.emergencyOverrideDao())
+        overrideRepo = EmergencyOverrideRepository(
+            db, db.emergencyOverrideDao(), db.prayerRecordDao(), streakRepo,
+        )
     }
 
     @After
@@ -57,10 +61,11 @@ class LocalPrayerPersistenceTest {
         // 1) User is SIGNED IN (scope resolves to the Clerk user id).
         ActiveOwnerProvider.shared.onAuthenticated(clerkUser)
 
-        // Record a full day (5/5) + an emergency override while signed in.
-        listOf(PrayerName.FAJR, PrayerName.DHUHR, PrayerName.ASR, PrayerName.MAGHRIB, PrayerName.ISHA)
+        // Record 4 prayers normally + the 5th via an emergency override → a full 5/5 day.
+        listOf(PrayerName.FAJR, PrayerName.DHUHR, PrayerName.ASR, PrayerName.MAGHRIB)
             .forEach { streakRepo.recordVerification(today, it, wasOverride = false) }
-        assertEquals("override recorded", true, overrideRepo.useOverride(OverrideReason.TRAVELLING))
+        val overrideResult = overrideRepo.useOverrideForPrayer(today, PrayerName.ISHA, OverrideReason.TRAVELLING)
+        assertTrue("override consumed", overrideResult is OverrideResult.Consumed)
 
         // Data lands under __local__, NEVER under the signed-in Clerk owner.
         assertEquals(5, db.prayerRecordDao().getAll(OwnerIds.LOCAL).size)

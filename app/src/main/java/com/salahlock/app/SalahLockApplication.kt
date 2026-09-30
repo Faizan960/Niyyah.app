@@ -90,7 +90,12 @@ class SalahLockApplication : Application(), Configuration.Provider {
         AppBlacklistRepository(this, database.appBlacklistDao())
     }
     val overrideRepository by lazy {
-        EmergencyOverrideRepository(database.emergencyOverrideDao())
+        EmergencyOverrideRepository(
+            database,
+            database.emergencyOverrideDao(),
+            database.prayerRecordDao(),
+            streakRepository,
+        )
     }
 
     /** Singleton — prevents Hadith sync from re-running on every Knowledge screen visit. */
