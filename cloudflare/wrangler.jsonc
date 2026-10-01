@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "niyyah-backend",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-11-01",
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "niyyah",
+      // Placeholder id so local dev + `--local` migrations work with no Cloudflare
+      // account. Replace with the real id from `wrangler d1 create niyyah` before
+      // any remote deploy. (Not a secret.)
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    // Non-secret public config. Override locally via .dev.vars (gitignored).
+    // JWT verification uses ONLY the public JWKS — no Clerk secret key is needed.
+    "CLERK_ISSUER": "https://your-subdomain.clerk.accounts.dev",
+    "CLERK_JWKS_URL": "https://your-subdomain.clerk.accounts.dev/.well-known/jwks.json",
+    "CLERK_AUTHORIZED_PARTIES": ""
+  }
+}

@@ -1,0 +1,18 @@
+# Local development variables for `wrangler dev`.
+# Copy this file to `.dev.vars` (which is gitignored) and fill in your values.
+#
+# These are the ONLY settings needed to verify Clerk session JWTs.
+# Verification uses the PUBLIC JWKS — there is NO Clerk secret key here on purpose.
+
+# Clerk issuer = your Clerk Frontend API origin.
+# Example: https://your-app.clerk.accounts.dev   (or your production Clerk domain)
+CLERK_ISSUER="https://your-subdomain.clerk.accounts.dev"
+
+# Clerk JWKS endpoint (public RS256 verification keys).
+CLERK_JWKS_URL="https://your-subdomain.clerk.accounts.dev/.well-known/jwks.json"
+
+# Optional: comma-separated allowlist of acceptable `azp` (authorized party) claims.
+# Leave empty to skip the azp check (typical for a native mobile client).
+CLERK_AUTHORIZED_PARTIES=""
+
+# NEVER put real secrets, private keys, or production credentials in a committed file.
