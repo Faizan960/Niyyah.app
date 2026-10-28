@@ -39,9 +39,12 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # Ensures the Android SDK is present with licenses accepted so AGP can
-      # auto-fetch missing platforms (compileSdk 36) if the runner image lacks them.
-      - uses: android-actions/setup-android@v3
+      # The runner image ships the Android SDK. Accept licenses so AGP 9 can
+      # auto-fetch any missing component (compileSdk 36). Note: we deliberately
+      # do NOT use android-actions/setup-android@v3 — it currently fails on
+      # recent sdkmanagers by requesting the removed legacy 'tools' package.
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
 
       # Caches the Gradle user home (wrapper dists + dependencies).
       - uses: gradle/actions/setup-gradle@v4
@@ -74,7 +77,8 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
 
       - uses: gradle/actions/setup-gradle@v4
 
