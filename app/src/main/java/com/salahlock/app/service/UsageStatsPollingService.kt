@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 private const val TAG = "UsageStatsPollingService"
@@ -165,6 +166,16 @@ class UsageStatsPollingService : Service() {
             // Initial load
             blockedPackages = app.blacklistRepository.getBlockedPackages().toSet()
             lockWindowActive = true
+
+            // Immediate foreground check before entering the recurring poll loop:
+            // without it the first check is deferred until the main looper processes
+            // the posted runnable, so a blocked app that is ALREADY foreground when
+            // the lock window starts would not trigger the overlay until later.
+            // checkForegroundApp() normally runs on the main-looper handler, so the
+            // Main dispatcher here keeps identical threading.
+            withContext(Dispatchers.Main) { checkForegroundApp() }
+
+            // Now schedule the recurring poll (first tick fires after the interval).
             handler.post(pollingRunnable)
             Log.d(TAG, "Polling started. Blocked packages: ${blockedPackages.size}")
 

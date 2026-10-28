@@ -136,7 +136,7 @@ fun TextVerificationScreen(
             singleLine = true,
             isError = showError,
             supportingText = if (showError) {
-                { Text("Almost there — check the sentence and try again.", color = MaterialTheme.colorScheme.error) }
+                { Text("Almost there — type the full phrase above, including the prayer name.", color = MaterialTheme.colorScheme.error) }
             } else null,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submit() }),
