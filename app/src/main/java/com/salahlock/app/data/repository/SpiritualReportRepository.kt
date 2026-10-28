@@ -171,8 +171,8 @@ class SpiritualReportRepository(
         val records = prayerRecordDao.getRecordsBetween(
             ownerId(), month.atDay(1).toString(), month.atEndOfMonth().toString(),
         )
-        val mercy = emergencyOverrideDao.getForMonth(ownerId(), monthKey(month))?.count ?: 0
-        val stats = MonthlyStatsCalculator.calculate(month, records, mercy, today)
+        val overridesUsed = emergencyOverrideDao.getForMonth(ownerId(), monthKey(month))?.count ?: 0
+        val stats = MonthlyStatsCalculator.calculate(month, records, overridesUsed, today)
 
         val prev = getStored(month.minusMonths(1))
         val score = RankCalculator.score(stats, prev?.completionPercent)
@@ -203,7 +203,9 @@ class SpiritualReportRepository(
             fajrDays = stats.fajrDays,
             longestStreakInMonth = stats.longestStreakInMonth,
             endOfMonthStreak = stats.endOfMonthStreak,
-            mercyUsed = stats.mercyUsed,
+            // StoredMonthlyReflection keeps its serialized JSON field name for backward
+            // compatibility with previously frozen reports; the value counts emergency overrides.
+            mercyUsed = stats.overridesUsed,
             perPrayerCompletion = stats.perPrayerCompletion.mapKeys { it.key.name },
             perPrayerMissed = stats.perPrayerMissed.mapKeys { it.key.name },
             improvementPercent = prev?.let { stats.completionPercent - it.completionPercent },
@@ -226,7 +228,7 @@ class SpiritualReportRepository(
         val ranks = exportAll()
             .associate { YearMonth.parse(it.month) to rankOf(it.rank) }
             .let { if (extraRank != null) it + extraRank else it }
-        val mercyByMonth = emergencyOverrideDao.getAll(ownerId()).mapNotNull { o ->
+        val overridesByMonth = emergencyOverrideDao.getAll(ownerId()).mapNotNull { o ->
             runCatching { YearMonth.parse(o.monthYear) }.getOrNull()?.let { it to o.count }
         }.toMap()
         val dates = allRecords.mapNotNull { runCatching { LocalDate.parse(it.date) }.getOrNull() }
@@ -235,7 +237,7 @@ class SpiritualReportRepository(
         return AchievementEngine.Context(
             allRecords = allRecords,
             monthlyRanks = ranks,
-            mercyByMonth = mercyByMonth,
+            overridesByMonth = overridesByMonth,
             ramadanDates = ramadan,
         )
     }
@@ -303,7 +305,7 @@ data class StoredMonthlyReflection(
             fajrDays = fajrDays,
             longestStreakInMonth = longestStreakInMonth,
             endOfMonthStreak = endOfMonthStreak,
-            mercyUsed = mercyUsed,
+            overridesUsed = mercyUsed,
             perPrayerCompletion = perPrayerCompletion.mapKeys { PrayerName.valueOf(it.key) },
             perPrayerMissed = perPrayerMissed.mapKeys { PrayerName.valueOf(it.key) },
         )

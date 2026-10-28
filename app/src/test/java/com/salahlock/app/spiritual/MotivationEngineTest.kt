@@ -24,7 +24,7 @@ class MotivationEngineTest {
         fajrDays = 0,
         longestStreakInMonth = 0,
         endOfMonthStreak = 0,
-        mercyUsed = 0,
+        overridesUsed = 0,
         perPrayerCompletion = emptyMap(),
         perPrayerMissed = perPrayerMissed,
     )

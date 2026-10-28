@@ -90,7 +90,6 @@ data class StreakInfo(
     val currentStreak: Int = 0,
     val bestStreak: Int = 0,
     val rank: SpiritualRank = SpiritualRank.AL_MUBTADI,
-    val mercyAvailableThisWeek: Boolean = true,
 )
 
 enum class SpiritualRank(

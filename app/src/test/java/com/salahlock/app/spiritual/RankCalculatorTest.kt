@@ -18,7 +18,7 @@ class RankCalculatorTest {
         longestStreak: Int = 0,
         endStreak: Int = 0,
         lockVerified: Int = 0,
-        mercy: Int = 0,
+        overrides: Int = 0,
         perPrayer: Map<PrayerName, Double> = MonthlyStatsCalculator.DAILY_PRAYERS.associateWith { 0.0 },
     ) = MonthlyStats(
         month = YearMonth.of(2026, 6),
@@ -31,7 +31,7 @@ class RankCalculatorTest {
         fajrDays = fajrDays,
         longestStreakInMonth = longestStreak,
         endOfMonthStreak = endStreak,
-        mercyUsed = mercy,
+        overridesUsed = overrides,
         perPrayerCompletion = perPrayer,
         perPrayerMissed = perPrayer.mapValues { ((1 - it.value) * elapsedDays).toInt() },
     )
@@ -65,16 +65,16 @@ class RankCalculatorTest {
     }
 
     @Test
-    fun `mercy usage lowers the score`() {
+    fun `emergency override usage lowers the score`() {
         val without = RankCalculator.score(stats(completed = 120), null)
-        val with = RankCalculator.score(stats(completed = 120, mercy = 3), null)
+        val with = RankCalculator.score(stats(completed = 120, overrides = 3), null)
         assertEquals(without - 6.0, with, 0.001)
     }
 
     @Test
-    fun `mercy penalty is capped at 10`() {
+    fun `override penalty is capped at 10`() {
         val without = RankCalculator.score(stats(completed = 120), null)
-        val many = RankCalculator.score(stats(completed = 120, mercy = 50), null)
+        val many = RankCalculator.score(stats(completed = 120, overrides = 50), null)
         assertEquals(without - 10.0, many, 0.001)
     }
 
@@ -115,6 +115,6 @@ class RankCalculatorTest {
             perPrayer = MonthlyStatsCalculator.DAILY_PRAYERS.associateWith { 1.0 },
         )
         assertTrue(RankCalculator.score(perfect, 0, jamaatPrayers = 100) <= 100.0)
-        assertTrue(RankCalculator.score(stats(completed = 0, mercy = 10), 100) >= 0.0)
+        assertTrue(RankCalculator.score(stats(completed = 0, overrides = 10), 100) >= 0.0)
     }
 }

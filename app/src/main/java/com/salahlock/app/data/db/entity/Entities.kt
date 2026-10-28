@@ -45,9 +45,8 @@ data class StreakEntity(
     val bestStreak: Int = 0,
     /** ISO date of the last fully verified day */
     val lastFullDay: String = "",
-    /** ISO week string of last mercy used: "2025-W23" */
-    val lastMercyWeek: String = "",
-    val mercyUsedThisWeek: Boolean = false,
+    // The weekly mercy / free-pass columns (lastMercyWeek, mercyUsedThisWeek) were
+    // REMOVED with the feature (Room v12 drops them; streaks are strict 5/5 days).
     // BM-013 — streak is a derived cache recomputed from owner-scoped prayer_records;
     // only bestStreak is durable. ownerId is carried for future per-account rows.
     @ColumnInfo(defaultValue = "__local__") val ownerId: String = OwnerIds.LOCAL,
@@ -56,7 +55,7 @@ data class StreakEntity(
 
 @Entity(
     tableName = "emergency_overrides",
-    // BM-013 — one row per (owner, month) so accounts don't share mercy counters.
+    // BM-013 — one row per (owner, month) so accounts don't share override counters.
     indices = [Index(value = ["ownerId", "monthYear"], unique = true)],
 )
 data class EmergencyOverride(

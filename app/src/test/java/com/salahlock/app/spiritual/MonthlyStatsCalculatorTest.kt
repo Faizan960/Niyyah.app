@@ -42,12 +42,12 @@ class MonthlyStatsCalculatorTest {
         val records =
             (1..20).map { record(it, PrayerName.FAJR) } +
                 (1..30).map { record(it, PrayerName.DHUHR, VerificationType.SELF_REPORTED) }
-        val stats = MonthlyStatsCalculator.calculate(june, records, mercyUsed = 2, today = july1)
+        val stats = MonthlyStatsCalculator.calculate(june, records, overridesUsed = 2, today = july1)
         assertEquals(50, stats.completedPrayers)
         assertEquals(20, stats.fajrDays)
         assertEquals(20, stats.lockVerified)
         assertEquals(30, stats.selfReported)
-        assertEquals(2, stats.mercyUsed)
+        assertEquals(2, stats.overridesUsed)
         assertEquals(10, stats.perPrayerMissed[PrayerName.FAJR])
         assertEquals(0, stats.perPrayerMissed[PrayerName.DHUHR])
         assertEquals(30, stats.perPrayerMissed[PrayerName.ISHA])
