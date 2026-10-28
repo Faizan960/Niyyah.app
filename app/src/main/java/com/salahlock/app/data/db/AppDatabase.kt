@@ -63,7 +63,7 @@ import com.salahlock.app.data.db.entity.LegacyOwnershipEntity
         com.salahlock.app.data.db.entity.SyncOutboxEntity::class,
         com.salahlock.app.data.db.entity.SyncStateEntity::class,
     ],
-    version = 11,
+    version = 12,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -536,6 +536,31 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Migration 11 → 12: drop the removed weekly free-pass ("mercy") columns from
+         * `streaks` (`lastMercyWeek`, `mercyUsedThisWeek`). Streaks are now strict
+         * consecutive 5/5 days. SQLite cannot drop columns in place on all supported
+         * API levels, so the table is rebuilt and every row is copied — current and
+         * best streaks survive untouched.
+         */
+        internal val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE `streaks_new` (`id` INTEGER NOT NULL, " +
+                        "`currentStreak` INTEGER NOT NULL, `bestStreak` INTEGER NOT NULL, " +
+                        "`lastFullDay` TEXT NOT NULL, " +
+                        "`ownerId` TEXT NOT NULL DEFAULT '__local__', " +
+                        "`updatedAt` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`ownerId`))"
+                )
+                db.execSQL(
+                    "INSERT INTO streaks_new (id, currentStreak, bestStreak, lastFullDay, ownerId, updatedAt) " +
+                        "SELECT id, currentStreak, bestStreak, lastFullDay, ownerId, updatedAt FROM streaks"
+                )
+                db.execSQL("DROP TABLE streaks")
+                db.execSQL("ALTER TABLE streaks_new RENAME TO streaks")
+            }
+        }
+
         /** SQLite expression producing a fresh v4-shaped UUID string per row. */
         private const val UUID_SQL =
             "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || " +
@@ -550,7 +575,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "salahlock_db",
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
                     .build().also { INSTANCE = it }
             }
     }

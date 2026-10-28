@@ -132,12 +132,12 @@ class AchievementEngineTest {
     fun `no mercy month requires zero overrides and real activity`() {
         // Two full months of history so May is "fully recorded".
         val records = perfectDays(LocalDate.of(2026, 5, 1), 61)
-        val clean = AchievementEngine.Context(records, mercyByMonth = emptyMap())
+        val clean = AchievementEngine.Context(records, overridesByMonth = emptyMap())
         assertTrue(find(clean, "no_mercy_month").unlocked)
 
         val mercied = AchievementEngine.Context(
             records,
-            mercyByMonth = mapOf(YearMonth.of(2026, 5) to 1, YearMonth.of(2026, 6) to 1, YearMonth.of(2026, 7) to 1),
+            overridesByMonth = mapOf(YearMonth.of(2026, 5) to 1, YearMonth.of(2026, 6) to 1, YearMonth.of(2026, 7) to 1),
         )
         assertFalse(find(mercied, "no_mercy_month").unlocked)
     }

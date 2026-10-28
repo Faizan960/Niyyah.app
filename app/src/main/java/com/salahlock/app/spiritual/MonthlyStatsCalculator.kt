@@ -25,13 +25,13 @@ object MonthlyStatsCalculator {
 
     /**
      * @param records prayer records whose `date` falls inside [month]; rows outside are ignored.
-     * @param mercyUsed emergency overrides consumed during [month].
+     * @param overridesUsed emergency overrides consumed during [month].
      * @param today used to cap elapsed days for the current (incomplete) month.
      */
     fun calculate(
         month: YearMonth,
         records: List<PrayerRecord>,
-        mercyUsed: Int,
+        overridesUsed: Int,
         today: LocalDate = LocalDate.now(),
     ): MonthlyStats {
         val elapsedDays = when {
@@ -90,7 +90,7 @@ object MonthlyStatsCalculator {
             fajrDays = perPrayerDays[PrayerName.FAJR] ?: 0,
             longestStreakInMonth = longest,
             endOfMonthStreak = endStreak,
-            mercyUsed = mercyUsed,
+            overridesUsed = overridesUsed,
             perPrayerCompletion = perPrayerCompletion,
             perPrayerMissed = perPrayerMissed,
         )

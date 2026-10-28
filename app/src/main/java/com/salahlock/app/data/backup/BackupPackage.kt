@@ -104,13 +104,14 @@ data class BackupPrayerRecord(
     val timestampMs: Long = 0,
 )
 
+// The weekly free-pass ("mercy") fields were removed with that feature. Old
+// backup files containing them still restore: the backup Json uses
+// ignoreUnknownKeys, so the removed keys are silently ignored.
 @Serializable
 data class BackupStreak(
     val currentStreak: Int = 0,
     val bestStreak: Int = 0,
     val lastFullDay: String = "",
-    val lastMercyWeek: String = "",
-    val mercyUsedThisWeek: Boolean = false,
 )
 
 @Serializable
@@ -180,13 +181,11 @@ fun BackupPrayerRecord.toEntity() = PrayerRecord(
 
 fun StreakEntity.toBackup() = BackupStreak(
     currentStreak = currentStreak, bestStreak = bestStreak,
-    lastFullDay = lastFullDay, lastMercyWeek = lastMercyWeek,
-    mercyUsedThisWeek = mercyUsedThisWeek,
+    lastFullDay = lastFullDay,
 )
 fun BackupStreak.toEntity() = StreakEntity(
     id = 1, currentStreak = currentStreak, bestStreak = bestStreak,
-    lastFullDay = lastFullDay, lastMercyWeek = lastMercyWeek,
-    mercyUsedThisWeek = mercyUsedThisWeek,
+    lastFullDay = lastFullDay,
 )
 
 fun EmergencyOverride.toBackup() = BackupEmergencyOverride(

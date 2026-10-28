@@ -49,7 +49,7 @@ data class MonthlyStats(
     /** Days on which the prayer was missed, keyed by the five daily prayers. */
     val perPrayerMissed: Map<PrayerName, Int>,
     /** Emergency overrides used this month. */
-    val mercyUsed: Int,
+    val overridesUsed: Int,
     /** Completion ratio per prayer, 0.0–1.0, keyed by the five daily prayers. */
     val perPrayerCompletion: Map<PrayerName, Double>,
 ) {

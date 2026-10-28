@@ -26,7 +26,7 @@ object AchievementEngine {
         /** Rank of each fully generated month (from frozen reports). */
         val monthlyRanks: Map<YearMonth, MonthlyRank> = emptyMap(),
         /** Emergency overrides used per month. */
-        val mercyByMonth: Map<YearMonth, Int> = emptyMap(),
+        val overridesByMonth: Map<YearMonth, Int> = emptyMap(),
         /** Days of Ramadan that fall inside recorded history; empty = cannot evaluate. */
         val ramadanDates: Set<LocalDate> = emptySet(),
     )
@@ -49,7 +49,7 @@ object AchievementEngine {
         val streak30End = consecutiveRunEnd(perfectDays, 30)
         val streak100End = consecutiveRunEnd(perfectDays, 100)
         val fridayMonth = firstCompleteFridayMonth(completedByDay, context)
-        val noMercyMonth = firstNoMercyMonth(completedByDay, context)
+        val noOverrideMonth = firstNoOverrideMonth(completedByDay, context)
         val verified100Month = hundredthVerifiedMonth(context.allRecords)
         val ramadanDone = context.ramadanDates.isNotEmpty() &&
             context.ramadanDates.all { completedByDay[it]?.size == 5 }
@@ -74,7 +74,7 @@ object AchievementEngine {
             achievement("friday_month", "🕌", "First Complete Friday Month",
                 "Dhuhr completed on every Friday of a month", AchievementRarity.RARE, fridayMonth),
             achievement("no_mercy_month", "🤲", "A Steadfast Month",
-                "A full month without a single emergency override", AchievementRarity.RARE, noMercyMonth),
+                "A full month without a single emergency override", AchievementRarity.RARE, noOverrideMonth),
             achievement("verified_100", "⭐", "100 Verified Prayers",
                 "100 prayers verified through the lock", AchievementRarity.RARE, verified100Month),
             achievement("ramadan_consistency", "🌙", "Ramadan Consistency",
@@ -125,14 +125,14 @@ object AchievementEngine {
     }
 
     /** First fully elapsed month with zero mercy and meaningful activity (≥50% completion). */
-    private fun firstNoMercyMonth(
+    private fun firstNoOverrideMonth(
         completedByDay: Map<LocalDate, Set<PrayerName>>,
         context: Context,
     ): YearMonth? = fullyRecordedMonths(context).firstOrNull { month ->
         val completed = completedByDay.entries
             .filter { YearMonth.from(it.key) == month }
             .sumOf { it.value.size }
-        (context.mercyByMonth[month] ?: 0) == 0 && completed * 2 >= month.lengthOfMonth() * 5
+        (context.overridesByMonth[month] ?: 0) == 0 && completed * 2 >= month.lengthOfMonth() * 5
     }
 
     /** Month during which the 100th LOCK_VERIFIED prayer happened. */
