@@ -1,0 +1,26 @@
+{
+  "name": "niyyah-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Niyyah cloud backend — Cloudflare Workers + D1 + Clerk auth, offline-first sync API (/api/v1). Standalone; does not replace Room on-device storage.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "migrate:local": "wrangler d1 migrations apply niyyah --local",
+    "migrate:remote": "wrangler d1 migrations apply niyyah --remote",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "jose": "^5.9.6"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.0.0",
+    "@cloudflare/workers-types": "^5.20260930.2",
+    "typescript": "^5.6.3",
+    "vitest": "^4.1.0",
+    "wrangler": "^4.145.0"
+  }
+}
