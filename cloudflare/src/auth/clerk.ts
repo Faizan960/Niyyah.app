@@ -56,7 +56,9 @@ export async function authenticate(req: Request, env: Env): Promise<VerifiedUser
   let payload: JWTPayload;
   try {
     const result = await jwtVerify(token, keyResolver(env), {
-      issuer: env.CLERK_ISSUER || undefined, // jose enforces exp/nbf automatically
+      // jose enforces exp/nbf automatically. A missing CLERK_ISSUER must fail
+      // CLOSED (config error), never skip issuer validation.
+      issuer: env.CLERK_ISSUER || undefined,
       clockTolerance: 5,
     });
     payload = result.payload;
@@ -64,14 +66,24 @@ export async function authenticate(req: Request, env: Env): Promise<VerifiedUser
     // Never echo the token or jose's internal reason.
     throw new HttpError(401, "Invalid or expired token", "unauthorized");
   }
+  if (!env.CLERK_ISSUER) {
+    throw new HttpError(500, "Server auth not configured", "config");
+  }
 
-  // Optional authorized-party enforcement.
+  // Authorized-party enforcement. When an allowlist is configured, `azp` MUST
+  // be present, a string, and on the list — a token with a missing, empty, or
+  // malformed azp is rejected, never silently accepted.
   const allow = (env.CLERK_AUTHORIZED_PARTIES ?? "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  if (allow.length > 0 && typeof payload.azp === "string" && !allow.includes(payload.azp)) {
-    throw new HttpError(401, "Unauthorized party", "unauthorized");
+  if (allow.length > 0) {
+    if (typeof payload.azp !== "string" || payload.azp === "") {
+      throw new HttpError(401, "Missing authorized party", "unauthorized");
+    }
+    if (!allow.includes(payload.azp)) {
+      throw new HttpError(401, "Unauthorized party", "unauthorized");
+    }
   }
 
   const sub = payload.sub;

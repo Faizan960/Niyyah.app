@@ -29,6 +29,12 @@ async function ensureUser(env: Env, userId: string, now: number): Promise<void> 
 async function readJson(req: Request): Promise<unknown> {
   const declared = Number(req.headers.get("content-length") ?? "0");
   if (declared > MAX_BODY_BYTES) throw new HttpError(413, "Body too large", "too_large");
+  // Content-type must be JSON when declared. Absent is tolerated (minimal
+  // clients); anything explicitly non-JSON is refused before parsing.
+  const contentType = (req.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+  if (contentType && contentType !== "application/json") {
+    throw new HttpError(415, "Content-Type must be application/json", "bad_content_type");
+  }
   const text = await req.text();
   if (text.length > MAX_BODY_BYTES) throw new HttpError(413, "Body too large", "too_large");
   if (text.length === 0) return {};

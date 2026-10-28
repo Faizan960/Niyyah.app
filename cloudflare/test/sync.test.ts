@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import type { Env } from "../src/types";
-import { migrateOnce, mintToken, pull, push } from "./helpers";
+import { api, migrateOnce, mintToken, pull, push } from "./helpers";
 
 migrateOnce();
 
@@ -207,5 +207,179 @@ describe("sync: incremental cursor", () => {
     const rows = ((await past.json()) as PullBody).changes.prayer_records;
     expect(rows.length).toBe(1);
     expect(rows[0].date).toBe("2026-11-02");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Continuation pagination (no-skip guarantee)
+// ---------------------------------------------------------------------------
+
+interface PullBodyFull {
+  changes: Record<string, Array<Record<string, unknown>>>;
+  cursors: Record<string, number>;
+  hasMore: Record<string, boolean>;
+  continuation: Record<string, string>;
+  serverTime: number;
+}
+
+describe("sync: keyset continuation pagination", () => {
+  // 600 rows pushed in ONE request all receive the SAME server updated_at.
+  // With a 500-row page limit, a naive `updated_at >= lastSeen LIMIT 500` pull
+  // would silently drop the 100 rows sharing the boundary timestamp. The keyset
+  // continuation must deliver all 600 with no skips and no duplicates.
+  it("delivers every row sharing a timestamp across pages (no skips)", async () => {
+    const token = await mintToken("page_user");
+    // hadith_reads natural key is (collection, hadith_number) — 600 unique rows.
+    const hadithRows = Array.from({ length: 600 }, (_, i) => ({
+      collection: "bukhari",
+      hadith_number: String(i + 1),
+      read_at_ms: i,
+    }));
+    const p = await push(token, { hadith_reads: hadithRows });
+    expect(p.status).toBe(200);
+
+    // Page 1
+    const r1 = (await (await pull(token, { domains: ["hadith_reads"] })).json()) as PullBodyFull;
+    expect(r1.changes.hadith_reads.length).toBe(500);
+    expect(r1.hasMore.hadith_reads).toBe(true);
+    expect(typeof r1.continuation.hadith_reads).toBe("string");
+    // Durable cursor must NOT advance mid-pagination (client keeps old cursor).
+    expect(r1.cursors.hadith_reads).toBe(0);
+
+    // Page 2 via continuation
+    const r2 = (await (
+      await pull(token, { domains: ["hadith_reads"], continuation: { hadith_reads: r1.continuation.hadith_reads } })
+    ).json()) as PullBodyFull;
+    expect(r2.changes.hadith_reads.length).toBe(100);
+    expect(r2.hasMore.hadith_reads).toBe(false);
+    // Cursor advances only on the final page.
+    expect(r2.cursors.hadith_reads).toBeGreaterThan(0);
+
+    const seen = new Set(
+      [...r1.changes.hadith_reads, ...r2.changes.hadith_reads].map((r) => r.hadith_number),
+    );
+    expect(seen.size).toBe(600); // 600 unique rows — nothing skipped, nothing duplicated
+    for (let i = 1; i <= 600; i++) expect(seen.has(String(i))).toBe(true);
+  });
+
+  it("rejects a malformed continuation token (400)", async () => {
+    const token = await mintToken("page_bad");
+    const res = await pull(token, {
+      domains: ["hadith_reads"],
+      continuation: { hadith_reads: "not-a-token;;;" },
+    });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as ErrBody).code).toBe("bad_request");
+  });
+
+  it("resuming with the durable cursor re-delivers the boundary row (gte, idempotent)", async () => {
+    const token = await mintToken("page_gte");
+    await push(token, { hadith_reads: [{ collection: "muslim", hadith_number: "1" }] });
+    const r1 = (await (await pull(token, { domains: ["hadith_reads"] })).json()) as PullBodyFull;
+    const cursor = r1.cursors.hadith_reads;
+    // Pulling AT the durable cursor re-delivers the boundary row (idempotent apply).
+    const r2 = (await (await pull(token, { domains: ["hadith_reads"], cursors: { hadith_reads: cursor } })).json()) as PullBodyFull;
+    expect(r2.changes.hadith_reads.length).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Local-only / removed-feature state can never be synced
+// ---------------------------------------------------------------------------
+
+describe("sync: removed free-pass (mercy) state", () => {
+  it("rejects mercy fields in a streaks push (400 forbidden_field)", async () => {
+    const token = await mintToken("mercy_field");
+    const res = await push(token, {
+      streaks: [{ current_streak: 2, best_streak: 5, mercy_used_this_week: true }],
+    });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as ErrBody).code).toBe("forbidden_field");
+  });
+
+  it("rejects last_mercy_week in a streaks push (400 forbidden_field)", async () => {
+    const token = await mintToken("mercy_week");
+    const res = await push(token, {
+      streaks: [{ current_streak: 2, last_mercy_week: "2026-W43" }],
+    });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as ErrBody).code).toBe("forbidden_field");
+  });
+
+  it("rejects mercy/free-pass/monthly-exception domain aliases (400 forbidden_domain)", async () => {
+    const token = await mintToken("mercy_domains");
+    for (const domain of ["mercy_weeks", "mercy", "free_passes", "monthly_exceptions"]) {
+      const res = await push(token, { [domain]: [{ x: 1 }] });
+      expect(res.status).toBe(400);
+      expect(((await res.json()) as ErrBody).code).toBe("forbidden_domain");
+    }
+  });
+
+  it("has no mercy columns in the streaks schema", async () => {
+    const { results } = await db
+      .prepare("PRAGMA table_info(streaks)")
+      .all<{ name: string }>();
+    const names = results.map((r) => r.name);
+    expect(names).not.toContain("last_mercy_week");
+    expect(names).not.toContain("mercy_used_this_week");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Semantic input validation
+// ---------------------------------------------------------------------------
+
+describe("sync: semantic validation", () => {
+  it("rejects an unknown prayer_name (400)", async () => {
+    const token = await mintToken("val_prayer");
+    const res = await push(token, {
+      prayer_records: [{ date: "2026-10-01", prayer_name: "TEHRUD" }],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a malformed date (400)", async () => {
+    const token = await mintToken("val_date");
+    const res = await push(token, {
+      prayer_records: [{ date: "01/10/2026", prayer_name: "FAJR" }],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects an out-of-range surah_number (400)", async () => {
+    const token = await mintToken("val_surah");
+    const res = await push(token, { quran_bookmarks: [{ surah_number: 115, ayah_number: 1 }] });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects an out-of-range ayah_number (400)", async () => {
+    const token = await mintToken("val_ayah");
+    const res = await push(token, { quran_bookmarks: [{ surah_number: 1, ayah_number: 287 }] });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects text fields exceeding their length cap (400)", async () => {
+    const token = await mintToken("val_len");
+    const res = await push(token, {
+      hadith_reads: [{ collection: "b".repeat(65), hadith_number: "1" }],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a non-object row (400)", async () => {
+    const token = await mintToken("val_row");
+    const res = await push(token, { hadith_reads: ["i-am-not-an-object"] });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects an explicitly non-JSON content type (415)", async () => {
+    const token = await mintToken("val_ct");
+    const res = await api("/api/v1/sync/push", {
+      method: "POST",
+      token,
+      headers: { "content-type": "text/plain" },
+      body: "changes={}",
+    });
+    expect(res.status).toBe(415);
   });
 });

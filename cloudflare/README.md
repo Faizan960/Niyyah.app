@@ -66,7 +66,7 @@ Cloudflare D1 (SQLite) — one logical dataset per Clerk user
 | Domain                   | Natural key (besides `user_id`)       | Purpose                               |
 | ------------------------ | ------------------------------------- | ------------------------------------- |
 | `prayer_records`         | `date`, `prayer_name`                 | Prayer completion / verification      |
-| `streaks`                | — (one row per user)                  | Streak + mercy-week state             |
+| `streaks`                | — (one row per user)                  | Streak counters (no mercy-week state) |
 | `quran_reader_state`     | `surah_number`                        | Continue-reading position per surah   |
 | `quran_reading_sessions` | `session_id`                          | Reading-session log                   |
 | `quran_surah_stats`      | `surah_number`                        | Per-surah aggregate stats             |
@@ -76,9 +76,33 @@ Cloudflare D1 (SQLite) — one logical dataset per Clerk user
 
 Plus `users` (one row per Clerk user, maintained server-side).
 
+Every domain enforces semantic validation on push: `prayer_name` must be one of
+`FAJR | DHUHR | ASR | MAGHRIB | ISHA`, `date` must be ISO `yyyy-MM-dd`,
+`surah_number` ∈ 1–114, `ayah_number` ∈ 0–286, and text fields carry explicit
+length caps. Unknown or out-of-range values are rejected with `400`.
+
 ### 🚫 Emergency overrides are never syncable
 
 There is **no** `emergency_overrides` table, **no** sync domain, and **no** endpoint for emergency overrides — by design. Emergency override allowances are **local-only and device-bound**. The backend hard-rejects any push/pull that names `emergency_overrides` (or an alias) with HTTP `400 forbidden_domain`, and a test asserts the table does not exist. Do not add one.
+
+### 🚫 Free-pass / mercy-week state is gone, and stays out
+
+The three-free-passes ("mercy week") feature is being **removed from the product**.
+The `streaks` schema therefore has **no** `last_mercy_week` / `mercy_used_this_week`
+columns, the sync registry does not contain them, and a push that *includes* either
+field is rejected with `400 forbidden_field`. Domain aliases (`mercy`, `mercy_weeks`,
+`free_passes`, `monthly_exceptions`, `exception_records`) are on the same hard
+denylist as emergency overrides. The Android `streaks` table still carries the
+legacy columns purely for Room migration safety — its sync client must never send
+them. Streak values are client-computed summaries derived from eligible prayer
+history; the server stores the last-writer-wins value and never re-derives it
+(avoiding a second, contradictory source of truth).
+
+**Note on `prayer_records.override_used`:** this boolean mirrors the Android
+`PrayerRecord.overrideUsed` column and records only *that this prayer was resolved
+via override* — part of ordinary prayer history. The emergency-override **allowance
+records** themselves (per-month counts, reasons) remain local-only, as asserted by
+tests.
 
 ---
 
@@ -189,9 +213,11 @@ Response:
 - Missing required key column or wrong type → `400 bad_request`.
 
 ### `POST /api/v1/sync/pull`
-Returns rows changed at or after the per-domain cursor.
+Returns rows changed at or after the per-domain cursor, **paginated with a keyset
+continuation** (see *Sync model* below).
 
-Request (omit `domains` to pull all; omit a cursor to start at 0):
+Request (omit `domains` to pull all; omit a cursor to start at 0; send a
+`continuation` token only while `hasMore` was true for that domain):
 ```json
 { "domains": ["prayer_records", "quran_bookmarks"], "cursors": { "prayer_records": 1730000000000 } }
 ```
@@ -208,11 +234,16 @@ Response:
     "quran_bookmarks": []
   },
   "cursors": { "prayer_records": 1730000000500, "quran_bookmarks": 1730000000000 },
+  "hasMore": { "prayer_records": false, "quran_bookmarks": false },
+  "continuation": {},
   "serverTime": 1730000000999
 }
 ```
 
-The client persists each returned `cursors[domain]` and sends it back on the next pull.
+The client persists each returned `cursors[domain]` and sends it back on the next
+pull. If `hasMore[domain]` is `true`, the durable cursor for that domain has NOT
+advanced — the client must loop, echoing `continuation[domain]`, until `hasMore`
+becomes `false`, and only then persist the final `cursors[domain]`.
 
 ---
 
@@ -222,16 +253,33 @@ Offline-first, mirroring the algorithm the Android app already uses for Quran bo
 
 - **Server-authoritative `updated_at`.** Every write stamps `updated_at = Date.now()` on the server. Device clocks are never trusted for ordering. `updated_at` **is** the pull cursor.
 - **Pull is `updated_at >= cursor` (gte).** The row sitting exactly on the cursor boundary is re-delivered, never skipped. Because apply is an idempotent upsert on the natural key, re-delivery is harmless. Clients advance the cursor to `max(updated_at)` seen (or `+1` to skip the boundary).
+- **No-skip pagination.** Each domain pages 500 rows at a time, ordered by
+  `(updated_at, rowid)`. A full page returns `hasMore = true` plus an opaque
+  `continuation` token encoding the last `(updated_at, rowid)`; the next request
+  resumes **strictly after** that pair. This is what makes equal-timestamp rows
+  safe: many rows written in one push share a single `updated_at`, and a naive
+  `updated_at >= lastSeen LIMIT n` page would silently drop the ones past the
+  page boundary. A test pushes 600 same-timestamp rows and asserts all 600 come
+  back across pages, with no skips and no duplicates.
 - **Soft deletes (tombstones).** `deleted_at` non-null marks a delete. Deletes propagate like any other change, so other devices converge on them through a normal pull. Re-adding a key is an upsert that clears `deleted_at`.
 - **Conflict resolution.** Last write wins on the natural key: the most recent `push` for a key becomes the newest server row and propagates. The Android engine's rule — a locally pending (unpushed) mutation always wins over an incoming pull for the same key, then is pushed — remains the client's responsibility; the server stays a simple convergent store.
+- **Client outbox discipline.** The client must keep its pending changes queued until the server's 200 response for that exact batch is received; a failed or offline push never marks anything synced and never erases local data. (The existing Android outbox already behaves this way.)
 - **Idempotency.** `push` is `INSERT ... ON CONFLICT(natural key) DO UPDATE`. Pushing the same row twice yields one row.
 
 ---
 
 ## Authentication
 
+> **⚠️ Provisional.** Clerk is the authentication scaffold this foundation was
+> built on — the final auth provider for the Cloudflare architecture has **not**
+> been chosen yet. The Clerk implementation is deliberately isolated in
+> `src/auth/clerk.ts` behind a single `authenticate(req, env)` function and the
+> three `CLERK_*` env vars, so swapping providers touches one file and the var
+> names. Finalizing it means: picking the provider, wiring the Android client to
+> it, and setting real production values for the issuer/JWKS/azp vars.
+
 - The Worker expects a Clerk **session JWT** as `Authorization: Bearer <jwt>`.
-- The token is verified with `jose` against Clerk's **public JWKS** (RS256), checking signature, `exp`/`nbf`, and `iss` (`CLERK_ISSUER`). An optional `azp` allowlist (`CLERK_AUTHORIZED_PARTIES`) is enforced when set.
+- The token is verified with `jose` against Clerk's **public JWKS** (RS256), checking signature, `exp`/`nbf`, and `iss` (`CLERK_ISSUER` — a missing issuer config is a hard `500 config` error, never silently skipped). An optional `azp` allowlist (`CLERK_AUTHORIZED_PARTIES`) is enforced **fail-closed**: when the allowlist is non-empty, a token with a missing, empty, or disallowed `azp` is rejected with 401.
 - **Identity = `sub` only.** The request body is never trusted for identity. A spoofed `user_id` in a payload is ignored; the row is written under the token subject.
 - Tokens are never logged, persisted, or echoed in errors.
 
@@ -252,6 +300,7 @@ Config (`wrangler.jsonc` vars / `.dev.vars`):
 - **No secrets committed.** Only public config (issuer, JWKS URL) lives in `wrangler.jsonc`. Real local config goes in `.dev.vars` (gitignored). There is no Clerk secret key in this project at all.
 - **Injection-safe dynamic SQL.** Table/column names come only from the static registry; all values are bound parameters. A test pushes `1'); DROP TABLE prayer_records;--` as data and asserts the table survives.
 - **Per-user authorization** on every read and write via the server-derived `user_id`.
+- **Strict input validation.** Unknown domains rejected; unknown fields ignored; every column type-checked, range-checked, and length-capped; `prayer_name` enum-validated; dates format-checked; `content-type` must be JSON when declared (else 415); request bodies capped at 5 MB and 1000 rows/domain. All rejections are `400`-family with a stable machine code.
 - **Body size guard** (5 MB) and per-domain row cap (1000) to bound request cost.
 - **Safe errors.** Unexpected failures return `500 internal` without leaking internals.
 
@@ -278,7 +327,32 @@ Tests run against the **real Worker runtime** and a **real local D1** via `@clou
 npm test
 ```
 
-Covered scenarios include: health (no auth), missing/garbage/expired/wrong-issuer tokens rejected, valid token → `/me`, push+pull roundtrip, multi-domain push, idempotent upsert, cross-user isolation, spoofed `user_id` ignored, malformed payload rejected, wrong type rejected, unknown domain rejected, **emergency override push/pull rejected + table absent**, SQL-injection string stored as inert data, tombstone deletes, and incremental cursor (gte boundary + advance).
+Covered scenarios include: health (no auth), missing/garbage/expired/wrong-issuer tokens rejected, valid token → `/me`, **azp allowlist accepted / disallowed / missing rejected**, push+pull roundtrip, multi-domain push, idempotent upsert, cross-user isolation, spoofed `user_id` ignored, malformed payload rejected, wrong type rejected, unknown domain rejected, **emergency override push/pull rejected + table absent**, **mercy fields and free-pass domain aliases rejected + columns absent**, SQL-injection string stored as inert data, tombstone deletes, incremental cursor (gte boundary + advance), **keyset continuation pagination (600 same-timestamp rows, zero skips)**, **malformed continuation token rejected**, and semantic validation (prayer enum, date format, surah/ayah ranges, text length caps, non-object rows, non-JSON content type).
+
+---
+
+## Schema / API gap report (vs the intended MVP)
+
+The schema covers the *user data* half of the MVP. The following intended-MVP
+pieces are **not** present and are **not** invented here; each needs its own
+grounded design before implementation:
+
+| Missing piece | Notes |
+| --- | --- |
+| User profile & preferences | Not synced yet; needs a decision on what is eligible (preferences vs personal data). |
+| Backup / restore metadata | A `backups` table + restore endpoint will be needed for cross-device recovery. |
+| Mosque directory & canonical mosque IDs | Community feature; needs canonical identifier scheme + dedup policy. |
+| Mosque schedules (multi-jama'ah, effective dates, seasonal/Ramadan) | Community submissions require provenance, verification status, and stale-data handling — none of which exists yet. |
+| Mosque admin authorization | No roles/permissions model. |
+| Prayer verification *outcomes* detail | `prayer_records.verification_type` exists; prayer-*method* info is not modeled. |
+| Azkar progress | The Android app tracks Azkar state (`AzkarUserStateEntity`); no sync domain yet. Deliberately deferred until the client transport is designed. |
+
+The community feed is **deferred by product decision** and is intentionally absent.
+
+The Android app today syncs Quran bookmarks through the **existing Supabase
+backend** (Clerk + PostgREST + RLS, outbox-driven). This Cloudflare backend is a
+foundation, **not wired into the app**, so nothing here competes with that live
+path. Any client integration must be a separate, explicit migration decision.
 
 ---
 

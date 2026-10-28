@@ -19,6 +19,10 @@ export default defineConfig(async () => {
   const privJwk = { ...(await exportJWK(privateKey)), kid, alg: "RS256" };
 
   const TEST_ISSUER = "https://test.niyyah.local";
+  // Azp allowlist active for the whole test suite — helpers.mintToken defaults
+  // to an ALLOWED azp so existing tests keep passing, and auth.test.ts pins the
+  // missing / disallowed azp rejections.
+  const TEST_AZP = "https://test-app.niyyah.local";
 
   return {
     plugins: [
@@ -29,7 +33,7 @@ export default defineConfig(async () => {
             TEST_MIGRATIONS: migrations,
             TEST_PRIVATE_JWK: JSON.stringify(privJwk),
             CLERK_ISSUER: TEST_ISSUER,
-            CLERK_AUTHORIZED_PARTIES: "",
+            CLERK_AUTHORIZED_PARTIES: TEST_AZP,
             CLERK_JWKS_JSON: JSON.stringify({ keys: [pubJwk] }),
           },
         },

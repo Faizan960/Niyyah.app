@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { api, migrateOnce, mintToken } from "./helpers";
+import { api, migrateOnce, mintToken, TEST_AZP } from "./helpers";
 
 migrateOnce();
 
@@ -32,5 +32,23 @@ describe("auth", () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as { userId: string };
     expect(body.userId).toBe("user_me");
+  });
+
+  it("accepts a token whose azp is on the authorized-parties allowlist", async () => {
+    const token = await mintToken("azp_ok", { azp: TEST_AZP });
+    const res = await api("/api/v1/me", { token });
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects a token with a disallowed azp (401)", async () => {
+    const token = await mintToken("azp_bad", { azp: "https://evil.example" });
+    const res = await api("/api/v1/me", { token });
+    expect(res.status).toBe(401);
+  });
+
+  it("rejects a token with a MISSING azp claim while an allowlist is configured (401)", async () => {
+    const token = await mintToken("azp_missing", { omitAzp: true });
+    const res = await api("/api/v1/me", { token });
+    expect(res.status).toBe(401);
   });
 });

@@ -16,7 +16,12 @@ export interface MintOpts {
   expired?: boolean;
   issuer?: string;
   azp?: string;
+  /** Mint a token with NO azp claim at all (rejected under an allowlist). */
+  omitAzp?: boolean;
 }
+
+/** The azp value allowed by the test suite's CLERK_AUTHORIZED_PARTIES (vitest.config.ts). */
+export const TEST_AZP = "https://test-app.niyyah.local";
 
 /** Mints a Clerk-shaped RS256 session token for `sub` using the test private key. */
 export async function mintToken(sub: string, opts: MintOpts = {}): Promise<string> {
@@ -24,7 +29,9 @@ export async function mintToken(sub: string, opts: MintOpts = {}): Promise<strin
   const key = await importJWK(privJwk, "RS256");
   const nowSec = Math.floor(Date.now() / 1000);
   const payload: Record<string, unknown> = {};
-  if (opts.azp) payload.azp = opts.azp;
+  // Default to the suite's allowed azp; pass azp: undefined + omitAzp to mint a
+  // token with NO azp claim (rejected while the allowlist is configured).
+  if (opts.omitAzp !== true) payload.azp = opts.azp ?? TEST_AZP;
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "RS256", kid: privJwk.kid })
     .setSubject(sub)

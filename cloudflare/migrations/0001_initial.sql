@@ -42,13 +42,16 @@ CREATE TABLE IF NOT EXISTS prayer_records (
 CREATE INDEX IF NOT EXISTS idx_prayer_records_cursor ON prayer_records (user_id, updated_at);
 
 -- Streak state. One row per user.
+-- NOTE: no mercy-week / free-pass columns. The three-free-passes feature is
+-- being removed from the product; its state is local-only legacy and must not
+-- enter the cloud schema. The Android streak table keeps legacy columns solely
+-- for Room migration safety — its sync client must never send them (and the
+-- backend rejects them).
 CREATE TABLE IF NOT EXISTS streaks (
   user_id              TEXT    PRIMARY KEY,
   current_streak       INTEGER NOT NULL DEFAULT 0,
   best_streak          INTEGER NOT NULL DEFAULT 0,
   last_full_day        TEXT,
-  last_mercy_week      TEXT,
-  mercy_used_this_week INTEGER NOT NULL DEFAULT 0, -- bool
   updated_at           INTEGER NOT NULL,
   deleted_at           INTEGER
 );
