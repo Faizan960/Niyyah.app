@@ -13,8 +13,8 @@ import java.time.YearMonth
  * Pure and deterministic — no clock, no DB, no Android dependency — so it is
  * fully unit-testable. The in-month streak here is intentionally independent of
  * [com.salahlock.app.data.repository.StreakRepository]'s lifetime streak: that
- * one powers the lock UI and allows weekly mercy; this one measures perfect
- * 5/5 days strictly inside the month for the frozen monthly report.
+ * one powers the lock UI; this one measures perfect 5/5 days strictly inside
+ * the month for the frozen monthly report.
  */
 object MonthlyStatsCalculator {
 

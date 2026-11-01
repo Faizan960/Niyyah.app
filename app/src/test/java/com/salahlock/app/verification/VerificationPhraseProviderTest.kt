@@ -180,6 +180,46 @@ class VerificationPhraseProviderTest {
         typedReject("let me use my phone", "Maghrib")
     }
 
+    // ── Typed: the reported incorrect phrases must stay rejected ─────────────
+
+    @Test
+    fun `typed rejects the reported invalid phrases`() {
+        // Field reports: "prays as" / "Prayed ase" / "Prayed aser" were accepted
+        // before commit 96d614f (typed input ignored the prayer name entirely).
+        // These tests pin the repaired behavior so the regression cannot creep
+        // back in — the literal user-reported spellings, and the same queries
+        // with the pronoun restored (which must STILL be rejected, because "as"
+        // and "ase" are not allowlisted spellings of Asr).
+        typedReject("prays as", "Asr")
+        typedReject("Prayed ase", "Asr")
+        typedReject("Prayed aser", "Asr")
+        typedReject("I prays as", "Asr")
+        typedReject("I Prayed ase", "Asr")
+    }
+
+    @Test
+    fun `typed rejects phonetic approximations not in the allowlist`() {
+        // The prayer name is matched as a whole token against the EXPLICIT
+        // allowlist only — fuzzy/substring matching of the name must not creep
+        // in (only the confirmation verb is typo-tolerant).
+        typedReject("I prayed aswr", "Asr")
+        typedReject("I prayed assr", "Asr")
+        typedReject("I prayed azr", "Asr")
+        typedReject("I prayed maghrub", "Maghrib")
+        typedReject("I prayed aser", "Dhuhr")  // "aser" is an Asr-variant token, not Dhuhr's
+    }
+
+    @Test
+    fun `typed cross-prayer matrix rejects every wrong name for every gate`() {
+        val prayers = listOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha")
+        for (gate in prayers) {
+            for (named in prayers) {
+                if (gate == named) continue
+                typedReject("I prayed $named", gate)
+            }
+        }
+    }
+
     // ── Typed: neutral debug phrase relaxes the name requirement ─────────────
 
     @Test
