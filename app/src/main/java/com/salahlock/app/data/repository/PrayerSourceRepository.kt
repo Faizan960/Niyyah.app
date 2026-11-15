@@ -1,5 +1,6 @@
 package com.salahlock.app.data.repository
 
+import android.util.Log
 import com.salahlock.app.data.db.dao.LocalMasjidDao
 import com.salahlock.app.data.db.entity.LocalMasjidEntity
 import com.salahlock.app.data.model.PrayerSource
@@ -27,6 +28,7 @@ class PrayerSourceRepository(
 
     suspend fun setPrayerSource(source: PrayerSource) {
         prefs.setPrayerSource(source.name)
+        Log.d("PrayerSourceRepo", "[TIMING] Display source transitioned to ${source.name}")
     }
 
     /** Observes the local masjid configuration. Emits null if not yet set up. */
@@ -37,6 +39,11 @@ class PrayerSourceRepository(
     /** Save or update the local masjid timetable. Always uses id = 1 (single-row). */
     suspend fun saveLocalMasjid(entity: LocalMasjidEntity) {
         localMasjidDao.upsert(entity.copy(id = 1, updatedAt = System.currentTimeMillis()))
+        Log.d(
+            "PrayerSourceRepo",
+            "[JAMAAT] Saved Fajr=${entity.fajr} Dhuhr=${entity.dhuhr} Asr=${entity.asr} " +
+                "Maghrib=${entity.maghrib} Isha=${entity.isha}",
+        )
     }
 
     /**
@@ -59,7 +66,7 @@ class PrayerSourceRepository(
      */
     suspend fun useGps() = setPrayerSource(PrayerSource.API)
 
-    /** Activates the saved Local Masjid timetable as the prayer-time source. */
+    /** Highlights the saved Local Masjid Jamaat timetable in the UI. */
     suspend fun useLocalMasjid() = setPrayerSource(PrayerSource.LOCAL_MASJID)
 
     /** Deletes the local masjid configuration and resets source to API. */

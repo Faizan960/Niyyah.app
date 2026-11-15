@@ -32,7 +32,6 @@ import com.salahlock.app.SalahLockApplication
 import com.salahlock.app.data.model.PrayerSource
 import com.salahlock.app.theme.EmeraldPrimary
 import com.salahlock.app.theme.MutedSage
-import com.salahlock.app.work.AlarmRefreshWorker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -76,8 +75,6 @@ class PrayerSourceViewModel(application: Application) : AndroidViewModel(applica
     fun setSource(source: PrayerSource) {
         viewModelScope.launch {
             repo.setPrayerSource(source)
-            // Keep Home + Salah Lock scheduling on the same effective schedule.
-            AlarmRefreshWorker.runNow(app)
         }
     }
 }
@@ -103,7 +100,7 @@ fun PrayerSourceOptions(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            "PRAYER TIMES",
+            "SCHEDULE DISPLAY",
             style = MaterialTheme.typography.labelMedium,
             letterSpacing = 1.5.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -112,16 +109,16 @@ fun PrayerSourceOptions(
 
         SourceRow(
             icon = Icons.Outlined.LocationOn,
-            title = "GPS / Current Location",
-            subtitle = cityName.ifBlank { "Calculated from your location" },
+            title = "Calculated Prayer Starts",
+            subtitle = cityName.ifBlank { "Aladhan with offline calculation" },
             selected = source == PrayerSource.API,
             onClick = onSelectGps,
         )
         Spacer(Modifier.height(12.dp))
         SourceRow(
             icon = Icons.Outlined.Mosque,
-            title = "Local Masjid",
-            subtitle = if (masjidConfigured) savedMasjidName else "Not configured yet",
+            title = "Local Masjid Jamaat",
+            subtitle = if (masjidConfigured) "$savedMasjidName congregation times" else "Not configured yet",
             selected = source == PrayerSource.LOCAL_MASJID,
             // Selecting Local Masjid only makes sense once one is configured — otherwise
             // route straight to setup rather than activating an empty timetable.
@@ -274,7 +271,7 @@ fun PrayerSourceSettingsScreen(
         ) {
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Choose where Niyyah gets prayer times. Your saved masjid is kept even when GPS is selected.",
+                text = "Calculated prayer starts always power prayer windows and alarms. Choose whether to highlight those starts or your saved masjid's separate Jamaat schedule.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

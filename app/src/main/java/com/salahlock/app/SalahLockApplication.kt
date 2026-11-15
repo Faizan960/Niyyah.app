@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.work.Configuration
 import com.clerk.api.Clerk
 import com.salahlock.app.auth.AuthRepository
+import com.salahlock.app.alarm.PrayerAlarmCoordinator
 import com.salahlock.app.data.db.AppDatabase
 import com.salahlock.app.data.preferences.UserPreferences
 import com.salahlock.app.data.repository.AppBlacklistRepository
@@ -16,7 +17,6 @@ import com.salahlock.app.data.repository.PrayerTimesRepository
 import com.salahlock.app.data.repository.StreakRepository
 import com.salahlock.app.data.api.ApiClient
 import com.salahlock.app.util.NotificationHelper
-import com.salahlock.app.work.AlarmRefreshWorker
 import com.salahlock.app.util.NetworkConnectivityObserver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -83,6 +83,9 @@ class SalahLockApplication : Application(), Configuration.Provider {
             database.localMasjidDao(),
         )
     }
+    val prayerAlarmCoordinator by lazy {
+        PrayerAlarmCoordinator(this, userPreferences, prayerTimesRepository)
+    }
     val streakRepository by lazy {
         StreakRepository(database.prayerRecordDao(), database.streakDao())
     }
@@ -148,8 +151,11 @@ class SalahLockApplication : Application(), Configuration.Provider {
         // is gathered first (needs an Activity) and the Mobile Ads SDK is initialized
         // only after consent resolves — see ConsentManager, driven from MainActivity.
 
-        // Schedule the periodic alarm refresh worker
-        AlarmRefreshWorker.schedule(this)
+        // One alarm coordinator owns periodic work, immediate refreshes, and every
+        // timing-input transition. Its initial Flow emission also repairs alarms
+        // after process death/restart.
+        prayerAlarmCoordinator.schedulePeriodicRefresh()
+        prayerAlarmCoordinator.startObservingChanges(appScope)
 
         // On first launch: populate app blacklist with installed apps
         appScope.launch {
