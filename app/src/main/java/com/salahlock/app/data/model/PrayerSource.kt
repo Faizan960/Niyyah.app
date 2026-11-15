@@ -1,10 +1,10 @@
 package com.salahlock.app.data.model
 
 /**
- * Determines where prayer times originate.
+ * Determines which schedule context the UI highlights.
  *
- * [API] — Aladhan REST API with offline Adhan2 fallback. Default.
- * [LOCAL_MASJID] — User-entered timings for their local masjid.
+ * Actual prayer starts always come from Aladhan/offline Adhan2. [LOCAL_MASJID]
+ * highlights the saved congregation schedule without replacing prayer starts.
  *
  * Architecture is designed to support future sources (community DB, Friday overrides,
  * Ramadan timetables) without schema changes.

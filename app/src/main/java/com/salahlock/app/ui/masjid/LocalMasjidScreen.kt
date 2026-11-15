@@ -169,9 +169,8 @@ class LocalMasjidViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     /**
-     * QoL: pre-fills the five prayer times from the current calculated/API times.
-     * Reuses [PrayerTimesRepository.getTodayPrayers] — the user then tweaks only the
-     * jamaat differences. No new repository or model.
+     * Pre-fills Jamaat fields from today's calculated starts as an explicit draft.
+     * The copied values remain editable congregation times and never replace starts.
      */
     fun importApiTimes() {
         viewModelScope.launch {
@@ -244,7 +243,7 @@ fun LocalMasjidScreen(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "Enter your local masjid's prayer times. These will override the Aladhan API times.",
+                text = "Enter your local masjid's congregation times. These are displayed separately from calculated prayer start times.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -285,14 +284,14 @@ fun LocalMasjidScreen(
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "PRAYER TIMES",
+                    text = "JAMAAT TIMES",
                     style = MaterialTheme.typography.labelSmall,
                     color = MutedSage,
                     letterSpacing = 1.5.sp,
                 )
                 // QoL — fill from current calculated/API times, then edit the differences
                 Text(
-                    text = "Import current times",
+                    text = "Use calculated starts as draft",
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
                         .clickable { viewModel.importApiTimes() }
@@ -302,6 +301,12 @@ fun LocalMasjidScreen(
                     color = EmeraldPrimary,
                 )
             }
+
+            Text(
+                text = "This copies today's calculated prayer starts into the Jamaat fields as a starting point. Review and adjust them to your masjid's congregation timetable before saving.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
 
             // Which prayer's picker is open (null = none). Stored value is "HH:mm" 24h.
             var editingKey by remember { mutableStateOf<String?>(null) }
@@ -370,7 +375,7 @@ fun LocalMasjidScreen(
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
                     Spacer(Modifier.width(8.dp))
                 }
-                Text("Save Masjid Timings", fontWeight = FontWeight.SemiBold)
+                Text("Save Jamaat Timings", fontWeight = FontWeight.SemiBold)
             }
 
             // Explicit destructive action (separate from switching source to GPS).

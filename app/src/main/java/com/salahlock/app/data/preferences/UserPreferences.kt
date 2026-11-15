@@ -32,6 +32,8 @@ class UserPreferences(private val context: Context) {
         val KEY_LAST_SYNC_LAT = doublePreferencesKey("last_sync_lat")
         val KEY_LAST_SYNC_LNG = doublePreferencesKey("last_sync_lng")
         val KEY_LAST_SYNC_MONTH = stringPreferencesKey("last_sync_month")
+        val KEY_LAST_SYNC_METHOD = stringPreferencesKey("last_sync_method")
+        val KEY_LAST_SYNC_MADHAB = stringPreferencesKey("last_sync_madhab")
         // Missed prayer reminder delay (minutes)
         val KEY_MISSED_PRAYER_DELAY_MIN = intPreferencesKey("missed_prayer_delay_min")
         // Per-prayer lock enable/disable — all on by default
@@ -71,6 +73,11 @@ class UserPreferences(private val context: Context) {
         // Stored in DataStore, NOT Room — avoids a schema migration for display-only data.
         val KEY_JUMMA_1 = stringPreferencesKey("local_masjid_jumma1")
         val KEY_JUMMA_2 = stringPreferencesKey("local_masjid_jumma2")
+
+        // Alarm schedule identity. Generation changes only when the effective
+        // calculated schedule changes, so repeated refreshes stay idempotent.
+        val KEY_ALARM_SCHEDULE_FINGERPRINT = stringPreferencesKey("alarm_schedule_fingerprint")
+        val KEY_ALARM_SCHEDULE_GENERATION = longPreferencesKey("alarm_schedule_generation")
     }
 
     private val securePreferences = SecurePreferences(context)
@@ -132,6 +139,12 @@ class UserPreferences(private val context: Context) {
     /** SL-004 — Jumma (Friday) prayer times for the local masjid. Blank = not set. */
     val jumma1: Flow<String> = context.dataStore.data.map { it[KEY_JUMMA_1] ?: "" }
     val jumma2: Flow<String> = context.dataStore.data.map { it[KEY_JUMMA_2] ?: "" }
+    val alarmScheduleGeneration: Flow<Long> = context.dataStore.data
+        .map { it[KEY_ALARM_SCHEDULE_GENERATION] ?: 0L }
+    val lastPrayerSyncMethod: Flow<String> = context.dataStore.data
+        .map { it[KEY_LAST_SYNC_METHOD] ?: "" }
+    val lastPrayerSyncMadhab: Flow<String> = context.dataStore.data
+        .map { it[KEY_LAST_SYNC_MADHAB] ?: "" }
 
     suspend fun setThemePreference(theme: ThemePreference) {
         context.dataStore.edit { it[KEY_THEME_PREFERENCE] = theme.name }
@@ -177,14 +190,36 @@ class UserPreferences(private val context: Context) {
         context.dataStore.edit { it[KEY_NOTIFICATIONS_ENABLED] = enabled }
     }
 
+    /**
+     * Atomically activates [fingerprint] and returns its stable generation.
+     * The generation advances only when actual trigger times/configuration change.
+     */
+    suspend fun activateAlarmSchedule(fingerprint: String): Long {
+        var activeGeneration = 0L
+        context.dataStore.edit { values ->
+            val oldFingerprint = values[KEY_ALARM_SCHEDULE_FINGERPRINT]
+            val oldGeneration = values[KEY_ALARM_SCHEDULE_GENERATION] ?: 0L
+            activeGeneration = if (oldFingerprint == fingerprint && oldGeneration > 0L) {
+                oldGeneration
+            } else {
+                oldGeneration + 1L
+            }
+            values[KEY_ALARM_SCHEDULE_FINGERPRINT] = fingerprint
+            values[KEY_ALARM_SCHEDULE_GENERATION] = activeGeneration
+        }
+        return activeGeneration
+    }
+
     /** Called after a successful prayer time sync to record when and where sync occurred. */
-    suspend fun recordPrayerSync(lat: Double, lng: Double) {
+    suspend fun recordPrayerSync(lat: Double, lng: Double, method: String, madhab: String) {
         val month = java.time.YearMonth.now().toString() // e.g. "2025-06"
         context.dataStore.edit {
             it[KEY_LAST_PRAYER_SYNC_MS] = System.currentTimeMillis()
             it[KEY_LAST_SYNC_LAT] = lat
             it[KEY_LAST_SYNC_LNG] = lng
             it[KEY_LAST_SYNC_MONTH] = month
+            it[KEY_LAST_SYNC_METHOD] = method
+            it[KEY_LAST_SYNC_MADHAB] = madhab
         }
     }
 

@@ -151,6 +151,16 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".receiver.TimeChangeReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
         <!-- ── MISSED PRAYER REMINDER RECEIVER ── -->
         <!-- Fires at prayer_time + lockDurationMin; shows notification only if prayer unverified -->
         <receiver
