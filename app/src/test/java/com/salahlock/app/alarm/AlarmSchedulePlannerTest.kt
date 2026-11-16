@@ -81,6 +81,42 @@ class AlarmSchedulePlannerTest {
     }
 
     @Test
+    fun horizonRollover_keepsGenerationWhenOverlappingTriggersAreUnchanged() {
+        val firstWindow = AlarmSchedulePlanner.all(
+            listOf(prayers(date), prayers(date.plusDays(1))),
+        )
+        val rolledWindow = AlarmSchedulePlanner.all(
+            listOf(prayers(date.plusDays(1)), prayers(date.plusDays(2))),
+        )
+
+        assertTrue(
+            AlarmSchedulePlanner.sameGeneration(
+                AlarmSchedulePlanner.generationIdentity(firstWindow, 30, ZoneId.of("Asia/Kolkata")),
+                AlarmSchedulePlanner.generationIdentity(rolledWindow, 30, ZoneId.of("Asia/Kolkata")),
+            ),
+        )
+    }
+
+    @Test
+    fun overlappingTriggerChange_advancesGeneration() {
+        val original = AlarmSchedulePlanner.all(
+            listOf(prayers(date), prayers(date.plusDays(1))),
+        )
+        val changed = original.map {
+            if (it.prayer == PrayerName.ISHA && it.time.toLocalDate() == date.plusDays(1)) {
+                it.copy(time = it.time.plusMinutes(1))
+            } else it
+        }
+
+        assertFalse(
+            AlarmSchedulePlanner.sameGeneration(
+                AlarmSchedulePlanner.generationIdentity(original, 30, ZoneId.of("Asia/Kolkata")),
+                AlarmSchedulePlanner.generationIdentity(changed, 30, ZoneId.of("Asia/Kolkata")),
+            ),
+        )
+    }
+
+    @Test
     fun sourceAndJamaatEditsRequestRefresh_withoutChangingPrayerStartPlan() {
         val schedule = AlarmSchedulePlanner.upcoming(
             listOf(prayers(date)), LocalDateTime.of(date, LocalTime.MIDNIGHT),

@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -38,8 +40,14 @@ class PrayerTimesRepository(
     private val cacheDao: PrayerTimeCacheDao,
     private val apiService: AladhanApiService,
     private val localMasjidDao: LocalMasjidDao,
-    private val clock: Clock = Clock.systemDefaultZone(),
+    private val clock: Clock = object : Clock() {
+        override fun getZone(): ZoneId = ZoneId.systemDefault()
+        override fun withZone(zone: ZoneId): Clock = Clock.system(zone)
+        override fun instant(): Instant = Instant.now()
+    },
 ) {
+    private val cacheMutex = Mutex()
+
     /**
      * Returns today's prayer times.
      *
@@ -133,9 +141,11 @@ class PrayerTimesRepository(
                     lastUpdated = System.currentTimeMillis()
                 )
             }
-            cacheDao.insertAll(entities)
+            cacheMutex.withLock {
+                cacheDao.insertAll(entities)
+                prefs.recordPrayerSync(lat, lng, method, madhab)
+            }
             Log.d("PrayerTimesRepo", "[TIMING] API sync cached ${entities.size} days method=$method madhab=$madhab")
-            prefs.recordPrayerSync(lat, lng, method, madhab)
         } catch (e: Exception) {
             Log.e("PrayerTimesRepo", "Sync failed: ${e.message}", e)
         }
@@ -235,19 +245,26 @@ class PrayerTimesRepository(
     ): List<DailyPrayers> {
         var cachedCount = 0
         var offlineCount = 0
-        val prayerPrefs = PrayerPrefs(
-            lat,
-            lng,
-            method,
-            madhab,
-            prefs.lastPrayerSyncMethod.first(),
-            prefs.lastPrayerSyncMadhab.first(),
-        )
+        val (prayerPrefs, cachedByDate) = cacheMutex.withLock {
+            val snapshotPrefs = PrayerPrefs(
+                lat,
+                lng,
+                method,
+                madhab,
+                prefs.lastPrayerSyncMethod.first(),
+                prefs.lastPrayerSyncMadhab.first(),
+            )
+            val cachedRows = (0 until 30).associate { offset ->
+                val date = today.plusDays(offset.toLong())
+                date to cacheDao.getPrayerTimesForDateSync(date.toString())
+            }
+            snapshotPrefs to cachedRows
+        }
         Log.d("PrayerSync", "[TIMING] Source=CALCULATED_API_OR_OFFLINE method=$method madhab=$madhab")
 
         val result = (0 until 30).map { offset ->
             val date = today.plusDays(offset.toLong())
-            val cached = cacheDao.getPrayerTimesForDateSync(date.toString())
+            val cached = cachedByDate[date]
             if (cached != null && cached.matches(prayerPrefs)) {
                 cachedCount++
                 parseCached(cached, date)

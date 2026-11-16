@@ -69,13 +69,17 @@ object AlarmScheduler {
         Log.d("AlarmScheduler", "[ALARM] Scheduled ${prayer.name} start=$time generation=$generation")
     }
 
-    /**
-     * Cancel all alarms for the provided list.
-     * Uses [PendingIntent.FLAG_UPDATE_CURRENT] to ensure the PendingIntent is found
-     * even if previously created — then cancels it explicitly.
-     */
+    /** Cancels prayer-start alarms while preserving any active missed-prayer reminder. */
+    fun cancelPrayerStartAlarms(context: Context) {
+        cancelKnownAlarms(context, includeReminders = false)
+    }
+
     /** Cancels every known start and reminder PendingIntent before replacement. */
     fun cancelAllLegacy(context: Context) {
+        cancelKnownAlarms(context, includeReminders = true)
+    }
+
+    private fun cancelKnownAlarms(context: Context, includeReminders: Boolean) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val today = LocalDate.now()
         for (offset in -2..62) {
@@ -83,10 +87,19 @@ object AlarmScheduler {
             PrayerName.entries.forEach { prayer ->
                 val requestCode = buildRequestCode(prayer, date)
                 cancelExisting(context, alarmManager, PrayerAlarmReceiver::class.java, requestCode)
-                cancelExisting(context, alarmManager, MissedPrayerReminderReceiver::class.java, requestCode)
+                if (includeReminders) {
+                    cancelExisting(context, alarmManager, MissedPrayerReminderReceiver::class.java, requestCode)
+                }
             }
         }
-        Log.d("AlarmScheduler", "[ALARM] Cancelled stale prayer and reminder alarms")
+        Log.d(
+            "AlarmScheduler",
+            if (includeReminders) {
+                "[ALARM] Cancelled stale prayer and reminder alarms"
+            } else {
+                "[ALARM] Cancelled prayer-start alarms; active reminders preserved"
+            },
+        )
     }
 
     /**

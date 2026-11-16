@@ -7,6 +7,7 @@ import android.util.Log
 import com.salahlock.app.SalahLockApplication
 import com.salahlock.app.alarm.AlarmScheduler
 import com.salahlock.app.alarm.AlarmEventValidator
+import com.salahlock.app.alarm.PrayerLifecycleSynchronizer
 import com.salahlock.app.data.model.PrayerName
 import com.salahlock.app.service.UsageStatsPollingService
 import com.salahlock.app.util.NotificationHelper
@@ -18,6 +19,24 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 private const val TAG = "SalahLockReceiver"
+
+private suspend fun runIfScheduleIsCurrent(
+    app: SalahLockApplication,
+    deliveredGeneration: Long,
+    block: () -> Unit,
+): Boolean = PrayerLifecycleSynchronizer.withLock {
+    val activeGeneration = app.userPreferences.alarmScheduleGeneration.first()
+    if (AlarmEventValidator.isCurrent(deliveredGeneration, activeGeneration)) {
+        block()
+        true
+    } else {
+        Log.w(
+            TAG,
+            "[ALARM] Rejected side effects generation=$deliveredGeneration active=$activeGeneration",
+        )
+        false
+    }
+}
 
 /** Fires when a prayer time alarm triggers. Starts the lock window service. */
 class PrayerAlarmReceiver : BroadcastReceiver() {
@@ -85,27 +104,39 @@ class PrayerAlarmReceiver : BroadcastReceiver() {
                 val isEnabled = app.userPreferences.isPrayerLockEnabled(prayer).first()
                 if (!isEnabled) {
                     Log.d(TAG, "Lock disabled by user for ${prayer.displayName} — skipping.")
-                    if (announcementsEnabled) NotificationHelper.showAdhanNotification(context, prayer)
+                    if (announcementsEnabled) {
+                        runIfScheduleIsCurrent(app, scheduleGeneration) {
+                            NotificationHelper.showAdhanNotification(context, prayer)
+                        }
+                    }
                     return@launch
                 }
 
                 if (!PermissionHelper.hasCriticalPermissions(context)) {
                     Log.w(TAG, "Critical permissions missing — skipping lock window for ${prayer.displayName}")
-                    if (announcementsEnabled) NotificationHelper.showAdhanNotification(context, prayer)
+                    if (announcementsEnabled) {
+                        runIfScheduleIsCurrent(app, scheduleGeneration) {
+                            NotificationHelper.showAdhanNotification(context, prayer)
+                        }
+                    }
                     return@launch
                 }
 
-                val serviceIntent = Intent(context, UsageStatsPollingService::class.java).apply {
-                    putExtra(UsageStatsPollingService.EXTRA_PRAYER_NAME, prayer.name)
-                    putExtra(UsageStatsPollingService.EXTRA_LOCK_DURATION_MIN, lockDurationMin)
-                    putExtra(UsageStatsPollingService.EXTRA_SCHEDULE_GENERATION, scheduleGeneration)
+                val lifecycleStarted = runIfScheduleIsCurrent(app, scheduleGeneration) {
+                    val serviceIntent = Intent(context, UsageStatsPollingService::class.java).apply {
+                        putExtra(UsageStatsPollingService.EXTRA_PRAYER_NAME, prayer.name)
+                        putExtra(UsageStatsPollingService.EXTRA_LOCK_DURATION_MIN, lockDurationMin)
+                        putExtra(UsageStatsPollingService.EXTRA_SCHEDULE_GENERATION, scheduleGeneration)
+                    }
+                    context.startForegroundService(serviceIntent)
+                    if (announcementsEnabled) NotificationHelper.showAdhanNotification(context, prayer)
+                    AlarmScheduler.scheduleMissedPrayerReminder(
+                        context, prayer, prayerDate, lockDurationMin, scheduleGeneration,
+                    )
                 }
-                context.startForegroundService(serviceIntent)
-                if (announcementsEnabled) NotificationHelper.showAdhanNotification(context, prayer)
-                AlarmScheduler.scheduleMissedPrayerReminder(
-                    context, prayer, prayerDate, lockDurationMin, scheduleGeneration,
-                )
-                Log.d(TAG, "[NOTIFICATION] ${prayer.name} prayer-start lifecycle started")
+                if (lifecycleStarted) {
+                    Log.d(TAG, "[NOTIFICATION] ${prayer.name} prayer-start lifecycle started")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error in PrayerAlarmReceiver: ${e.message}", e)
             } finally {

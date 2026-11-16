@@ -1164,7 +1164,7 @@ private fun nextJamaatLabel(masjid: LocalMasjidEntity?, now: LocalDateTime): Str
 /** Returns the next saved congregation time, rolling Fajr into tomorrow if needed. */
 internal fun nextJamaatPrayer(masjid: LocalMasjidEntity?, now: LocalDateTime): PrayerTime? {
     if (masjid == null) return null
-    val formatter = DateTimeFormatter.ofPattern("HH:mm")
+    val formatter = DateTimeFormatter.ofPattern("H:mm")
     val jamaat = listOf(
         PrayerName.FAJR to masjid.fajr,
         PrayerName.DHUHR to masjid.dhuhr,
@@ -1175,8 +1175,11 @@ internal fun nextJamaatPrayer(masjid: LocalMasjidEntity?, now: LocalDateTime): P
         runCatching { prayer to now.toLocalDate().atTime(java.time.LocalTime.parse(value, formatter)) }
             .getOrNull()
     }
-    val next = jamaat.firstOrNull { (_, time) -> time.isAfter(now) }
-        ?: jamaat.firstOrNull()?.let { (prayer, time) -> prayer to time.plusDays(1) }
+    val next = jamaat
+        .map { (prayer, time) ->
+            prayer to if (time.isAfter(now)) time else time.plusDays(1)
+        }
+        .minByOrNull { (_, time) -> time }
         ?: return null
     return PrayerTime(next.first, next.second)
 }

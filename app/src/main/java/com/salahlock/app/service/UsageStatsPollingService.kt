@@ -250,9 +250,13 @@ class UsageStatsPollingService : Service() {
                         it.prayerName == lockedPrayer.name && (it.verified || it.overrideUsed)
                     }
                     if (verified) {
-                        prayerVerified = true
-                        Log.d(TAG, "${lockedPrayer.name} verified — ending lock window.")
-                        stopSelf()
+                        handler.post {
+                            if (sessionJob === currentSessionJob) {
+                                prayerVerified = true
+                                Log.d(TAG, "${lockedPrayer.name} verified — ending lock window.")
+                                stopSelf()
+                            }
+                        }
                     }
                 }
         }

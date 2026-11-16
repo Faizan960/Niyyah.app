@@ -111,20 +111,28 @@ class PrayerAlarmCoordinator(
             val upcoming = prayerTimesRepository.calculateUpcoming(lat, lng, method, madhab)
             AlarmSchedulePlanner.all(upcoming) to AlarmSchedulePlanner.upcoming(upcoming, now)
         }
-        val previousGeneration = prefs.alarmScheduleGeneration.first()
-        val generation = prefs.activateAlarmSchedule(
-            AlarmSchedulePlanner.fingerprint(scheduleIdentity, duration),
-        )
-
-        if (previousGeneration > 0L && generation != previousGeneration) {
-            context.stopService(Intent(context, UsageStatsPollingService::class.java))
-            NotificationHelper.cancelPrayerLifecycleNotifications(context)
-            Log.d(TAG, "[NOTIFICATION] Cleared lifecycle from replaced schedule")
+        val (generation, scheduleReplaced) = PrayerLifecycleSynchronizer.withLock {
+            val previousGeneration = prefs.alarmScheduleGeneration.first()
+            val activatedGeneration = prefs.activateAlarmSchedule(
+                AlarmSchedulePlanner.generationIdentity(scheduleIdentity, duration),
+                AlarmSchedulePlanner::sameGeneration,
+            )
+            val replaced = previousGeneration <= 0L || activatedGeneration != previousGeneration
+            if (previousGeneration > 0L && replaced) {
+                context.stopService(Intent(context, UsageStatsPollingService::class.java))
+                NotificationHelper.cancelPrayerLifecycleNotifications(context)
+                Log.d(TAG, "[NOTIFICATION] Cleared lifecycle from replaced schedule")
+            }
+            activatedGeneration to replaced
         }
 
         // Activate the new generation before cancellation: any old alarm racing
         // with this refresh is rejected by the receiver.
-        AlarmScheduler.cancelAllLegacy(context)
+        if (scheduleReplaced) {
+            AlarmScheduler.cancelAllLegacy(context)
+        } else {
+            AlarmScheduler.cancelPrayerStartAlarms(context)
+        }
         AlarmScheduler.scheduleAll(context, schedule, duration, generation)
         Log.d(
             TAG,

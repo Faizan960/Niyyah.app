@@ -59,4 +59,42 @@ class JamaatDisplayTimingTest {
             ),
         )
     }
+
+    @Test
+    fun singleDigitSavedHour_remainsAValidJamaatCandidate() {
+        val today = LocalDate.of(2026, 11, 15)
+        val next = nextJamaatPrayer(
+            masjid.copy(fajr = "6:00"),
+            today.atTime(5, 30),
+        )
+
+        assertEquals(PrayerName.FAJR, next?.name)
+        assertEquals(LocalTime.of(6, 0), next?.time?.toLocalTime())
+    }
+
+    @Test
+    fun shortlyAfterMidnight_selectsTodaysEarlyIshaBeforeFajr() {
+        val today = LocalDate.of(2026, 11, 15)
+        val next = nextJamaatPrayer(
+            masjid.copy(isha = "00:30"),
+            today.atTime(0, 10),
+        )
+
+        assertEquals(PrayerName.ISHA, next?.name)
+        assertEquals(today, next?.time?.toLocalDate())
+        assertEquals(LocalTime.of(0, 30), next?.time?.toLocalTime())
+    }
+
+    @Test
+    fun lateAtNight_includesTomorrowsEarlyIshaCandidate() {
+        val today = LocalDate.of(2026, 11, 15)
+        val next = nextJamaatPrayer(
+            masjid.copy(isha = "00:30"),
+            today.atTime(23, 0),
+        )
+
+        assertEquals(PrayerName.ISHA, next?.name)
+        assertEquals(today.plusDays(1), next?.time?.toLocalDate())
+        assertEquals(LocalTime.of(0, 30), next?.time?.toLocalTime())
+    }
 }

@@ -194,12 +194,19 @@ class UserPreferences(private val context: Context) {
      * Atomically activates [fingerprint] and returns its stable generation.
      * The generation advances only when actual trigger times/configuration change.
      */
-    suspend fun activateAlarmSchedule(fingerprint: String): Long {
+    suspend fun activateAlarmSchedule(
+        fingerprint: String,
+        isSameGeneration: (String, String) -> Boolean = { previous, current -> previous == current },
+    ): Long {
         var activeGeneration = 0L
         context.dataStore.edit { values ->
             val oldFingerprint = values[KEY_ALARM_SCHEDULE_FINGERPRINT]
             val oldGeneration = values[KEY_ALARM_SCHEDULE_GENERATION] ?: 0L
-            activeGeneration = if (oldFingerprint == fingerprint && oldGeneration > 0L) {
+            activeGeneration = if (
+                oldFingerprint != null &&
+                oldGeneration > 0L &&
+                isSameGeneration(oldFingerprint, fingerprint)
+            ) {
                 oldGeneration
             } else {
                 oldGeneration + 1L
