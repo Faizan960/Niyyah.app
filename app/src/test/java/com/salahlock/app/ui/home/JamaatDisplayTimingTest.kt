@@ -35,4 +35,28 @@ class JamaatDisplayTimingTest {
         assertEquals(PrayerName.ASR, next?.name)
         assertEquals(LocalTime.of(17, 0), next?.time?.toLocalTime())
     }
+
+    @Test
+    fun calculatedCurrentPrayer_isNeverLabelledAsJamaat() {
+        assertEquals(
+            "Surat · Calculated start",
+            heroTimingLabel(
+                kind = HeroTimingKind.CALCULATED_START,
+                cityName = "Surat",
+                masjidName = "Modern Masjid",
+            ),
+        )
+    }
+
+    @Test
+    fun savedCongregationTime_isLabelledWithMasjid() {
+        assertEquals(
+            "Modern Masjid · Jamaat",
+            heroTimingLabel(
+                kind = HeroTimingKind.JAMAAT,
+                cityName = "Surat",
+                masjidName = "Modern Masjid",
+            ),
+        )
+    }
 }

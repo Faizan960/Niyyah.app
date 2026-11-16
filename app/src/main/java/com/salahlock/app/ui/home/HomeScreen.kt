@@ -146,6 +146,11 @@ fun HomeScreen(
                 val countdownTarget = if (verifiablePrayer != null) {
                     calculatedNext?.time ?: next.time
                 } else next.time
+                val timingKind = if (verifiablePrayer == null && selectedJamaatNext != null) {
+                    HeroTimingKind.JAMAAT
+                } else {
+                    HeroTimingKind.CALCULATED_START
+                }
                 NextPrayerHero(
                     isLight = isLight,
                     label = when {
@@ -156,7 +161,11 @@ fun HomeScreen(
                     prayerName = heroFocus.name.displayName,
                     timeString = heroFocus.time.toClock(),
                     remaining = formatTimeRemaining(state.currentTimeMs, countdownTarget),
-                    sourceLabel = sourceLabel(state),
+                    sourceLabel = heroTimingLabel(
+                        kind = timingKind,
+                        cityName = state.cityName,
+                        masjidName = state.activeMasjidName,
+                    ),
                     progress = intervalProgress(state, now),
                     verifyPrayerName = verifiablePrayer?.name?.displayName,
                     showVerifiedBadge = inWindow && currentVerified,
@@ -1124,12 +1133,26 @@ private fun AlertHairlineCard(
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-/** Label for the selected display context; prayer starts remain calculated. */
-private fun sourceLabel(state: HomeUiState): String = when {
-    state.prayerSource == PrayerSource.LOCAL_MASJID && state.activeMasjidName.isNotBlank() ->
-        "${state.activeMasjidName} · Jamaat"
-    state.cityName.isNotBlank() -> "${state.cityName} · Calculated"
-    else -> "Set prayer times"
+internal enum class HeroTimingKind { CALCULATED_START, JAMAAT }
+
+/**
+ * Labels the time actually rendered in the hero. A calculated current-prayer start
+ * must never be presented as a masjid Jamaat time merely because that display mode
+ * is selected.
+ */
+internal fun heroTimingLabel(
+    kind: HeroTimingKind,
+    cityName: String,
+    masjidName: String,
+): String = when (kind) {
+    HeroTimingKind.JAMAAT -> when {
+        masjidName.isNotBlank() -> "$masjidName · Jamaat"
+        else -> "Saved Jamaat time"
+    }
+    HeroTimingKind.CALCULATED_START -> when {
+        cityName.isNotBlank() -> "$cityName · Calculated start"
+        else -> "Calculated prayer start"
+    }
 }
 
 /** Next congregation time, deliberately independent from calculated prayer starts. */

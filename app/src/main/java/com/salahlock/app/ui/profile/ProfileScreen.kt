@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -477,6 +478,7 @@ fun ProgressCard(title: String, value: String, modifier: Modifier = Modifier) {
 fun BackupSection(state: ProfileUiState, viewModel: ProfileViewModel) {
     val backupState by viewModel.backupUiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val locale = LocalConfiguration.current.locales[0]
     val scope = rememberCoroutineScope()
 
     // SAF — create new ZIP backup file
@@ -489,9 +491,11 @@ fun BackupSection(state: ProfileUiState, viewModel: ProfileViewModel) {
         ActivityResultContracts.OpenDocument()
     ) { uri -> uri?.let { viewModel.loadBackupPreview(it) } }
 
-    val lastBackupText = when {
-        state.lastBackupMs == 0L -> "No backup yet"
-        else -> "Last backup: ${SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(Date(state.lastBackupMs))}"
+    val lastBackupText = remember(state.lastBackupMs, locale) {
+        when {
+            state.lastBackupMs == 0L -> "No backup yet"
+            else -> "Last backup: ${SimpleDateFormat("d MMM yyyy", locale).format(Date(state.lastBackupMs))}"
+        }
     }
     val busy = backupState.isBackingUp || backupState.isRestoring || backupState.isLoadingPreview
 

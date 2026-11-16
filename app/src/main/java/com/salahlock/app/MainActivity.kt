@@ -381,7 +381,7 @@ private fun MainTabsContent(navController: androidx.navigation.NavController) {
     // are separate Activities/deep screens). The manager enforces the 24h cap, the
     // lock-window guard, consent, and fail-open behaviour.
     val app = LocalContext.current.applicationContext as SalahLockApplication
-    val adActivity = LocalContext.current as? android.app.Activity
+    val adActivity = androidx.activity.compose.LocalActivity.current
     var hasLeftHome by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(pagerState.settledPage) {
         val settled = pagerState.settledPage

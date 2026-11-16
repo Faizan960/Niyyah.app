@@ -1,10 +1,10 @@
 # CI for Niyyah.app — Android app + Cloudflare backend.
 #
-# Runs on every PR targeting main and every push to main. Read-only with respect
+# Runs on every PR targeting main and every push to main or testing. Read-only with respect
 # to infrastructure: no deployment commands, no production secrets.
 #
 # Jobs:
-#   android             — unit tests + debug builds (JVM-only, fast)
+#   android             — unit tests + lint + debug/release builds
 #   android-instrumented— real emulator run of the instrumented tests, including
 #                         the Room migration tests (8→9, 9→10, 10→11, 11→12).
 #                         This is a TRUE device/emulator verification, distinct
@@ -15,7 +15,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, testing]
   pull_request:
     branches: [main]
 
@@ -49,11 +49,8 @@ jobs:
       # Caches the Gradle user home (wrapper dists + dependencies).
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Unit tests
-        run: ./gradlew testDebugUnitTest
-
-      - name: Debug build
-        run: ./gradlew assembleDebug
+      - name: Build, unit tests, and lint
+        run: ./gradlew build
 
       - name: Compile instrumented tests
         run: ./gradlew assembleDebugAndroidTest
@@ -65,6 +62,13 @@ jobs:
           name: unit-test-results
           path: app/build/test-results/testDebugUnitTest
           if-no-files-found: ignore
+
+      - name: Upload installable debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: niyyah-debug-${{ github.sha }}
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
 
   android-instrumented:
     name: Android — instrumented tests (emulator)
