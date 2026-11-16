@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.salahlock.app.SalahLockApplication
 import com.salahlock.app.data.db.entity.PrayerRecord
+import com.salahlock.app.data.db.entity.LocalMasjidEntity
 import com.salahlock.app.data.model.DailyPrayers
 import com.salahlock.app.data.model.PrayerName
 import com.salahlock.app.data.model.PrayerTime
@@ -61,6 +62,8 @@ data class HomeUiState(
     val savedMasjidName: String = "",
     /** BM-HOME-PRAYER-UX — whether a Local Masjid timetable has been configured */
     val localMasjidConfigured: Boolean = false,
+    /** Separate Room-backed congregation schedule; never used as prayer starts. */
+    val localMasjid: LocalMasjidEntity? = null,
 ) {
     val isPaused: Boolean get() = pauseUntilMs > currentTimeMs
 }
@@ -135,7 +138,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun setPrayerSource(source: com.salahlock.app.data.model.PrayerSource) {
         viewModelScope.launch {
             app.prayerSourceRepository.setPrayerSource(source)
-            com.salahlock.app.work.AlarmRefreshWorker.runNow(app)
         }
     }
 
@@ -154,6 +156,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     it.copy(
                         savedMasjidName = masjid?.masjidName ?: "",
                         localMasjidConfigured = !masjid?.masjidName.isNullOrBlank(),
+                        localMasjid = masjid,
                     )
                 }
             }

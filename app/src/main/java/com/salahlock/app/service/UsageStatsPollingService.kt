@@ -22,6 +22,7 @@ import com.salahlock.app.util.NotificationHelper
 import com.salahlock.app.util.PermissionHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -32,6 +33,18 @@ private const val TAG = "UsageStatsPollingService"
 private const val LOCK_STATE_PREFS = "salahlock_active_lock"
 private const val KEY_PRAYER = "prayer_name"
 private const val KEY_END_MS = "lock_end_ms"
+private const val KEY_GENERATION = "schedule_generation"
+
+internal fun isDuplicateLockStart(
+    active: Boolean,
+    currentPrayer: PrayerName,
+    incomingPrayer: PrayerName,
+    currentGeneration: Long,
+    incomingGeneration: Long,
+    currentEndMs: Long,
+    nowMs: Long,
+): Boolean = active && currentPrayer == incomingPrayer &&
+    currentGeneration == incomingGeneration && nowMs < currentEndMs
 
 /**
  * The core lock engine.
@@ -50,16 +63,18 @@ class UsageStatsPollingService : Service() {
     companion object {
         const val EXTRA_PRAYER_NAME = "prayer_name"
         const val EXTRA_LOCK_DURATION_MIN = "lock_duration_min"
+        const val EXTRA_SCHEDULE_GENERATION = "schedule_generation"
         val CHANNEL_ID get() = NotificationHelper.LOCK_CHANNEL_ID
         const val NOTIFICATION_ID = 1001
 
         @Volatile var isRunning = false
 
         // --- Lock state persistence (SharedPreferences — synchronous, no coroutine needed) ---
-        private fun saveLockState(context: Context, prayer: String, endMs: Long) {
+        private fun saveLockState(context: Context, prayer: String, endMs: Long, generation: Long) {
             lockPrefs(context).edit()
                 .putString(KEY_PRAYER, prayer)
                 .putLong(KEY_END_MS, endMs)
+                .putLong(KEY_GENERATION, generation)
                 .apply()
         }
 
@@ -68,11 +83,14 @@ class UsageStatsPollingService : Service() {
         }
 
         /** Returns null if no valid saved lock state exists (expired or missing). */
-        fun getSavedLockState(context: Context): Pair<String, Long>? {
+        fun getSavedLockState(context: Context): Triple<String, Long, Long>? {
             val prefs = lockPrefs(context)
             val prayer = prefs.getString(KEY_PRAYER, null) ?: return null
             val endMs = prefs.getLong(KEY_END_MS, 0L)
-            return if (endMs > System.currentTimeMillis()) Pair(prayer, endMs) else null
+            val generation = prefs.getLong(KEY_GENERATION, 0L)
+            return if (endMs > System.currentTimeMillis() && generation > 0L) {
+                Triple(prayer, endMs, generation)
+            } else null
         }
 
         private fun lockPrefs(context: Context): SharedPreferences =
@@ -85,6 +103,8 @@ class UsageStatsPollingService : Service() {
 
     private var prayerName: PrayerName = PrayerName.FAJR
     private var lockEndMs: Long = 0L
+    private var scheduleGeneration: Long = 0L
+    private var sessionJob: Job? = null
     private var blockedPackages: Set<String> = emptySet()
     private var lockWindowActive = false
     private var lastLaunchedOverlayMs = 0L
@@ -125,17 +145,40 @@ class UsageStatsPollingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val (prayerNameStr, resolvedLockEndMs) = resolveStartParams(intent) ?: run {
+        val (prayerNameStr, resolvedLockEndMs, resolvedGeneration) = resolveStartParams(intent) ?: run {
             Log.w(TAG, "Cannot resolve lock state — stopping.")
             stopSelf()
             return START_NOT_STICKY
         }
 
-        prayerName = try { PrayerName.valueOf(prayerNameStr) } catch (_: Exception) { PrayerName.FAJR }
+        val incomingPrayer = try { PrayerName.valueOf(prayerNameStr) } catch (_: Exception) { PrayerName.FAJR }
+        if (isDuplicateLockStart(
+                lockWindowActive,
+                prayerName,
+                incomingPrayer,
+                scheduleGeneration,
+                resolvedGeneration,
+                lockEndMs,
+                System.currentTimeMillis(),
+            )
+        ) {
+            startForeground(NOTIFICATION_ID, buildNotification(prayerName))
+            Log.d(TAG, "[NOTIFICATION] Duplicate service start ignored for ${prayerName.name}")
+            return START_STICKY
+        }
+
+        sessionJob?.cancel()
+        handler.removeCallbacks(pollingRunnable)
+        val currentSessionJob = SupervisorJob()
+        sessionJob = currentSessionJob
+        val sessionScope = CoroutineScope(currentSessionJob + Dispatchers.IO)
+
+        prayerName = incomingPrayer
         lockEndMs = resolvedLockEndMs
+        scheduleGeneration = resolvedGeneration
 
         // Persist so the service can resume if killed by OS
-        saveLockState(applicationContext, prayerName.name, lockEndMs)
+        saveLockState(applicationContext, prayerName.name, lockEndMs, scheduleGeneration)
 
         Log.d(TAG, "Starting lock window for ${prayerName.displayName}, ends at $lockEndMs")
 
@@ -147,7 +190,7 @@ class UsageStatsPollingService : Service() {
         // restarts that occur *after* the prayer was already verified).
         prayerVerified = false
 
-        serviceScope.launch {
+        sessionScope.launch {
             // Gate check — read verification state ONCE before the poller can run.
             // This establishes a happens-before so a restart (process death / START_STICKY)
             // that occurs AFTER the prayer was verified never shows the overlay: the
@@ -188,7 +231,7 @@ class UsageStatsPollingService : Service() {
         }
 
         // Keep the pause state live — if the user pauses mid-window, locking stops at once.
-        serviceScope.launch {
+        sessionScope.launch {
             app.userPreferences.pauseUntil.collect { pauseUntilMs = it }
         }
 
@@ -197,7 +240,7 @@ class UsageStatsPollingService : Service() {
         // already existed before an OS-triggered restart — stops the service and
         // prevents re-locking when the user reopens a blocked app.
         val lockedPrayer = prayerName
-        serviceScope.launch {
+        sessionScope.launch {
             // Prayer records are device-local & auth-independent — always read __local__.
             val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
             app.database.prayerRecordDao()
@@ -207,9 +250,13 @@ class UsageStatsPollingService : Service() {
                         it.prayerName == lockedPrayer.name && (it.verified || it.overrideUsed)
                     }
                     if (verified) {
-                        prayerVerified = true
-                        Log.d(TAG, "${lockedPrayer.name} verified — ending lock window.")
-                        stopSelf()
+                        handler.post {
+                            if (sessionJob === currentSessionJob) {
+                                prayerVerified = true
+                                Log.d(TAG, "${lockedPrayer.name} verified — ending lock window.")
+                                stopSelf()
+                            }
+                        }
                     }
                 }
         }
@@ -224,12 +271,14 @@ class UsageStatsPollingService : Service() {
      *
      * Returns null if no valid lock state can be resolved (service should stop).
      */
-    private fun resolveStartParams(intent: Intent?): Pair<String, Long>? {
+    private fun resolveStartParams(intent: Intent?): Triple<String, Long, Long>? {
         if (intent != null) {
             val name = intent.getStringExtra(EXTRA_PRAYER_NAME) ?: return null
             val durationMin = intent.getIntExtra(EXTRA_LOCK_DURATION_MIN, 30)
+            val generation = intent.getLongExtra(EXTRA_SCHEDULE_GENERATION, 0L)
+            if (generation <= 0L) return null
             val endMs = System.currentTimeMillis() + (durationMin * 60_000L)
-            return Pair(name, endMs)
+            return Triple(name, endMs, generation)
         }
 
         // Null intent = OS killed and restarted via START_STICKY — attempt recovery
@@ -335,6 +384,9 @@ class UsageStatsPollingService : Service() {
         lockWindowActive = false
         handler.removeCallbacks(pollingRunnable)
         serviceScope.cancel()
+        sessionJob?.cancel()
+        NotificationHelper.cancelAdhanNotification(applicationContext, prayerName)
+        stopForeground(STOP_FOREGROUND_REMOVE)
         // Clear persisted lock state so a stale state doesn't affect future restarts
         clearLockState(applicationContext)
         Log.d(TAG, "Service destroyed — lock state cleared.")

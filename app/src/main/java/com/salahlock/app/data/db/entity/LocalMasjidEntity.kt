@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * User-entered local masjid prayer timetable.
+ * User-entered local masjid Jamaat (congregation) timetable.
  *
  * Single-row table (id = 1 always). Times are stored as "HH:mm" strings so
  * they survive timezone changes without re-entry.
@@ -24,7 +24,7 @@ data class LocalMasjidEntity(
     val asr: String = "",
     val maghrib: String = "",
     val isha: String = "",
-    /** Whether this local timetable is currently active */
+    /** Legacy display-selection flag. Never determines actual prayer starts. */
     val enabled: Boolean = false,
     val updatedAt: Long = System.currentTimeMillis(),
 )

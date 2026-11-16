@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.batoulapps.adhan2.CalculationMethod
 import com.batoulapps.adhan2.Coordinates
+import com.batoulapps.adhan2.Madhab
 import com.batoulapps.adhan2.PrayerTimes
 import com.batoulapps.adhan2.data.DateComponents
 import com.salahlock.app.data.api.AladhanApiService
@@ -23,6 +24,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -36,38 +40,26 @@ class PrayerTimesRepository(
     private val cacheDao: PrayerTimeCacheDao,
     private val apiService: AladhanApiService,
     private val localMasjidDao: LocalMasjidDao,
+    private val clock: Clock = object : Clock() {
+        override fun getZone(): ZoneId = ZoneId.systemDefault()
+        override fun withZone(zone: ZoneId): Clock = Clock.system(zone)
+        override fun instant(): Instant = Instant.now()
+    },
 ) {
+    private val cacheMutex = Mutex()
+
     /**
      * Returns today's prayer times.
      *
-     * Routing:
-     *  - [PrayerSource.LOCAL_MASJID] — uses user-entered masjid timings from Room.
-     *  - [PrayerSource.API] — uses Aladhan API cache, falls back to offline Adhan2 calculation.
+     * Prayer starts always come from the Aladhan cache or offline Adhan2 calculation.
+     * Local masjid values are Jamaat times and never drive prayer windows or alarms.
      */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun getTodayPrayers(): Flow<DailyPrayers?> =
-        prefs.prayerSource.flatMapLatest { sourceStr ->
-            when (PrayerSource.fromString(sourceStr)) {
-                // The active SOURCE preference is the sole authority — a saved masjid is
-                // used whenever LOCAL_MASJID is selected, regardless of the legacy
-                // `enabled` flag. Existence of a masjid never decides the active source.
-                PrayerSource.LOCAL_MASJID -> localMasjidDao.observe().map { masjid ->
-                    masjid?.toTodayDailyPrayers()
-                }
-                PrayerSource.API -> getApiTodayPrayers()
-            }
-        }
+    fun getTodayPrayers(): Flow<DailyPrayers?> = getCalculatedTodayPrayers()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun getTomorrowPrayers(): Flow<DailyPrayers?> =
-        prefs.prayerSource.flatMapLatest { sourceStr ->
-            when (PrayerSource.fromString(sourceStr)) {
-                PrayerSource.LOCAL_MASJID -> localMasjidDao.observe().map { masjid ->
-                    masjid?.toDailyPrayers(LocalDate.now().plusDays(1))
-                }
-                PrayerSource.API -> getApiTomorrowPrayers()
-            }
-        }
+    fun getTomorrowPrayers(): Flow<DailyPrayers?> = getCalculatedTomorrowPrayers()
+
+    /** Saved congregation schedule, exposed separately from actual prayer starts. */
+    fun getLocalJamaatTimes(): Flow<LocalMasjidEntity?> = localMasjidDao.observe()
 
     fun getTomorrowFajr(): Flow<LocalDateTime?> =
         getTomorrowPrayers().map { it?.fajr }
@@ -80,30 +72,38 @@ class PrayerTimesRepository(
     // ── API / Offline paths ─────────────────────────────────────────────────
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun getApiTodayPrayers(): Flow<DailyPrayers?> = combine(
-        prefs.userLat, prefs.userLng, prefs.calcMethod, prefs.madhab
-    ) { lat, lng, method, madhab ->
-        PrayerPrefs(lat, lng, method, madhab)
+    private fun getCalculatedTodayPrayers(): Flow<DailyPrayers?> = combine(
+        prefs.userLat,
+        prefs.userLng,
+        prefs.calcMethod,
+        prefs.madhab,
+        combine(prefs.lastPrayerSyncMethod, prefs.lastPrayerSyncMadhab) { method, madhab -> method to madhab },
+    ) { lat, lng, method, madhab, cachedConfig ->
+        PrayerPrefs(lat, lng, method, madhab, cachedConfig.first, cachedConfig.second)
     }.flatMapLatest { p ->
         if (p.lat == 0.0 && p.lng == 0.0) return@flatMapLatest flowOf(null)
-        val today = LocalDate.now()
+        val today = LocalDate.now(clock)
         cacheDao.getPrayerTimesForDate(today.toString()).map { cached ->
-            if (cached != null) parseCached(cached, today)
-            else calculateForDate(p.lat, p.lng, p.method, today)
+            if (cached != null && cached.matches(p)) parseCached(cached, today)
+            else calculateForDate(p.lat, p.lng, p.method, p.madhab, today)
         }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun getApiTomorrowPrayers(): Flow<DailyPrayers?> = combine(
-        prefs.userLat, prefs.userLng, prefs.calcMethod, prefs.madhab
-    ) { lat, lng, method, madhab ->
-        PrayerPrefs(lat, lng, method, madhab)
+    private fun getCalculatedTomorrowPrayers(): Flow<DailyPrayers?> = combine(
+        prefs.userLat,
+        prefs.userLng,
+        prefs.calcMethod,
+        prefs.madhab,
+        combine(prefs.lastPrayerSyncMethod, prefs.lastPrayerSyncMadhab) { method, madhab -> method to madhab },
+    ) { lat, lng, method, madhab, cachedConfig ->
+        PrayerPrefs(lat, lng, method, madhab, cachedConfig.first, cachedConfig.second)
     }.flatMapLatest { p ->
         if (p.lat == 0.0 && p.lng == 0.0) return@flatMapLatest flowOf(null)
-        val tomorrow = LocalDate.now().plusDays(1)
+        val tomorrow = LocalDate.now(clock).plusDays(1)
         cacheDao.getPrayerTimesForDate(tomorrow.toString()).map { cached ->
-            if (cached != null) parseCached(cached, tomorrow)
-            else calculateForDate(p.lat, p.lng, p.method, tomorrow)
+            if (cached != null && cached.matches(p)) parseCached(cached, tomorrow)
+            else calculateForDate(p.lat, p.lng, p.method, p.madhab, tomorrow)
         }
     }
 
@@ -112,7 +112,7 @@ class PrayerTimesRepository(
         if (lat == 0.0 && lng == 0.0) return
         val methodInt = mapMethodToInt(method)
         val schoolInt = if (madhab == "HANAFI") 1 else 0
-        val now = LocalDate.now()
+        val now = LocalDate.now(clock)
 
         try {
             val response = apiService.getCalendar(
@@ -141,39 +141,17 @@ class PrayerTimesRepository(
                     lastUpdated = System.currentTimeMillis()
                 )
             }
-            cacheDao.insertAll(entities)
-            Log.d("PrayerTimesRepo", "Sync complete — cached ${entities.size} days for $method at ($lat,$lng).")
-            prefs.recordPrayerSync(lat, lng)
+            cacheMutex.withLock {
+                cacheDao.insertAll(entities)
+                prefs.recordPrayerSync(lat, lng, method, madhab)
+            }
+            Log.d("PrayerTimesRepo", "[TIMING] API sync cached ${entities.size} days method=$method madhab=$madhab")
         } catch (e: Exception) {
             Log.e("PrayerTimesRepo", "Sync failed: ${e.message}", e)
         }
     }
 
     // ── Local masjid parsing ────────────────────────────────────────────────
-
-    private fun LocalMasjidEntity.toTodayDailyPrayers(): DailyPrayers =
-        toDailyPrayers(LocalDate.now())
-
-    private fun LocalMasjidEntity.toDailyPrayers(date: LocalDate): DailyPrayers {
-        fun parse(hhmm: String): LocalDateTime {
-            val time = runCatching {
-                LocalTime.parse(hhmm.trim(), DateTimeFormatter.ofPattern("HH:mm"))
-            }.getOrElse { LocalTime.MIDNIGHT }
-            return LocalDateTime.of(date, time)
-        }
-        // Sunrise is not collected for local masjid — use a reasonable default (1 hour after Fajr)
-        val fajrDt = parse(fajr)
-        return DailyPrayers(
-            date = date.toString(),
-            fajr = fajrDt,
-            sunrise = fajrDt.plusHours(1),
-            dhuhr = parse(dhuhr),
-            asr = parse(asr),
-            maghrib = parse(maghrib),
-            isha = parse(isha),
-            isOfflineFallback = false,
-        )
-    }
 
     // ── API cache parsing ───────────────────────────────────────────────────
 
@@ -194,16 +172,30 @@ class PrayerTimesRepository(
         )
     }
 
-    private fun calculateForDate(lat: Double, lng: Double, method: String, date: LocalDate): DailyPrayers {
+    private fun calculateForDate(
+        lat: Double,
+        lng: Double,
+        method: String,
+        madhab: String,
+        date: LocalDate,
+    ): DailyPrayers {
         val coordinates = Coordinates(lat, lng)
         val dateComponents = DateComponents(date.year, date.monthValue, date.dayOfMonth)
-        val calcMethod = when (method) {
+        val baseParameters = when (method) {
             "MWL"   -> CalculationMethod.MUSLIM_WORLD_LEAGUE.parameters
             "ISNA"  -> CalculationMethod.NORTH_AMERICA.parameters
             "EGYPT" -> CalculationMethod.EGYPTIAN.parameters
+            "MAKKAH" -> CalculationMethod.UMM_AL_QURA.parameters
+            "QATAR" -> CalculationMethod.QATAR.parameters
+            "DUBAI" -> CalculationMethod.DUBAI.parameters
+            "SINGAPORE" -> CalculationMethod.SINGAPORE.parameters
+            "TURKEY" -> CalculationMethod.TURKEY.parameters
             else    -> CalculationMethod.KARACHI.parameters
         }
-        val prayerTimes = PrayerTimes(coordinates, dateComponents, calcMethod)
+        val parameters = baseParameters.copy(
+            madhab = if (madhab == "HANAFI") Madhab.HANAFI else Madhab.SHAFI,
+        )
+        val prayerTimes = PrayerTimes(coordinates, dateComponents, parameters)
         val zone = ZoneId.systemDefault()
 
         @Suppress("DEPRECATION")
@@ -228,31 +220,61 @@ class PrayerTimesRepository(
         else -> 1
     }
 
-    private data class PrayerPrefs(val lat: Double, val lng: Double, val method: String, val madhab: String)
+    private data class PrayerPrefs(
+        val lat: Double,
+        val lng: Double,
+        val method: String,
+        val madhab: String,
+        val cachedMethod: String,
+        val cachedMadhab: String,
+    )
 
-    suspend fun calculateUpcoming(lat: Double, lng: Double, method: String): List<DailyPrayers> {
-        val today = LocalDate.now()
+    private fun PrayerTimeCacheEntity.matches(prefs: PrayerPrefs): Boolean =
+        calculationMethod == mapMethodToInt(prefs.method) &&
+            prefs.cachedMethod == prefs.method &&
+            prefs.cachedMadhab == prefs.madhab &&
+            kotlin.math.abs(lat - prefs.lat) < 0.0001 &&
+            kotlin.math.abs(lng - prefs.lng) < 0.0001
+
+    suspend fun calculateUpcoming(
+        lat: Double,
+        lng: Double,
+        method: String,
+        madhab: String,
+        today: LocalDate = LocalDate.now(clock),
+    ): List<DailyPrayers> {
         var cachedCount = 0
         var offlineCount = 0
-
-        // Lock scheduling MUST consume the same active source as Home / Next Prayer.
-        // Decide on the authoritative [PrayerSource] preference — NOT masjid.enabled —
-        // so a user on GPS never gets lock alarms scheduled from stale masjid times
-        // (and vice versa).
-        val source = PrayerSource.fromString(prefs.prayerSource.first())
-        val localMasjid = localMasjidDao.get()
-        if (source == PrayerSource.LOCAL_MASJID && localMasjid != null) {
-            Log.d("PrayerSync", "calculateUpcoming: using LOCAL_MASJID timings for all 30 days.")
-            return (0 until 30).map { offset ->
-                localMasjid.toDailyPrayers(today.plusDays(offset.toLong()))
+        val (prayerPrefs, cachedByDate) = cacheMutex.withLock {
+            val snapshotPrefs = PrayerPrefs(
+                lat,
+                lng,
+                method,
+                madhab,
+                prefs.lastPrayerSyncMethod.first(),
+                prefs.lastPrayerSyncMadhab.first(),
+            )
+            val cachedRows = (0 until 30).associate { offset ->
+                val date = today.plusDays(offset.toLong())
+                date to cacheDao.getPrayerTimesForDateSync(date.toString())
             }
+            snapshotPrefs to cachedRows
         }
+        Log.d("PrayerSync", "[TIMING] Source=CALCULATED_API_OR_OFFLINE method=$method madhab=$madhab")
 
         val result = (0 until 30).map { offset ->
             val date = today.plusDays(offset.toLong())
-            val cached = cacheDao.getPrayerTimesForDateSync(date.toString())
-            if (cached != null) { cachedCount++; parseCached(cached, date) }
-            else { offlineCount++; calculateForDate(lat, lng, method, date) }
+            val cached = cachedByDate[date]
+            if (cached != null && cached.matches(prayerPrefs)) {
+                cachedCount++
+                parseCached(cached, date)
+            } else {
+                offlineCount++
+                calculateForDate(lat, lng, method, madhab, date)
+            }
+        }
+        result.firstOrNull()?.toList()?.forEach { prayer ->
+            Log.d("PrayerSync", "[TIMING] ${prayer.name.name}Start=${prayer.time}")
         }
         Log.d("PrayerSync", "calculateUpcoming: $cachedCount days from API cache, $offlineCount days from offline calc.")
         return result

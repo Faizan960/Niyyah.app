@@ -103,16 +103,31 @@ object NotificationHelper {
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setContentIntent(tapIntent)
-            .setAutoCancel(false)
+            .setAutoCancel(true)
             .setOngoing(false)
             .build()
 
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.notify(prayer.ordinal + 100, notification)
-        Log.d(TAG, "Adhan notification shown for ${prayer.displayName}")
+        Log.d(TAG, "[NOTIFICATION] ${prayer.name} prayer-start notification posted")
 
         // Vibration pattern: long-short-long (respectful, not jarring)
         vibrate(context)
+    }
+
+    fun cancelAdhanNotification(context: Context, prayer: PrayerName) {
+        context.getSystemService(NotificationManager::class.java)
+            .cancel(prayer.ordinal + 100)
+        Log.d(TAG, "[NOTIFICATION] ${prayer.name} prayer-start notification cancelled")
+    }
+
+    fun cancelPrayerLifecycleNotifications(context: Context) {
+        val manager = context.getSystemService(NotificationManager::class.java)
+        PrayerName.entries.forEach { prayer ->
+            manager.cancel(prayer.ordinal + 100)
+            manager.cancel(prayer.ordinal + 200)
+        }
+        manager.cancel(com.salahlock.app.service.UsageStatsPollingService.NOTIFICATION_ID)
     }
 
     // ── Missed Prayer Notification ────────────────────────────────────────────

@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.salahlock.app.R
 import com.salahlock.app.data.db.entity.PrayerRecord
+import com.salahlock.app.data.db.entity.LocalMasjidEntity
 import com.salahlock.app.data.model.DailyPrayers
 import com.salahlock.app.data.model.PrayerName
 import com.salahlock.app.data.model.PrayerSource
@@ -106,6 +107,11 @@ fun HomeScreen(
     // unverified. Never a future prayer — so a next-prayer countdown of 1h can't be
     // "verified" early.
     val verifiablePrayer = if (inWindow && !currentVerified) currentPrayer else null
+    val selectedJamaatNext = if (
+        state.prayerSource == PrayerSource.LOCAL_MASJID && state.localMasjidConfigured
+    ) {
+        nextJamaatPrayer(state.localMasjid, now)
+    } else null
 
     Column(
         modifier = Modifier
@@ -124,9 +130,12 @@ fun HomeScreen(
         ) {
             GreetingBlock(userName = state.userName)
 
-            // Hero always shows the true NEXT upcoming prayer + countdown. The Verify
-            // CTA is a SEPARATE concept — it names and verifies the ongoing prayer.
-            state.nextPrayer?.let { next ->
+            // When Local Masjid display is selected, the hero presents the next
+            // congregation time. Calculated starts still drive current-prayer state,
+            // verification, lock windows, alarms, and the timeline below.
+            val calculatedNext = state.nextPrayer
+            val displayedNext = selectedJamaatNext ?: calculatedNext
+            displayedNext?.let { next ->
                 // The hero focuses on whichever prayer the user must act on: the ongoing,
                 // unverified current prayer (label "CURRENT PRAYER" + Verify CTA); otherwise
                 // the true next upcoming prayer (label "NEXT PRAYER"). This removes the old
@@ -134,13 +143,29 @@ fun HomeScreen(
                 // "Verify Fajr". The countdown always tracks the next boundary (next.time),
                 // which — while a prayer is in-window — is the time left to pray it.
                 val heroFocus = verifiablePrayer ?: next
+                val countdownTarget = if (verifiablePrayer != null) {
+                    calculatedNext?.time ?: next.time
+                } else next.time
+                val timingKind = if (verifiablePrayer == null && selectedJamaatNext != null) {
+                    HeroTimingKind.JAMAAT
+                } else {
+                    HeroTimingKind.CALCULATED_START
+                }
                 NextPrayerHero(
                     isLight = isLight,
-                    label = if (verifiablePrayer != null) "CURRENT PRAYER" else "NEXT PRAYER",
+                    label = when {
+                        verifiablePrayer != null -> "CURRENT PRAYER"
+                        selectedJamaatNext != null -> "NEXT JAMAAT"
+                        else -> "NEXT PRAYER"
+                    },
                     prayerName = heroFocus.name.displayName,
                     timeString = heroFocus.time.toClock(),
-                    remaining = formatTimeRemaining(state.currentTimeMs, next.time),
-                    sourceLabel = sourceLabel(state),
+                    remaining = formatTimeRemaining(state.currentTimeMs, countdownTarget),
+                    sourceLabel = heroTimingLabel(
+                        kind = timingKind,
+                        cityName = state.cityName,
+                        masjidName = state.activeMasjidName,
+                    ),
                     progress = intervalProgress(state, now),
                     verifyPrayerName = verifiablePrayer?.name?.displayName,
                     showVerifiedBadge = inWindow && currentVerified,
@@ -175,9 +200,7 @@ fun HomeScreen(
                 masjidName = state.savedMasjidName,
                 jamaatLabel = when {
                     state.prayerSource == PrayerSource.LOCAL_MASJID && state.localMasjidConfigured ->
-                        state.nextPrayer?.let {
-                            "${it.name.displayName} Jamaat  •  ${it.time.toClock()}"
-                        }
+                        nextJamaatLabel(state.localMasjid, now)
                     state.localMasjidConfigured -> "Jamaat timings saved · GPS active"
                     else -> null
                 },
@@ -619,7 +642,7 @@ private fun PrayerTimeline(
 
     Column(Modifier.fillMaxWidth()) {
         Text(
-            "TODAY'S PRAYERS",
+            "TODAY'S PRAYER STARTS",
             style = MaterialTheme.typography.labelMedium,
             letterSpacing = 1.5.sp,
             color = muted,
@@ -1110,12 +1133,55 @@ private fun AlertHairlineCard(
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-/** Label for the hero source control: masjid name when active, else "City · GPS". */
-private fun sourceLabel(state: HomeUiState): String = when {
-    state.prayerSource == PrayerSource.LOCAL_MASJID && state.activeMasjidName.isNotBlank() ->
-        state.activeMasjidName
-    state.cityName.isNotBlank() -> "${state.cityName} · GPS"
-    else -> "Set prayer times"
+internal enum class HeroTimingKind { CALCULATED_START, JAMAAT }
+
+/**
+ * Labels the time actually rendered in the hero. A calculated current-prayer start
+ * must never be presented as a masjid Jamaat time merely because that display mode
+ * is selected.
+ */
+internal fun heroTimingLabel(
+    kind: HeroTimingKind,
+    cityName: String,
+    masjidName: String,
+): String = when (kind) {
+    HeroTimingKind.JAMAAT -> when {
+        masjidName.isNotBlank() -> "$masjidName · Jamaat"
+        else -> "Saved Jamaat time"
+    }
+    HeroTimingKind.CALCULATED_START -> when {
+        cityName.isNotBlank() -> "$cityName · Calculated start"
+        else -> "Calculated prayer start"
+    }
+}
+
+/** Next congregation time, deliberately independent from calculated prayer starts. */
+private fun nextJamaatLabel(masjid: LocalMasjidEntity?, now: LocalDateTime): String? {
+    val next = nextJamaatPrayer(masjid, now) ?: return null
+    return "${next.name.displayName} Jamaat  •  ${next.time.toClock()}"
+}
+
+/** Returns the next saved congregation time, rolling Fajr into tomorrow if needed. */
+internal fun nextJamaatPrayer(masjid: LocalMasjidEntity?, now: LocalDateTime): PrayerTime? {
+    if (masjid == null) return null
+    val formatter = DateTimeFormatter.ofPattern("H:mm")
+    val jamaat = listOf(
+        PrayerName.FAJR to masjid.fajr,
+        PrayerName.DHUHR to masjid.dhuhr,
+        PrayerName.ASR to masjid.asr,
+        PrayerName.MAGHRIB to masjid.maghrib,
+        PrayerName.ISHA to masjid.isha,
+    ).mapNotNull { (prayer, value) ->
+        runCatching { prayer to now.toLocalDate().atTime(java.time.LocalTime.parse(value, formatter)) }
+            .getOrNull()
+    }
+    val next = jamaat
+        .map { (prayer, time) ->
+            prayer to if (time.isAfter(now)) time else time.plusDays(1)
+        }
+        .minByOrNull { (_, time) -> time }
+        ?: return null
+    return PrayerTime(next.first, next.second)
 }
 
 /** Fraction elapsed through the current prayer interval (most-recent past → next). */
