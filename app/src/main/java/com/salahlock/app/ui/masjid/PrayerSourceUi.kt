@@ -75,6 +75,7 @@ class PrayerSourceViewModel(application: Application) : AndroidViewModel(applica
     fun setSource(source: PrayerSource) {
         viewModelScope.launch {
             repo.setPrayerSource(source)
+            app.refreshPrayerAlarms("settings_source_changed")
         }
     }
 }
@@ -100,7 +101,7 @@ fun PrayerSourceOptions(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            "SCHEDULE DISPLAY",
+            "ACTIVE SCHEDULE",
             style = MaterialTheme.typography.labelMedium,
             letterSpacing = 1.5.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -271,7 +272,7 @@ fun PrayerSourceSettingsScreen(
         ) {
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Calculated prayer starts always power prayer windows and alarms. Choose whether to highlight those starts or your saved masjid's separate Jamaat schedule.",
+                text = "Choose the schedule used by Home, prayer notifications, and SalahLock alarms. Changes apply immediately.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

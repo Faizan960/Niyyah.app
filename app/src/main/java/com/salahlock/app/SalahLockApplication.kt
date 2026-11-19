@@ -86,6 +86,20 @@ class SalahLockApplication : Application(), Configuration.Provider {
     val prayerAlarmCoordinator by lazy {
         PrayerAlarmCoordinator(this, userPreferences, prayerTimesRepository)
     }
+
+    /**
+     * Applies a user-visible schedule change now without allowing an alarm-service
+     * failure to crash the calling screen. The observer/Worker remains a fallback.
+     */
+    suspend fun refreshPrayerAlarms(reason: String) {
+        try {
+            prayerAlarmCoordinator.refreshNow(reason)
+        } catch (error: Exception) {
+            Log.e("SalahLockApp", "Immediate alarm refresh failed: $reason", error)
+            runCatching { prayerAlarmCoordinator.requestRefresh("${reason}_retry") }
+                .onFailure { Log.e("SalahLockApp", "Could not enqueue alarm refresh", it) }
+        }
+    }
     val streakRepository by lazy {
         StreakRepository(database.prayerRecordDao(), database.streakDao())
     }

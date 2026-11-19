@@ -62,7 +62,7 @@ data class HomeUiState(
     val savedMasjidName: String = "",
     /** BM-HOME-PRAYER-UX — whether a Local Masjid timetable has been configured */
     val localMasjidConfigured: Boolean = false,
-    /** Separate Room-backed congregation schedule; never used as prayer starts. */
+    /** Room-backed Local Masjid schedule used whenever [prayerSource] selects it. */
     val localMasjid: LocalMasjidEntity? = null,
 ) {
     val isPaused: Boolean get() = pauseUntilMs > currentTimeMs
@@ -138,6 +138,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun setPrayerSource(source: com.salahlock.app.data.model.PrayerSource) {
         viewModelScope.launch {
             app.prayerSourceRepository.setPrayerSource(source)
+            app.refreshPrayerAlarms("home_source_changed")
         }
     }
 
