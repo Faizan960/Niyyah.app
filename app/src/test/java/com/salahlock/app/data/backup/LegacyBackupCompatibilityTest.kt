@@ -12,9 +12,8 @@ import org.junit.Test
  *  1. A backup produced by an older app version still contains the removed
  *     `lastMercyWeek` / `mercyUsedThisWeek` streak fields. Restore must ignore
  *     them (`Json.ignoreUnknownKeys`) and keep every surviving value.
- *  2. Frozen monthly reflections persist their serialized `mercyUsed` field
- *     (emergency-override count). Old stored reports must still parse and map
- *     through `toReport()` unchanged.
+ *  2. Frozen monthly reflections with the old `mercyUsed` field still parse, but
+ *     that legacy counter no longer enters the active report model.
  */
 class LegacyBackupCompatibilityTest {
 
@@ -49,7 +48,7 @@ class LegacyBackupCompatibilityTest {
     }
 
     @Test
-    fun `stored reflection with legacy mercyUsed field parses and keeps the override count`() {
+    fun `stored reflection with legacy mercyUsed field remains readable but inactive`() {
         val legacy = """
             {
               "version": 1,
@@ -62,9 +61,7 @@ class LegacyBackupCompatibilityTest {
         val stored = json.decodeFromString<StoredMonthlyReflection>(legacy)
         assertEquals(3, stored.mercyUsed)
 
-        // toReport() rebuilds the in-memory MonthlyStats with the renamed property
-        // while preserving the same emergency-override count.
         val report = stored.toReport()
-        assertEquals(3, report.stats.overridesUsed)
+        assertEquals(0, report.stats.completedPrayers)
     }
 }

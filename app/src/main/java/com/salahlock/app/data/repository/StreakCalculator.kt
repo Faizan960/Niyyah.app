@@ -5,7 +5,7 @@ import java.time.LocalDate
 
 /**
  * Pure, unit-testable streak rule: a day counts toward the streak only when ALL
- * five daily prayers are completed (verified or emergency-overridden).
+ * five daily prayers are genuinely verified.
  *
  * The previous weekly "mercy" / free-pass allowance (one 4/5 day per week counted)
  * was REMOVED with that feature — a 4/5 day now simply ends the streak. The
@@ -21,8 +21,8 @@ internal object StreakCalculator {
     /**
      * Counts consecutive fully-completed days ending today (or yesterday if today
      * is still incomplete — an in-progress day must never break the streak).
-     * A prayer completed via emergency override (`overrideUsed`) still counts:
-     * the user acted on the prayer; the override itself is tracked separately.
+     * Legacy `overrideUsed` rows are deliberately ignored: an override pauses
+     * protection, but is not evidence that the prayer was completed.
      */
     fun calculate(byDay: Map<String, List<PrayerRecord>>, today: LocalDate): Int {
         var streak = 0
@@ -30,7 +30,7 @@ internal object StreakCalculator {
         for (i in 0 until WINDOW_DAYS) {
             val date = today.minusDays(i.toLong())
             val dayRecords = byDay[date.toString()] ?: emptyList()
-            val completedCount = dayRecords.count { it.verified || it.overrideUsed }
+            val completedCount = dayRecords.count { it.verified }
 
             when {
                 completedCount >= 5 -> streak++

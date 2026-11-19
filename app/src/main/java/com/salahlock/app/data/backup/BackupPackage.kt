@@ -1,7 +1,7 @@
 package com.salahlock.app.data.backup
 
 import com.salahlock.app.data.db.entity.AppBlacklistItem
-import com.salahlock.app.data.db.entity.EmergencyOverride
+import com.salahlock.app.data.db.entity.EmergencyOverrideEvent
 import com.salahlock.app.data.db.entity.LocalMasjidEntity
 import com.salahlock.app.data.db.entity.PrayerRecord
 import com.salahlock.app.data.db.entity.StreakEntity
@@ -74,6 +74,9 @@ data class BackupPackage(
 
     val prayerHistory: List<BackupPrayerRecord> = emptyList(),
     val streak: BackupStreak? = null,
+    /** Current append-only emergency history. */
+    val emergencyOverrideEvents: List<BackupEmergencyOverrideEvent> = emptyList(),
+    /** Legacy v1 monthly aggregates, accepted on restore but never exported by current builds. */
     val emergencyOverrides: List<BackupEmergencyOverride> = emptyList(),
     val localMasjid: BackupLocalMasjid? = null,
     val settings: BackupSettings = BackupSettings(),
@@ -121,6 +124,15 @@ data class BackupEmergencyOverride(
     val count: Int = 0,
     val lastReason: String = "",
     val lastUsedMs: Long = 0,
+)
+
+@Serializable
+data class BackupEmergencyOverrideEvent(
+    val eventId: String,
+    val prayerIdentifier: String,
+    val reason: String,
+    val timestampMs: Long,
+    val date: String,
 )
 
 @Serializable
@@ -188,13 +200,19 @@ fun BackupStreak.toEntity() = StreakEntity(
     lastFullDay = lastFullDay,
 )
 
-fun EmergencyOverride.toBackup() = BackupEmergencyOverride(
-    id = id, monthYear = monthYear, count = count,
-    lastReason = lastReason, lastUsedMs = lastUsedMs,
+fun EmergencyOverrideEvent.toBackup() = BackupEmergencyOverrideEvent(
+    eventId = eventId,
+    prayerIdentifier = prayerIdentifier,
+    reason = reason,
+    timestampMs = timestampMs,
+    date = date,
 )
-fun BackupEmergencyOverride.toEntity() = EmergencyOverride(
-    id = 0, monthYear = monthYear, count = count,
-    lastReason = lastReason, lastUsedMs = lastUsedMs,
+fun BackupEmergencyOverrideEvent.toEntity() = EmergencyOverrideEvent(
+    eventId = eventId,
+    prayerIdentifier = prayerIdentifier,
+    reason = reason,
+    timestampMs = timestampMs,
+    date = date,
 )
 
 fun LocalMasjidEntity.toBackup() = BackupLocalMasjid(

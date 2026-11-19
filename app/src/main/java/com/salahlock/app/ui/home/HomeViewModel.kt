@@ -20,7 +20,6 @@ import java.time.LocalDateTime
 data class LockSummary(
     val blockedAppCount: Int = 0,
     val todayBlockedCount: Int = 0,
-    val remainingOverrides: Int = 3,
     val activeProfile: String = "Custom",
     val lastVerificationLabel: String = "None today",
 )
@@ -352,17 +351,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     // Prayer records are device-local & auth-independent — always read __local__.
                     val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
                     val todayRecords = app.database.prayerRecordDao().getRecordsForDate(owner, today)
-                    val verifiedToday = todayRecords.filter { it.verified || it.overrideUsed }
+                    val verifiedToday = todayRecords.filter { it.verified }
                     val lastVerifiedLabel = if (verifiedToday.isEmpty()) "None today"
                         else "${verifiedToday.last().prayerName.lowercase().replaceFirstChar { it.uppercase() }} verified"
-                    val overrideState = app.overrideRepository.getOverrideState()
-
                     _uiState.update {
                         it.copy(
                             lockSummary = LockSummary(
                                 blockedAppCount = blockedCount,
                                 todayBlockedCount = verifiedToday.size,
-                                remainingOverrides = overrideState.maxPerMonth - overrideState.usedThisMonth,
                                 activeProfile = com.salahlock.app.data.model.BlockProfile.fromName(profileName).displayName,
                                 lastVerificationLabel = lastVerifiedLabel,
                             )

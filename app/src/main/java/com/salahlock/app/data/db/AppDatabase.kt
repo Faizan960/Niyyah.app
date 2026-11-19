@@ -11,7 +11,7 @@ import com.salahlock.app.data.db.dao.EmergencyOverrideDao
 import com.salahlock.app.data.db.dao.PrayerRecordDao
 import com.salahlock.app.data.db.dao.StreakDao
 import com.salahlock.app.data.db.entity.AppBlacklistItem
-import com.salahlock.app.data.db.entity.EmergencyOverride
+import com.salahlock.app.data.db.entity.EmergencyOverrideEvent
 import com.salahlock.app.data.db.entity.MasjidEntity
 import com.salahlock.app.data.db.entity.PrayerRecord
 import com.salahlock.app.data.db.entity.StreakEntity
@@ -42,7 +42,7 @@ import com.salahlock.app.data.db.entity.LegacyOwnershipEntity
     entities = [
         PrayerRecord::class,
         StreakEntity::class,
-        EmergencyOverride::class,
+        EmergencyOverrideEvent::class,
         AppBlacklistItem::class,
         PrayerTimeCacheEntity::class,
         HadithEntity::class,
@@ -63,7 +63,7 @@ import com.salahlock.app.data.db.entity.LegacyOwnershipEntity
         com.salahlock.app.data.db.entity.SyncOutboxEntity::class,
         com.salahlock.app.data.db.entity.SyncStateEntity::class,
     ],
-    version = 12,
+    version = 13,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -561,6 +561,93 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Migration 12 → 13: replace the monthly allowance aggregate with append-only,
+         * device-local override events. Existing history is reconstructed without deleting
+         * any known use: prayer_records supply exact prayer/date/timestamp details, and any
+         * aggregate remainder becomes a LEGACY_UNKNOWN event. The old aggregate table is
+         * dropped only after every represented use has been copied.
+         */
+        internal val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `emergency_override_events` (" +
+                        "`eventId` TEXT NOT NULL, `prayerIdentifier` TEXT NOT NULL, " +
+                        "`reason` TEXT NOT NULL, `timestampMs` INTEGER NOT NULL, " +
+                        "`date` TEXT NOT NULL, `ownerId` TEXT NOT NULL DEFAULT '__local__', " +
+                        "PRIMARY KEY(`eventId`))"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_emergency_override_events_ownerId_date_prayerIdentifier` " +
+                        "ON `emergency_override_events` (`ownerId`, `date`, `prayerIdentifier`)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_emergency_override_events_ownerId_timestampMs` " +
+                        "ON `emergency_override_events` (`ownerId`, `timestampMs`)"
+                )
+
+                // Recover event-level details from legacy prayer rows first. These rows are
+                // retained unchanged; overrideUsed is now historical metadata only.
+                db.execSQL(
+                    "INSERT OR IGNORE INTO emergency_override_events " +
+                        "(eventId, prayerIdentifier, reason, timestampMs, date, ownerId) " +
+                        "SELECT 'legacy-prayer-' || id, prayerName, 'OTHER', timestampMs, date, ownerId " +
+                        "FROM prayer_records WHERE overrideUsed = 1"
+                )
+
+                // Preserve aggregate uses that have no corresponding prayer row. Recursive
+                // expansion creates one independent event per missing historical use.
+                db.execSQL(
+                    "WITH RECURSIVE missing(aggregateId, ownerId, monthYear, lastReason, lastUsedMs, ordinal, total) AS (" +
+                        "SELECT e.id, e.ownerId, e.monthYear, e.lastReason, e.lastUsedMs, 1, " +
+                        "MAX(e.count - (SELECT COUNT(*) FROM prayer_records p " +
+                        "WHERE p.overrideUsed = 1 AND p.ownerId = e.ownerId " +
+                        "AND substr(p.date, 1, 7) = e.monthYear), 0) " +
+                        "FROM emergency_overrides e " +
+                        "UNION ALL " +
+                        "SELECT aggregateId, ownerId, monthYear, lastReason, lastUsedMs, ordinal + 1, total " +
+                        "FROM missing WHERE ordinal < total" +
+                        ") " +
+                        "INSERT OR IGNORE INTO emergency_override_events " +
+                        "(eventId, prayerIdentifier, reason, timestampMs, date, ownerId) " +
+                        "SELECT 'legacy-aggregate-' || aggregateId || '-' || ordinal, 'LEGACY_UNKNOWN', " +
+                        "CASE upper(lastReason) " +
+                        "WHEN 'MEDICAL' THEN 'MEDICAL' " +
+                        "WHEN 'FAMILY_EMERGENCY' THEN 'FAMILY_EMERGENCY' " +
+                        "WHEN 'TRAVELLING' THEN 'TRAVELLING' " +
+                        "WHEN 'WORK_CRITICAL' THEN 'WORK_CRITICAL' " +
+                        "WHEN 'OTHER' THEN 'OTHER' ELSE 'OTHER' END, " +
+                        "lastUsedMs, " +
+                        "CASE WHEN lastUsedMs > 0 THEN date(lastUsedMs / 1000, 'unixepoch', 'localtime') " +
+                        "ELSE monthYear || '-01' END, ownerId " +
+                        "FROM missing WHERE total > 0 AND ordinal <= total"
+                )
+
+                // Preserve the only reason retained by the old aggregate on the latest
+                // reconstructed event for that owner/month.
+                db.execSQL(
+                    "UPDATE emergency_override_events SET reason = (" +
+                        "SELECT CASE upper(e.lastReason) " +
+                        "WHEN 'MEDICAL' THEN 'MEDICAL' " +
+                        "WHEN 'FAMILY_EMERGENCY' THEN 'FAMILY_EMERGENCY' " +
+                        "WHEN 'TRAVELLING' THEN 'TRAVELLING' " +
+                        "WHEN 'WORK_CRITICAL' THEN 'WORK_CRITICAL' " +
+                        "WHEN 'OTHER' THEN 'OTHER' ELSE emergency_override_events.reason END " +
+                        "FROM emergency_overrides e WHERE e.ownerId = emergency_override_events.ownerId " +
+                        "AND e.monthYear = substr(emergency_override_events.date, 1, 7) LIMIT 1" +
+                        ") WHERE eventId IN (" +
+                        "SELECT ev.eventId FROM emergency_override_events ev " +
+                        "WHERE ev.eventId = (SELECT ev2.eventId FROM emergency_override_events ev2 " +
+                        "WHERE ev2.ownerId = ev.ownerId AND substr(ev2.date, 1, 7) = substr(ev.date, 1, 7) " +
+                        "ORDER BY ev2.timestampMs DESC, ev2.eventId DESC LIMIT 1)" +
+                        ") AND EXISTS (SELECT 1 FROM emergency_overrides e " +
+                        "WHERE e.ownerId = emergency_override_events.ownerId " +
+                        "AND e.monthYear = substr(emergency_override_events.date, 1, 7))"
+                )
+                db.execSQL("DROP TABLE emergency_overrides")
+            }
+        }
+
         /** SQLite expression producing a fresh v4-shaped UUID string per row. */
         private const val UUID_SQL =
             "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || " +
@@ -575,7 +662,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "salahlock_db",
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
                     .build().also { INSTANCE = it }
             }
     }

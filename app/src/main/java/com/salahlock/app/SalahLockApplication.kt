@@ -70,7 +70,7 @@ class SalahLockApplication : Application(), Configuration.Provider {
     /** Frozen monthly reflections — generated locally, stored in filesDir/reflections. */
     val spiritualReportRepository by lazy {
         com.salahlock.app.data.repository.SpiritualReportRepository(
-            this, database.prayerRecordDao(), database.emergencyOverrideDao(),
+            this, database.prayerRecordDao(),
         )
     }
 
@@ -107,12 +107,7 @@ class SalahLockApplication : Application(), Configuration.Provider {
         AppBlacklistRepository(this, database.appBlacklistDao())
     }
     val overrideRepository by lazy {
-        EmergencyOverrideRepository(
-            database,
-            database.emergencyOverrideDao(),
-            database.prayerRecordDao(),
-            streakRepository,
-        )
+        EmergencyOverrideRepository(database.emergencyOverrideDao())
     }
 
     /** Singleton — prevents Hadith sync from re-running on every Knowledge screen visit. */

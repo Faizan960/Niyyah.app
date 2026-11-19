@@ -23,7 +23,7 @@ class MonthlyStatsCalculatorTest {
 
     @Test
     fun `closed month uses full month length`() {
-        val stats = MonthlyStatsCalculator.calculate(june, emptyList(), 0, today = july1)
+        val stats = MonthlyStatsCalculator.calculate(june, emptyList(), today = july1)
         assertEquals(30, stats.elapsedDays)
         assertEquals(150, stats.expectedPrayers)
         assertEquals(150, stats.missedPrayers)
@@ -32,7 +32,7 @@ class MonthlyStatsCalculatorTest {
 
     @Test
     fun `current month caps elapsed days at today`() {
-        val stats = MonthlyStatsCalculator.calculate(june, emptyList(), 0, today = june.atDay(10))
+        val stats = MonthlyStatsCalculator.calculate(june, emptyList(), today = june.atDay(10))
         assertEquals(10, stats.elapsedDays)
         assertEquals(50, stats.expectedPrayers)
     }
@@ -42,12 +42,11 @@ class MonthlyStatsCalculatorTest {
         val records =
             (1..20).map { record(it, PrayerName.FAJR) } +
                 (1..30).map { record(it, PrayerName.DHUHR, VerificationType.SELF_REPORTED) }
-        val stats = MonthlyStatsCalculator.calculate(june, records, overridesUsed = 2, today = july1)
+        val stats = MonthlyStatsCalculator.calculate(june, records, today = july1)
         assertEquals(50, stats.completedPrayers)
         assertEquals(20, stats.fajrDays)
         assertEquals(20, stats.lockVerified)
         assertEquals(30, stats.selfReported)
-        assertEquals(2, stats.overridesUsed)
         assertEquals(10, stats.perPrayerMissed[PrayerName.FAJR])
         assertEquals(0, stats.perPrayerMissed[PrayerName.DHUHR])
         assertEquals(30, stats.perPrayerMissed[PrayerName.ISHA])
@@ -61,7 +60,7 @@ class MonthlyStatsCalculatorTest {
                 .filterNot { day == 5 && it == PrayerName.ISHA }
                 .map { record(day, it) }
         }
-        val stats = MonthlyStatsCalculator.calculate(june, records, 0, today = july1)
+        val stats = MonthlyStatsCalculator.calculate(june, records, today = july1)
         assertEquals(25, stats.longestStreakInMonth)
         assertEquals(25, stats.endOfMonthStreak)
     }
@@ -72,7 +71,7 @@ class MonthlyStatsCalculatorTest {
             date = "2026-05-31", prayerName = PrayerName.FAJR.name, verified = true,
         )
         val dupes = listOf(record(1, PrayerName.FAJR), record(1, PrayerName.FAJR))
-        val stats = MonthlyStatsCalculator.calculate(june, dupes + outside, 0, today = july1)
+        val stats = MonthlyStatsCalculator.calculate(june, dupes + outside, today = july1)
         assertEquals(1, stats.completedPrayers)
     }
 
@@ -81,7 +80,21 @@ class MonthlyStatsCalculatorTest {
         val sunrise = PrayerRecord(
             date = june.atDay(1).toString(), prayerName = PrayerName.SUNRISE.name, verified = true,
         )
-        val stats = MonthlyStatsCalculator.calculate(june, listOf(sunrise), 0, today = july1)
+        val stats = MonthlyStatsCalculator.calculate(june, listOf(sunrise), today = july1)
         assertEquals(0, stats.completedPrayers)
+    }
+
+    @Test
+    fun `legacy override row never counts as completion`() {
+        val override = PrayerRecord(
+            date = june.atDay(1).toString(),
+            prayerName = PrayerName.FAJR.name,
+            verified = false,
+            overrideUsed = true,
+            verificationType = VerificationType.SELF_REPORTED.name,
+        )
+        val stats = MonthlyStatsCalculator.calculate(june, listOf(override), today = july1)
+        assertEquals(0, stats.completedPrayers)
+        assertEquals(0, stats.selfReported)
     }
 }

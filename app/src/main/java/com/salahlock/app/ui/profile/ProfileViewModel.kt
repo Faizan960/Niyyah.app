@@ -270,7 +270,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             // Prayer records are device-local & auth-independent — always read __local__.
             val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
             app.database.prayerRecordDao().observeRecordsForDate(owner, today).collect { records ->
-                _extraState.update { it.copy(totalPrayers = records.count { r -> r.verified || r.overrideUsed }) }
+                _extraState.update { it.copy(totalPrayers = records.count { r -> r.verified }) }
             }
         }
     }

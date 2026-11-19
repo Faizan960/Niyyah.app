@@ -25,13 +25,11 @@ object MonthlyStatsCalculator {
 
     /**
      * @param records prayer records whose `date` falls inside [month]; rows outside are ignored.
-     * @param overridesUsed emergency overrides consumed during [month].
      * @param today used to cap elapsed days for the current (incomplete) month.
      */
     fun calculate(
         month: YearMonth,
         records: List<PrayerRecord>,
-        overridesUsed: Int,
         today: LocalDate = LocalDate.now(),
     ): MonthlyStats {
         val elapsedDays = when {
@@ -43,7 +41,7 @@ object MonthlyStatsCalculator {
 
         // date -> set of completed daily prayers on that day
         val completedByDay: Map<LocalDate, Set<PrayerName>> = records
-            .filter { it.verified || it.overrideUsed }
+            .filter { it.verified }
             .mapNotNull { rec ->
                 val date = runCatching { LocalDate.parse(rec.date) }.getOrNull() ?: return@mapNotNull null
                 val prayer = runCatching { PrayerName.valueOf(rec.prayerName) }.getOrNull() ?: return@mapNotNull null
@@ -55,10 +53,10 @@ object MonthlyStatsCalculator {
         val completed = completedByDay.values.sumOf { it.size }
 
         val lockVerified = records.count {
-            it.verificationType == VerificationType.LOCK_VERIFIED.name && inMonth(it, month)
+            it.verified && it.verificationType == VerificationType.LOCK_VERIFIED.name && inMonth(it, month)
         }
         val selfReported = records.count {
-            it.verificationType == VerificationType.SELF_REPORTED.name && inMonth(it, month)
+            it.verified && it.verificationType == VerificationType.SELF_REPORTED.name && inMonth(it, month)
         }
 
         val perPrayerDays: Map<PrayerName, Int> = DAILY_PRAYERS.associateWith { prayer ->
@@ -90,7 +88,6 @@ object MonthlyStatsCalculator {
             fajrDays = perPrayerDays[PrayerName.FAJR] ?: 0,
             longestStreakInMonth = longest,
             endOfMonthStreak = endStreak,
-            overridesUsed = overridesUsed,
             perPrayerCompletion = perPrayerCompletion,
             perPrayerMissed = perPrayerMissed,
         )

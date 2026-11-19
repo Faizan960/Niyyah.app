@@ -11,7 +11,7 @@ import com.salahlock.app.data.db.entity.LegacyOwnershipEntity
  * ## Scope of adoption (device-local prayer data is EXCLUDED)
  * Adoption only re-stamps the **cloud-synced, per-account** datasets: Quran bookmarks
  * & progress, collections, and Hadith/Azkar user state. It deliberately does NOT touch
- * prayer_records, streaks, emergency_overrides, or reflection files: prayer tracking is
+ * prayer_records, streaks, emergency_override_events, or reflection files: prayer tracking is
  * device-local and auth-independent by product requirement, so those rows must remain
  * under [OwnerIds.LOCAL][com.salahlock.app.data.db.entity.OwnerIds.LOCAL] and stay visible
  * across sign-in, sign-out, and every auth-state change.

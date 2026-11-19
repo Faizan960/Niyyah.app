@@ -142,9 +142,29 @@ describe("sync: emergency overrides are never syncable", () => {
     expect(((await res.json()) as ErrBody).code).toBe("forbidden_domain");
   });
 
+  it("rejects append-only emergency event push and pull", async () => {
+    const token = await mintToken("em_event");
+    const pushed = await push(token, {
+      emergency_override_events: [{ event_id: "local-only" }],
+    });
+    expect(pushed.status).toBe(400);
+    expect(((await pushed.json()) as ErrBody).code).toBe("forbidden_domain");
+
+    const pulled = await pull(token, { domains: ["emergency_override_events"] });
+    expect(pulled.status).toBe(400);
+    expect(((await pulled.json()) as ErrBody).code).toBe("forbidden_domain");
+  });
+
   it("has no emergency_overrides table in the schema", async () => {
     const { results } = await db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='emergency_overrides'")
+      .all();
+    expect(results.length).toBe(0);
+  });
+
+  it("has no emergency_override_events table in the schema", async () => {
+    const { results } = await db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='emergency_override_events'")
       .all();
     expect(results.length).toBe(0);
   });

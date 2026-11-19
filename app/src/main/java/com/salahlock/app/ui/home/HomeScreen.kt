@@ -101,7 +101,7 @@ fun HomeScreen(
     val inWindow = currentPrayer != null &&
         daily?.isWithinWindow(currentPrayer.name, now) == true
     val currentVerified = currentPrayer?.let {
-        state.todayRecords[it.name]?.let { r -> r.verified || r.overrideUsed }
+        state.todayRecords[it.name]?.verified
     } == true
     // The prayer the hero CTA verifies: the ongoing in-window prayer, only while
     // unverified. Never a future prayer — so a next-prayer countdown of 1h can't be
@@ -646,7 +646,7 @@ private fun PrayerTimeline(
 
         Row(Modifier.fillMaxWidth()) {
             items.forEach { p ->
-                val completed = records[p.name]?.let { it.verified || it.overrideUsed } == true
+                val completed = records[p.name]?.verified == true
                 val isCurrent = p.name == currentName
                 val pastUnverified = p.time.isBefore(now) && !completed && !isCurrent
                 val labelColor = when {
@@ -774,7 +774,7 @@ private fun PrayerStatusSheet(
     onDismiss: () -> Unit,
 ) {
     val time = daily?.toList()?.firstOrNull { it.name == prayer }?.time
-    val completed = record?.let { it.verified || it.overrideUsed } == true
+    val completed = record?.verified == true
     // Verifiable once the prayer's time has arrived — never a future prayer.
     val hasArrived = time != null && !time.isAfter(now)
     val sheetState = rememberModalBottomSheetState()

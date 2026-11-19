@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -114,7 +115,7 @@ class UsageStatsPollingService : Service() {
      * Read from Room — survives process death, service restart, and reboot — so a
      * verified prayer is never re-locked when the user reopens a blocked app.
      */
-    @Volatile private var prayerVerified = false
+    @Volatile private var lockReleased = false
 
     /** Lock engine is paused until this epoch-millis (Sprint N.3). Read live from prefs. */
     @Volatile private var pauseUntilMs = 0L
@@ -188,7 +189,7 @@ class UsageStatsPollingService : Service() {
         // Reset for the prayer this start command represents. The observer below
         // immediately re-derives the true value from Room (handles START_STICKY
         // restarts that occur *after* the prayer was already verified).
-        prayerVerified = false
+        lockReleased = false
 
         sessionScope.launch {
             // Gate check — read verification state ONCE before the poller can run.
@@ -199,9 +200,11 @@ class UsageStatsPollingService : Service() {
             // Prayer records are device-local & auth-independent — always read __local__.
             val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
             val existing = app.database.prayerRecordDao().getRecord(owner, today, prayerName.name)
-            if (existing != null && (existing.verified || existing.overrideUsed)) {
-                prayerVerified = true
-                Log.d(TAG, "${prayerName.name} already verified on start — not locking.")
+            val overrideRecorded = app.database.emergencyOverrideDao()
+                .countForPrayer(owner, today, prayerName.name) > 0
+            if (existing?.verified == true || overrideRecorded) {
+                lockReleased = true
+                Log.d(TAG, "${prayerName.name} protection already satisfied — not locking.")
                 stopSelf()
                 return@launch
             }
@@ -235,30 +238,29 @@ class UsageStatsPollingService : Service() {
             app.userPreferences.pauseUntil.collect { pauseUntilMs = it }
         }
 
-        // End the lock window as soon as THIS prayer is verified (or overridden).
-        // Observing Room means a verification done in the overlay — or one that
-        // already existed before an OS-triggered restart — stops the service and
-        // prevents re-locking when the user reopens a blocked app.
+        // End the lock window on genuine verification OR a separately recorded override.
+        // The two records remain distinct so an override can never become completion data.
         val lockedPrayer = prayerName
         sessionScope.launch {
             // Prayer records are device-local & auth-independent — always read __local__.
             val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
-            app.database.prayerRecordDao()
-                .observeRecordsForDate(owner, LocalDate.now().toString())
-                .collect { records ->
-                    val verified = records.any {
-                        it.prayerName == lockedPrayer.name && (it.verified || it.overrideUsed)
-                    }
-                    if (verified) {
-                        handler.post {
-                            if (sessionJob === currentSessionJob) {
-                                prayerVerified = true
-                                Log.d(TAG, "${lockedPrayer.name} verified — ending lock window.")
-                                stopSelf()
-                            }
+            val date = LocalDate.now().toString()
+            combine(
+                app.database.prayerRecordDao().observeRecordsForDate(owner, date),
+                app.database.emergencyOverrideDao().observeCountForPrayer(owner, date, lockedPrayer.name),
+            ) { records, overrideCount ->
+                records.any { it.prayerName == lockedPrayer.name && it.verified } || overrideCount > 0
+            }.collect { protectionSatisfied ->
+                if (protectionSatisfied) {
+                    handler.post {
+                        if (sessionJob === currentSessionJob) {
+                            lockReleased = true
+                            Log.d(TAG, "${lockedPrayer.name} protection released — ending lock window.")
+                            stopSelf()
                         }
                     }
                 }
+            }
         }
 
         return START_STICKY
@@ -292,7 +294,7 @@ class UsageStatsPollingService : Service() {
         // Prayer already done — never lock again this window. The Room observer
         // normally stops the service first; this is the synchronous safety net for
         // the brief race between verification and that callback.
-        if (prayerVerified) {
+        if (lockReleased) {
             stopSelf()
             return
         }

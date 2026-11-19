@@ -139,7 +139,7 @@ class BackupRepository(
             appVersionName = BuildConfig.VERSION_NAME,
             prayerHistory = records.map { it.toBackup() },
             streak = streak?.toBackup(),
-            emergencyOverrides = overrides.map { it.toBackup() },
+            emergencyOverrideEvents = overrides.map { it.toBackup() },
             localMasjid = localMasjid?.toBackup(),
             settings = settings,
             blockedApps = blockedApps.map { it.toBackup() },
@@ -333,8 +333,32 @@ class BackupRepository(
         }
         // Streak
         pkg.streak?.let { db.streakDao().upsert(it.toEntity().copy(ownerId = owner)) }
-        // Emergency overrides
-        pkg.emergencyOverrides.forEach { db.emergencyOverrideDao().upsert(it.toEntity().copy(ownerId = owner)) }
+        // Emergency overrides: append current event backups. Legacy aggregate backups are
+        // expanded into independent placeholder events so represented history is not lost.
+        db.emergencyOverrideDao().insertAll(
+            pkg.emergencyOverrideEvents.map { it.toEntity().copy(ownerId = owner) } +
+                pkg.emergencyOverrides.flatMap { legacy ->
+                    val reason = runCatching {
+                        com.salahlock.app.data.repository.OverrideReason.valueOf(legacy.lastReason.uppercase()).name
+                    }.getOrDefault(com.salahlock.app.data.repository.OverrideReason.OTHER.name)
+                    val date = if (legacy.lastUsedMs > 0) {
+                        java.time.Instant.ofEpochMilli(legacy.lastUsedMs)
+                            .atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
+                    } else {
+                        "${legacy.monthYear}-01"
+                    }
+                    (1..legacy.count.coerceAtLeast(0)).map { ordinal ->
+                        com.salahlock.app.data.db.entity.EmergencyOverrideEvent(
+                            eventId = "legacy-backup-${legacy.id}-${legacy.monthYear}-${legacy.lastUsedMs}-$ordinal",
+                            prayerIdentifier = "LEGACY_UNKNOWN",
+                            reason = reason,
+                            timestampMs = legacy.lastUsedMs,
+                            date = date,
+                            ownerId = owner,
+                        )
+                    }
+                }
+        )
         // Local masjid
         pkg.localMasjid?.let { db.localMasjidDao().upsert(it.toEntity()) }
         // Blocked apps

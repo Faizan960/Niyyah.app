@@ -54,20 +54,24 @@ data class StreakEntity(
 )
 
 @Entity(
-    tableName = "emergency_overrides",
-    // BM-013 — one row per (owner, month) so accounts don't share override counters.
-    indices = [Index(value = ["ownerId", "monthYear"], unique = true)],
+    tableName = "emergency_override_events",
+    indices = [
+        Index(value = ["ownerId", "date", "prayerIdentifier"]),
+        Index(value = ["ownerId", "timestampMs"]),
+    ],
 )
-data class EmergencyOverride(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    /** "2025-06" — month+year for monthly reset */
-    val monthYear: String,
-    val count: Int = 0,
-    val lastReason: String = "",
-    val lastUsedMs: Long = System.currentTimeMillis(),
-    // BM-013 — ownership + sync bookkeeping (default = legacy/unclaimed).
+data class EmergencyOverrideEvent(
+    /** UUID generated before insertion; every confirmation is an independent event. */
+    @PrimaryKey val eventId: String,
+    /** FAJR | DHUHR | ASR | MAGHRIB | ISHA; LEGACY_UNKNOWN only for unrecoverable v12 rows. */
+    val prayerIdentifier: String,
+    /** One of OverrideReason's persisted enum names. */
+    val reason: String,
+    val timestampMs: Long,
+    /** ISO local date, e.g. 2026-11-19. */
+    val date: String,
+    // Emergency history is always device-local and is never adopted or cloud-synced.
     @ColumnInfo(defaultValue = "__local__") val ownerId: String = OwnerIds.LOCAL,
-    @ColumnInfo(defaultValue = "0") val updatedAt: Long = 0L,
 )
 
 @Entity(

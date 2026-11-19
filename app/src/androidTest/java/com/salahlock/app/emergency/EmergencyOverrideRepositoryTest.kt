@@ -7,11 +7,8 @@ import com.salahlock.app.data.db.AppDatabase
 import com.salahlock.app.data.db.entity.OwnerIds
 import com.salahlock.app.data.model.PrayerName
 import com.salahlock.app.data.repository.EmergencyOverrideRepository
-import com.salahlock.app.data.repository.MAX_OVERRIDES_PER_MONTH
 import com.salahlock.app.data.repository.OverrideReason
 import com.salahlock.app.data.repository.OverrideResult
-import com.salahlock.app.data.repository.StreakRepository
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -21,104 +18,122 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.time.LocalDate
 
-/**
- * fix/emergency-feature — behavioural contract for the repaired emergency-override flow.
- * All emergency data is device-local ([OwnerIds.LOCAL]); these tests use a real in-memory
- * Room DB so the transaction, the (date, prayer) idempotency key, and the monthly limit
- * are exercised against the actual DAOs — not mocks.
- */
+/** Contract tests for unlimited, append-only, local-only emergency history. */
 @RunWith(AndroidJUnit4::class)
 class EmergencyOverrideRepositoryTest {
 
     private lateinit var db: AppDatabase
-    private lateinit var streakRepo: StreakRepository
     private lateinit var repo: EmergencyOverrideRepository
-    private val today = LocalDate.now().toString()
 
     @Before
     fun setUp() {
         val ctx = ApplicationProvider.getApplicationContext<android.content.Context>()
-        db = Room.inMemoryDatabaseBuilder(ctx, AppDatabase::class.java).allowMainThreadQueries().build()
-        streakRepo = StreakRepository(db.prayerRecordDao(), db.streakDao())
-        repo = EmergencyOverrideRepository(db, db.emergencyOverrideDao(), db.prayerRecordDao(), streakRepo)
+        db = Room.inMemoryDatabaseBuilder(ctx, AppDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
+        repo = EmergencyOverrideRepository(db.emergencyOverrideDao())
     }
 
     @After
     fun tearDown() = db.close()
 
     @Test
-    fun override_consumesOne_marksTargetPrayer_andCounts() = runBlocking {
-        val result = repo.useOverrideForPrayer(today, PrayerName.FAJR, OverrideReason.MEDICAL)
-
-        assertTrue("first use is consumed", result is OverrideResult.Consumed)
-        assertEquals(1, repo.getOverrideState().usedThisMonth)
-
-        // The exact target prayer is marked overrideUsed (and NOT falsely verified).
-        val fajr = db.prayerRecordDao().getRecord(OwnerIds.LOCAL, today, "FAJR")!!
-        assertTrue("target prayer overrideUsed", fajr.overrideUsed)
-        assertFalse("override is not a normal verification", fajr.verified)
-    }
-
-    @Test
-    fun override_appliesOnlyToTargetPrayer() = runBlocking {
-        repo.useOverrideForPrayer(today, PrayerName.ISHA, OverrideReason.TRAVELLING)
-
-        assertNull("FAJR untouched", db.prayerRecordDao().getRecord(OwnerIds.LOCAL, today, "FAJR"))
-        assertNull("DHUHR untouched", db.prayerRecordDao().getRecord(OwnerIds.LOCAL, today, "DHUHR"))
-        assertNull("ASR untouched", db.prayerRecordDao().getRecord(OwnerIds.LOCAL, today, "ASR"))
-        assertNull("MAGHRIB untouched", db.prayerRecordDao().getRecord(OwnerIds.LOCAL, today, "MAGHRIB"))
-        assertEquals(1, db.prayerRecordDao().getAll(OwnerIds.LOCAL).size)
-    }
-
-    @Test
-    fun override_isIdempotent_forSamePrayer() = runBlocking {
-        assertTrue(repo.useOverrideForPrayer(today, PrayerName.FAJR, OverrideReason.OTHER) is OverrideResult.Consumed)
-        // A second attempt on the SAME prayer must not consume another allowance.
-        val again = repo.useOverrideForPrayer(today, PrayerName.FAJR, OverrideReason.OTHER)
-        assertTrue("second attempt already handled", again is OverrideResult.AlreadyHandled)
-        assertEquals("still only one consumed", 1, repo.getOverrideState().usedThisMonth)
-        assertEquals("no duplicate record", 1, db.prayerRecordDao().getAll(OwnerIds.LOCAL).size)
-    }
-
-    @Test
-    fun override_doesNotDowngradeAlreadyVerifiedPrayer() = runBlocking {
-        streakRepo.recordVerification(today, PrayerName.FAJR, wasOverride = false)
-        val result = repo.useOverrideForPrayer(today, PrayerName.FAJR, OverrideReason.OTHER)
-
-        assertTrue("already verified → handled, not consumed", result is OverrideResult.AlreadyHandled)
-        assertEquals("no override charged", 0, repo.getOverrideState().usedThisMonth)
-        val fajr = db.prayerRecordDao().getRecord(OwnerIds.LOCAL, today, "FAJR")!!
-        assertTrue("verification preserved", fajr.verified)
-        assertFalse("not flipped to override", fajr.overrideUsed)
-    }
-
-    @Test
-    fun override_stopsAtMonthlyLimit_andWritesNothingWhenExhausted() = runBlocking {
-        // Exhaust the 3/month allowance across three distinct prayers.
-        listOf(PrayerName.FAJR, PrayerName.DHUHR, PrayerName.ASR).forEach {
-            assertTrue(repo.useOverrideForPrayer(today, it, OverrideReason.OTHER) is OverrideResult.Consumed)
+    fun moreThanThreeOverridesAreAcceptedAndRemainIndependent() = runBlocking {
+        val results = (1..6).map {
+            repo.useOverrideForPrayer("2026-11-19", PrayerName.FAJR, OverrideReason.OTHER)
         }
-        assertEquals(MAX_OVERRIDES_PER_MONTH, repo.getOverrideState().usedThisMonth)
-        assertFalse(repo.getOverrideState().canOverride)
 
-        // The 4th prayer must be rejected with NO database mutation.
-        val denied = repo.useOverrideForPrayer(today, PrayerName.MAGHRIB, OverrideReason.OTHER)
-        assertTrue("limit reached", denied is OverrideResult.NoAllowance)
-        assertEquals("count unchanged", MAX_OVERRIDES_PER_MONTH, repo.getOverrideState().usedThisMonth)
-        assertNull("no record for the denied prayer", db.prayerRecordDao().getRecord(OwnerIds.LOCAL, today, "MAGHRIB"))
+        assertTrue(results.all { it is OverrideResult.Recorded })
+        val events = db.emergencyOverrideDao().getAll(OwnerIds.LOCAL)
+        assertEquals(6, events.size)
+        assertEquals(6, events.map { it.eventId }.toSet().size)
+        events.forEach { assertEquals(it, db.emergencyOverrideDao().getById(it.eventId)) }
     }
 
     @Test
-    fun override_countsTowardStreakCompletion() = runBlocking {
-        // 4 normal verifications + 1 emergency override = a full 5/5 day → streak of 1.
-        listOf(PrayerName.FAJR, PrayerName.DHUHR, PrayerName.ASR, PrayerName.MAGHRIB).forEach {
-            streakRepo.recordVerification(today, it, wasOverride = false)
+    fun overridesRemainUnlimitedAcrossMonthBoundaries() = runBlocking {
+        repeat(4) {
+            repo.useOverrideForPrayer("2026-11-30", PrayerName.ISHA, OverrideReason.TRAVELLING)
         }
-        repo.useOverrideForPrayer(today, PrayerName.ISHA, OverrideReason.FAMILY_EMERGENCY)
+        repeat(4) {
+            repo.useOverrideForPrayer("2026-12-01", PrayerName.ISHA, OverrideReason.TRAVELLING)
+        }
 
-        assertEquals(5, db.prayerRecordDao().getAll(OwnerIds.LOCAL).size)
-        assertEquals("override completes the day", 1, streakRepo.observeStreakInfo().first().currentStreak)
+        val events = db.emergencyOverrideDao().getAll(OwnerIds.LOCAL)
+        assertEquals(8, events.size)
+        assertEquals(4, events.count { it.date == "2026-11-30" })
+        assertEquals(4, events.count { it.date == "2026-12-01" })
+    }
+
+    @Test
+    fun everySupportedReasonIsPersisted() = runBlocking {
+        OverrideReason.entries.forEach { reason ->
+            repo.useOverrideForPrayer("2026-11-19", PrayerName.ASR, reason)
+        }
+
+        val persisted = db.emergencyOverrideDao().getAll(OwnerIds.LOCAL).map { it.reason }.toSet()
+        assertEquals(OverrideReason.entries.map { it.name }.toSet(), persisted)
+    }
+
+    @Test
+    fun overrideIsLocalOnlyAndDoesNotCreateSyncOutboxWork() = runBlocking {
+        val result = repo.useOverrideForPrayer(
+            "2026-11-19", PrayerName.DHUHR, OverrideReason.FAMILY_EMERGENCY,
+        ) as OverrideResult.Recorded
+
+        val event = db.emergencyOverrideDao().getById(result.eventId)!!
+        assertEquals(OwnerIds.LOCAL, event.ownerId)
+        assertEquals(0, db.emergencyOverrideDao().getAll("clerk_user").size)
+        assertEquals(0, db.syncOutboxDao().countForOwner(OwnerIds.LOCAL))
+    }
+
+    @Test
+    fun overrideNeverMarksPrayerOrStreakAsCompleted() = runBlocking {
+        repo.useOverrideForPrayer("2026-11-19", PrayerName.MAGHRIB, OverrideReason.MEDICAL)
+
+        assertNull(db.prayerRecordDao().getRecord(OwnerIds.LOCAL, "2026-11-19", PrayerName.MAGHRIB.name))
+        assertNull(db.streakDao().getStreak(OwnerIds.LOCAL))
+    }
+
+    @Test
+    fun existingVerifiedPrayerIsNeverDowngraded() = runBlocking {
+        val streakRepo = com.salahlock.app.data.repository.StreakRepository(
+            db.prayerRecordDao(), db.streakDao(),
+        )
+        streakRepo.recordVerification("2026-11-19", PrayerName.FAJR)
+
+        repo.useOverrideForPrayer("2026-11-19", PrayerName.FAJR, OverrideReason.OTHER)
+
+        val record = db.prayerRecordDao().getRecord(OwnerIds.LOCAL, "2026-11-19", PrayerName.FAJR.name)!!
+        assertTrue(record.verified)
+        assertFalse(record.overrideUsed)
+        assertEquals(1, db.emergencyOverrideDao().getAll(OwnerIds.LOCAL).size)
+    }
+
+    @Test
+    fun recordsSurviveDatabaseCloseAndReopen() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val name = "override-process-death-${System.nanoTime()}.db"
+        val first = Room.databaseBuilder(context, AppDatabase::class.java, name)
+            .allowMainThreadQueries()
+            .build()
+        val firstRepo = EmergencyOverrideRepository(first.emergencyOverrideDao())
+        val result = firstRepo.useOverrideForPrayer(
+            "2026-11-19", PrayerName.ISHA, OverrideReason.WORK_CRITICAL,
+        ) as OverrideResult.Recorded
+        first.close()
+
+        val reopened = Room.databaseBuilder(context, AppDatabase::class.java, name)
+            .allowMainThreadQueries()
+            .build()
+        try {
+            val event = reopened.emergencyOverrideDao().getById(result.eventId)
+            assertEquals(PrayerName.ISHA.name, event?.prayerIdentifier)
+            assertEquals(OverrideReason.WORK_CRITICAL.name, event?.reason)
+        } finally {
+            reopened.close()
+            context.deleteDatabase(name)
+        }
     }
 }

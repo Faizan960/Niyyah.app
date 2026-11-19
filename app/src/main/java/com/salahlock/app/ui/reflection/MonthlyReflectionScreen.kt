@@ -248,7 +248,7 @@ private fun ProgressCard(report: MonthlyReport) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             StatBlock("${s.fajrDays}/${s.elapsedDays}", "Fajr days")
             StatBlock("${s.lockVerified}", "Verified")
-            StatBlock("${s.overridesUsed}", "Emergency overrides")
+            StatBlock("${s.selfReported}", "Self-reported")
         }
     }
 }
