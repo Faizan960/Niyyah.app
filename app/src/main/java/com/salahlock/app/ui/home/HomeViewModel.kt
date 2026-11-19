@@ -20,7 +20,6 @@ import java.time.LocalDateTime
 data class LockSummary(
     val blockedAppCount: Int = 0,
     val todayBlockedCount: Int = 0,
-    val remainingOverrides: Int = 3,
     val activeProfile: String = "Custom",
     val lastVerificationLabel: String = "None today",
 )
@@ -62,7 +61,7 @@ data class HomeUiState(
     val savedMasjidName: String = "",
     /** BM-HOME-PRAYER-UX — whether a Local Masjid timetable has been configured */
     val localMasjidConfigured: Boolean = false,
-    /** Separate Room-backed congregation schedule; never used as prayer starts. */
+    /** Room-backed Local Masjid schedule used whenever [prayerSource] selects it. */
     val localMasjid: LocalMasjidEntity? = null,
 ) {
     val isPaused: Boolean get() = pauseUntilMs > currentTimeMs
@@ -138,6 +137,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun setPrayerSource(source: com.salahlock.app.data.model.PrayerSource) {
         viewModelScope.launch {
             app.prayerSourceRepository.setPrayerSource(source)
+            app.refreshPrayerAlarms("home_source_changed")
         }
     }
 
@@ -351,17 +351,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     // Prayer records are device-local & auth-independent — always read __local__.
                     val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
                     val todayRecords = app.database.prayerRecordDao().getRecordsForDate(owner, today)
-                    val verifiedToday = todayRecords.filter { it.verified || it.overrideUsed }
+                    val verifiedToday = todayRecords.filter { it.verified }
                     val lastVerifiedLabel = if (verifiedToday.isEmpty()) "None today"
                         else "${verifiedToday.last().prayerName.lowercase().replaceFirstChar { it.uppercase() }} verified"
-                    val overrideState = app.overrideRepository.getOverrideState()
-
                     _uiState.update {
                         it.copy(
                             lockSummary = LockSummary(
                                 blockedAppCount = blockedCount,
                                 todayBlockedCount = verifiedToday.size,
-                                remainingOverrides = overrideState.maxPerMonth - overrideState.usedThisMonth,
                                 activeProfile = com.salahlock.app.data.model.BlockProfile.fromName(profileName).displayName,
                                 lastVerificationLabel = lastVerifiedLabel,
                             )

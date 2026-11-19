@@ -34,11 +34,6 @@ interface OwnershipAdoptionDao {
     }
 
     @Transaction
-    suspend fun adoptOverrides(owner: String) {
-        restampOverrides(owner); dropLocalOverrides()
-    }
-
-    @Transaction
     suspend fun adoptQuranBookmarks(owner: String) {
         restampQuranBookmarks(owner); dropLocalQuranBookmarks()
     }
@@ -79,11 +74,6 @@ interface OwnershipAdoptionDao {
     suspend fun restampStreaks(owner: String): Int
     @Query("DELETE FROM streaks WHERE ownerId = '__local__'")
     suspend fun dropLocalStreaks(): Int
-
-    @Query("UPDATE OR IGNORE emergency_overrides SET ownerId = :owner WHERE ownerId = '__local__'")
-    suspend fun restampOverrides(owner: String): Int
-    @Query("DELETE FROM emergency_overrides WHERE ownerId = '__local__'")
-    suspend fun dropLocalOverrides(): Int
 
     @Query("UPDATE OR IGNORE quran_bookmarks SET ownerId = :owner WHERE ownerId = '__local__'")
     suspend fun restampQuranBookmarks(owner: String): Int

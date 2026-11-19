@@ -10,9 +10,8 @@ import java.time.LocalDate
  * (chore/remove-free-passes): a day counts ONLY with all five prayers completed.
  *
  * The old rule — one 4/5 day per week still counted — is gone: a 4/5 day now
- * BREAKS the streak. Emergency-overridden prayers still count as completed (the
- * user acted on the prayer); the override counter itself lives in
- * emergency_overrides and is unaffected.
+ * BREAKS the streak. Emergency overrides are tracked separately and never count
+ * as prayer completion.
  */
 class StreakCalculatorTest {
 
@@ -55,12 +54,12 @@ class StreakCalculatorTest {
     }
 
     @Test
-    fun `emergency-overridden prayers count as completed`() {
+    fun `emergency-overridden prayers do not count as completed`() {
         val s = streakOf(
             today.minusDays(1) to day(today.minusDays(1), 5, overrides = 2),
             today to day(today, 5, overrides = 1),
         )
-        assertEquals(2, s)
+        assertEquals(0, s)
     }
 
     @Test

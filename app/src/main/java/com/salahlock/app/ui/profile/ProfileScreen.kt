@@ -1127,7 +1127,7 @@ fun HelpCenterScreen(onBack: () -> Unit) {
         "Which apps get locked?" to "Only the apps you choose in the Lock Apps tab. Calls, SMS, and essential system apps are never blocked.",
         "How do I verify a prayer?" to "Tap \"I Prayed\" on Home, or complete the short reflection + typed/voice affirmation on the lock screen.",
         "What is Pause Niyyah?" to "A temporary break (15m–1h or until the next prayer). While paused, no locking or adhan notifications occur. Prayer tracking continues.",
-        "What are emergency overrides?" to "Three per month. Use one to bypass a lock in a genuine emergency — it still counts toward your day's record.",
+        "What are emergency overrides?" to "Use one to pause protection for the current prayer in a genuine emergency. Overrides are unlimited, recorded privately on this device, and never count as prayer completion.",
         "How do local masjid timings work?" to "Enter your masjid's jamaat times in Home → Your Masjid. They replace the calculated times everywhere, including locking.",
         "Why does Niyyah need Usage Access and Display Over Apps?" to "Usage Access detects which app is open during a prayer window; Display Over Apps shows the prayer reminder over it. Both are used only during prayer windows.",
         "Is my data private?" to "Yes. Prayer history, location, and settings stay on your device. Backups are local files you control. Nothing is uploaded.",

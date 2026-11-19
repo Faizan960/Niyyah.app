@@ -176,7 +176,7 @@ class MissedPrayerReminderReceiver : BroadcastReceiver() {
                 // Prayer records are device-local & auth-independent — always read __local__.
                 val owner = com.salahlock.app.data.db.entity.OwnerIds.LOCAL
                 val record = app.database.prayerRecordDao().getRecord(owner, prayerDate, prayer.name)
-                val wasVerified = record != null && (record.verified || record.overrideUsed)
+                val wasVerified = record?.verified == true
                 if (!wasVerified && app.userPreferences.notificationsEnabled.first()) {
                     NotificationHelper.cancelAdhanNotification(context, prayer)
                     NotificationHelper.showMissedPrayerReminder(context, prayer)

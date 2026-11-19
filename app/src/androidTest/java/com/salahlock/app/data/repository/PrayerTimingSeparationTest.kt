@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -79,11 +78,11 @@ class PrayerTimingSeparationTest {
     }
 
     @Test
-    fun localJamaatSelection_doesNotOverwriteCalculatedPrayerStarts() = runBlocking {
-        val actualStarts = repository.getTodayPrayers().filterNotNull().first()
+    fun localMasjidSelection_becomesActiveScheduleImmediately() = runBlocking {
+        val activeSchedule = repository.getTodayPrayers().filterNotNull().first()
         val jamaat = repository.getLocalJamaatTimes().filterNotNull().first()
 
         assertEquals("23:55", jamaat.asr)
-        assertNotEquals(LocalTime.of(23, 55), actualStarts.asr.toLocalTime())
+        assertEquals(LocalTime.of(23, 55), activeSchedule.asr.toLocalTime())
     }
 }

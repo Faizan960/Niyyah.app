@@ -8,7 +8,6 @@ import com.salahlock.app.data.db.entity.OwnerIds
 import com.salahlock.app.data.model.PrayerName
 import com.salahlock.app.data.repository.EmergencyOverrideRepository
 import com.salahlock.app.data.repository.OverrideReason
-import com.salahlock.app.data.repository.OverrideResult
 import com.salahlock.app.data.repository.StreakRepository
 import com.salahlock.app.data.sync.ActiveOwnerProvider
 import kotlinx.coroutines.flow.first
@@ -41,9 +40,7 @@ class LocalPrayerPersistenceTest {
         val ctx = ApplicationProvider.getApplicationContext<android.content.Context>()
         db = Room.inMemoryDatabaseBuilder(ctx, AppDatabase::class.java).allowMainThreadQueries().build()
         streakRepo = StreakRepository(db.prayerRecordDao(), db.streakDao())
-        overrideRepo = EmergencyOverrideRepository(
-            db, db.emergencyOverrideDao(), db.prayerRecordDao(), streakRepo,
-        )
+        overrideRepo = EmergencyOverrideRepository(db.emergencyOverrideDao())
     }
 
     @After
@@ -61,18 +58,18 @@ class LocalPrayerPersistenceTest {
         // 1) User is SIGNED IN (scope resolves to the Clerk user id).
         ActiveOwnerProvider.shared.onAuthenticated(clerkUser)
 
-        // Record 4 prayers normally + the 5th via an emergency override → a full 5/5 day.
+        // Record 4 prayers normally and pause protection for the fifth. The override must
+        // remain separate from prayer completion and therefore cannot complete the streak.
         listOf(PrayerName.FAJR, PrayerName.DHUHR, PrayerName.ASR, PrayerName.MAGHRIB)
-            .forEach { streakRepo.recordVerification(today, it, wasOverride = false) }
-        val overrideResult = overrideRepo.useOverrideForPrayer(today, PrayerName.ISHA, OverrideReason.TRAVELLING)
-        assertTrue("override consumed", overrideResult is OverrideResult.Consumed)
+            .forEach { streakRepo.recordVerification(today, it) }
+        overrideRepo.useOverrideForPrayer(today, PrayerName.ISHA, OverrideReason.TRAVELLING)
 
         // Data lands under __local__, NEVER under the signed-in Clerk owner.
-        assertEquals(5, db.prayerRecordDao().getAll(OwnerIds.LOCAL).size)
+        assertEquals(4, db.prayerRecordDao().getAll(OwnerIds.LOCAL).size)
         assertEquals(0, db.prayerRecordDao().getAll(clerkUser).size)
         assertNull("streak is not stored under the Clerk owner", db.streakDao().getStreak(clerkUser))
-        assertEquals(1, streakRepo.observeStreakInfo().first().currentStreak)
-        assertEquals(1, overrideRepo.getOverrideState().usedThisMonth)
+        assertEquals(0, streakRepo.observeStreakInfo().first().currentStreak)
+        assertEquals(1, db.emergencyOverrideDao().getAll(OwnerIds.LOCAL).size)
 
         // 2) User SIGNS OUT after adoption (scope → SignedOutNoUser = "__none__").
         //    This is the exact state that previously hid all prayer data.
@@ -80,13 +77,13 @@ class LocalPrayerPersistenceTest {
         assertEquals("__none__", ActiveOwnerProvider.shared.ownerId())
 
         // Everything is still there and still readable through the repositories.
-        assertEquals(5, db.prayerRecordDao().getAll(OwnerIds.LOCAL).size)
-        assertEquals("streak survives logout", 1, streakRepo.observeStreakInfo().first().currentStreak)
-        assertEquals("override survives logout", 1, overrideRepo.getOverrideState().usedThisMonth)
+        assertEquals(4, db.prayerRecordDao().getAll(OwnerIds.LOCAL).size)
+        assertEquals("streak survives logout", 0, streakRepo.observeStreakInfo().first().currentStreak)
+        assertEquals("override survives logout", 1, db.emergencyOverrideDao().getAll(OwnerIds.LOCAL).size)
 
         // 3) A brand-new verification while signed OUT still records to __local__.
-        streakRepo.recordVerification(today, PrayerName.FAJR, wasOverride = false) // idempotent upsert
-        assertEquals(5, db.prayerRecordDao().getAll(OwnerIds.LOCAL).size)
+        streakRepo.recordVerification(today, PrayerName.FAJR) // idempotent upsert
+        assertEquals(4, db.prayerRecordDao().getAll(OwnerIds.LOCAL).size)
         assertEquals(0, db.prayerRecordDao().getAll(OwnerIds.NONE).size)
     }
 }

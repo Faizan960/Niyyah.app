@@ -2,7 +2,7 @@ package com.salahlock.app.data.db.dao
 
 import androidx.room.*
 import com.salahlock.app.data.db.entity.AppBlacklistItem
-import com.salahlock.app.data.db.entity.EmergencyOverride
+import com.salahlock.app.data.db.entity.EmergencyOverrideEvent
 import com.salahlock.app.data.db.entity.PrayerRecord
 import com.salahlock.app.data.db.entity.StreakEntity
 import kotlinx.coroutines.flow.Flow
@@ -67,16 +67,24 @@ interface StreakDao {
 // ── Emergency Override ──────────────────────────────────────────────────────
 @Dao
 interface EmergencyOverrideDao {
-    // BM-013 — owner-scoped (WHERE ownerId = :owner).
-    @Query("SELECT * FROM emergency_overrides WHERE ownerId = :owner AND monthYear = :monthYear LIMIT 1")
-    suspend fun getForMonth(owner: String, monthYear: String): EmergencyOverride?
+    /** Append-only insert: duplicate event IDs are rejected rather than overwritten. */
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insert(event: EmergencyOverrideEvent)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(override: EmergencyOverride)
+    @Query("SELECT * FROM emergency_override_events WHERE ownerId = :owner ORDER BY timestampMs ASC, eventId ASC")
+    suspend fun getAll(owner: String): List<EmergencyOverrideEvent>
 
-    /** Full export for backup (active owner). */
-    @Query("SELECT * FROM emergency_overrides WHERE ownerId = :owner")
-    suspend fun getAll(owner: String): List<EmergencyOverride>
+    @Query("SELECT * FROM emergency_override_events WHERE eventId = :eventId LIMIT 1")
+    suspend fun getById(eventId: String): EmergencyOverrideEvent?
+
+    @Query("SELECT COUNT(*) FROM emergency_override_events WHERE ownerId = :owner AND date = :date AND prayerIdentifier = :prayerIdentifier")
+    suspend fun countForPrayer(owner: String, date: String, prayerIdentifier: String): Int
+
+    @Query("SELECT COUNT(*) FROM emergency_override_events WHERE ownerId = :owner AND date = :date AND prayerIdentifier = :prayerIdentifier")
+    fun observeCountForPrayer(owner: String, date: String, prayerIdentifier: String): Flow<Int>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAll(events: List<EmergencyOverrideEvent>)
 }
 
 // ── App Blacklist ───────────────────────────────────────────────────────────

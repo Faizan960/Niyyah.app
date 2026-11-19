@@ -4,9 +4,9 @@
  * every SQL identifier (table + column names) originates HERE, never from client
  * input, which is what keeps the generic query builder injection-safe.
  *
- * SECURITY INVARIANT: `emergency_overrides` (and any alias) is NOT in this registry
- * and is additionally hard-denied below. Emergency override allowances and monthly
- * exception records are local-only and must never be synced.
+ * SECURITY INVARIANT: emergency override events (and every legacy alias) are NOT in
+ * this registry and are additionally hard-denied below. They are local-only and must
+ * never be synced.
  *
  * FREE-PASS/ mercy-week state (`last_mercy_week`, `mercy_used_this_week`) was
  * REMOVED from the streaks domain: the three-free-passes feature is being removed
@@ -205,6 +205,7 @@ export const DOMAINS: Readonly<Record<string, DomainSpec>> = {
  */
 export const FORBIDDEN_DOMAINS: ReadonlySet<string> = new Set([
   "emergency_overrides",
+  "emergency_override_events",
   "emergency_override",
   "emergency",
   "overrides",

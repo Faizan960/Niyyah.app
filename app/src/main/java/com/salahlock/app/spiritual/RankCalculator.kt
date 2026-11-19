@@ -18,7 +18,6 @@ import com.salahlock.app.data.model.MonthlyStats
  *   + 10 × improvementFactor                        (vs last month, see below)
  *   +  5 × balanceRatio                             (weakest prayer's completion)
  *   + jamaatBonus                                   (up to +5, currently 0*)
- *   − overridePenalty                               (2 per emergency override, capped 10)
  * ```
  *
  * improvementFactor = clamp((completionDeltaPct + 10) / 20, 0..1): −10pp or worse
@@ -52,7 +51,6 @@ object RankCalculator {
         } ?: 0.5
         val balanceRatio = stats.perPrayerCompletion.values.minOrNull() ?: 0.0
         val jamaatBonus = (jamaatPrayers * 0.5).coerceAtMost(5.0)
-        val overridePenalty = (stats.overridesUsed * 2.0).coerceAtMost(10.0)
 
         val raw = 45 * completionRatio +
             15 * fajrRatio +
@@ -61,8 +59,7 @@ object RankCalculator {
             10 * verifiedRatio +
             10 * improvementFactor +
             5 * balanceRatio +
-            jamaatBonus -
-            overridePenalty
+            jamaatBonus
 
         return raw.coerceIn(0.0, 100.0)
     }

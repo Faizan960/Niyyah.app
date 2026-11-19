@@ -14,7 +14,7 @@
 --
 -- ┌──────────────────────────────────────────────────────────────────────────┐
 -- │ EMERGENCY OVERRIDES ARE INTENTIONALLY ABSENT FROM THIS BACKEND.            │
--- │ Emergency override allowances are LOCAL-ONLY and device-bound. There is no  │
+-- │ Emergency override events are LOCAL-ONLY and device-bound. There is no       │
 -- │ emergency_overrides table, no sync domain, and no endpoint for them — by    │
 -- │ design. Do not add one.                                                     │
 -- └──────────────────────────────────────────────────────────────────────────┘

@@ -70,7 +70,7 @@ class SalahLockApplication : Application(), Configuration.Provider {
     /** Frozen monthly reflections — generated locally, stored in filesDir/reflections. */
     val spiritualReportRepository by lazy {
         com.salahlock.app.data.repository.SpiritualReportRepository(
-            this, database.prayerRecordDao(), database.emergencyOverrideDao(),
+            this, database.prayerRecordDao(),
         )
     }
 
@@ -86,6 +86,20 @@ class SalahLockApplication : Application(), Configuration.Provider {
     val prayerAlarmCoordinator by lazy {
         PrayerAlarmCoordinator(this, userPreferences, prayerTimesRepository)
     }
+
+    /**
+     * Applies a user-visible schedule change now without allowing an alarm-service
+     * failure to crash the calling screen. The observer/Worker remains a fallback.
+     */
+    suspend fun refreshPrayerAlarms(reason: String) {
+        try {
+            prayerAlarmCoordinator.refreshNow(reason)
+        } catch (error: Exception) {
+            Log.e("SalahLockApp", "Immediate alarm refresh failed: $reason", error)
+            runCatching { prayerAlarmCoordinator.requestRefresh("${reason}_retry") }
+                .onFailure { Log.e("SalahLockApp", "Could not enqueue alarm refresh", it) }
+        }
+    }
     val streakRepository by lazy {
         StreakRepository(database.prayerRecordDao(), database.streakDao())
     }
@@ -93,12 +107,7 @@ class SalahLockApplication : Application(), Configuration.Provider {
         AppBlacklistRepository(this, database.appBlacklistDao())
     }
     val overrideRepository by lazy {
-        EmergencyOverrideRepository(
-            database,
-            database.emergencyOverrideDao(),
-            database.prayerRecordDao(),
-            streakRepository,
-        )
+        EmergencyOverrideRepository(database.emergencyOverrideDao())
     }
 
     /** Singleton — prevents Hadith sync from re-running on every Knowledge screen visit. */

@@ -6,7 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.salahlock.app.data.db.AppDatabase
 import com.salahlock.app.data.db.entity.AzkarUserStateEntity
 import com.salahlock.app.data.db.entity.CollectionItemEntity
-import com.salahlock.app.data.db.entity.EmergencyOverride
+import com.salahlock.app.data.db.entity.EmergencyOverrideEvent
 import com.salahlock.app.data.db.entity.HadithUserStateEntity
 import com.salahlock.app.data.db.entity.LegacyOwnershipEntity
 import com.salahlock.app.data.db.entity.OwnerIds
@@ -56,7 +56,15 @@ class AdoptionCoverageTest {
         db.legacyOwnershipDao().insertIfAbsent(LegacyOwnershipEntity())
         db.prayerRecordDao().upsert(PrayerRecord(date = "2026-07-01", prayerName = "FAJR"))
         db.streakDao().upsert(StreakEntity(bestStreak = 5))
-        db.emergencyOverrideDao().upsert(EmergencyOverride(monthYear = "2026-07", count = 1))
+        db.emergencyOverrideDao().insert(
+            EmergencyOverrideEvent(
+                eventId = "local-override",
+                prayerIdentifier = "FAJR",
+                reason = "MEDICAL",
+                timestampMs = 1,
+                date = "2026-07-01",
+            )
+        )
         db.quranDao().insertBookmark(QuranBookmarkEntity(surahNumber = 2, ayahNumber = 255))
         db.quranDao().upsertProgress(QuranProgressEntity(surahNumber = 18, lastAyah = 3))
         val cid = db.collectionsDao().insertCollection(UserCollectionEntity(name = "Fav", clientUuid = "u1"))

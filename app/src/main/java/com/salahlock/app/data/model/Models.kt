@@ -108,9 +108,3 @@ enum class SpiritualRank(
             values().reversed().firstOrNull { days >= it.minDays } ?: AL_MUBTADI
     }
 }
-
-data class OverrideState(
-    val usedThisMonth: Int = 0,
-    val maxPerMonth: Int = 3,
-    val canOverride: Boolean = true,
-)

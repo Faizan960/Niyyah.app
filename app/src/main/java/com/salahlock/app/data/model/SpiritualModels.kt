@@ -29,7 +29,7 @@ enum class MonthlyRank(
     }
 }
 
-/** Raw per-month numbers derived from prayer_records + emergency_overrides. */
+/** Raw per-month numbers derived only from genuinely verified prayer records. */
 data class MonthlyStats(
     val month: YearMonth,
     /** Days of the month that have elapsed (full month length for past months). */
@@ -48,8 +48,6 @@ data class MonthlyStats(
     val endOfMonthStreak: Int,
     /** Days on which the prayer was missed, keyed by the five daily prayers. */
     val perPrayerMissed: Map<PrayerName, Int>,
-    /** Emergency overrides used this month. */
-    val overridesUsed: Int,
     /** Completion ratio per prayer, 0.0–1.0, keyed by the five daily prayers. */
     val perPrayerCompletion: Map<PrayerName, Double>,
 ) {

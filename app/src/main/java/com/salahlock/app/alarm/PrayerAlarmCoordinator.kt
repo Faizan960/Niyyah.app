@@ -9,7 +9,6 @@ import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.salahlock.app.data.preferences.UserPreferences
@@ -61,12 +60,16 @@ class PrayerAlarmCoordinator(
                 prefs.prayerSource,
                 prayerTimesRepository.getLocalJamaatTimes(),
             ) { calculated, displaySource, jamaat ->
-                // Source/Jamaat changes still request a refresh, proving that they
-                // cannot leak into the independently calculated alarm plan.
+                // Source and timetable changes must replace the active alarms immediately.
                 refreshTriggerKey(calculated, displaySource, jamaat?.updatedAt ?: 0L)
             }
                 .distinctUntilChanged()
-                .collect { requestRefresh("timing_configuration_changed") }
+                .collect {
+                    runCatching { requestRefresh("timing_configuration_changed") }
+                        .onFailure { error ->
+                            Log.e(TAG, "Could not enqueue timing refresh", error)
+                        }
+                }
         }
     }
 
@@ -87,7 +90,6 @@ class PrayerAlarmCoordinator(
     fun requestRefresh(reason: String) {
         val request = OneTimeWorkRequestBuilder<AlarmRefreshWorker>()
             .setInputData(Data.Builder().putString(AlarmRefreshWorker.KEY_REASON, reason).build())
-            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
         WorkManager.getInstance(context).enqueueUniqueWork(
             IMMEDIATE_WORK_NAME,
@@ -105,12 +107,9 @@ class PrayerAlarmCoordinator(
         val duration = prefs.lockDurationMin.first()
         val now = LocalDateTime.now()
 
-        val (scheduleIdentity, schedule) = if (lat == 0.0 && lng == 0.0) {
-            emptyList<ScheduledPrayer>() to emptyList()
-        } else {
-            val upcoming = prayerTimesRepository.calculateUpcoming(lat, lng, method, madhab)
-            AlarmSchedulePlanner.all(upcoming) to AlarmSchedulePlanner.upcoming(upcoming, now)
-        }
+        val upcoming = prayerTimesRepository.calculateUpcoming(lat, lng, method, madhab)
+        val scheduleIdentity = AlarmSchedulePlanner.all(upcoming)
+        val schedule = AlarmSchedulePlanner.upcoming(upcoming, now)
         val (generation, scheduleReplaced) = PrayerLifecycleSynchronizer.withLock {
             val previousGeneration = prefs.alarmScheduleGeneration.first()
             val activatedGeneration = prefs.activateAlarmSchedule(

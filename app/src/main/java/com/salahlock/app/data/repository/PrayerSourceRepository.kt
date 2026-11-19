@@ -28,7 +28,7 @@ class PrayerSourceRepository(
 
     suspend fun setPrayerSource(source: PrayerSource) {
         prefs.setPrayerSource(source.name)
-        Log.d("PrayerSourceRepo", "[TIMING] Display source transitioned to ${source.name}")
+        Log.d("PrayerSourceRepo", "[TIMING] Active schedule transitioned to ${source.name}")
     }
 
     /** Observes the local masjid configuration. Emits null if not yet set up. */

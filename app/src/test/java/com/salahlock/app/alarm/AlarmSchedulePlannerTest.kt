@@ -117,12 +117,7 @@ class AlarmSchedulePlannerTest {
     }
 
     @Test
-    fun sourceAndJamaatEditsRequestRefresh_withoutChangingPrayerStartPlan() {
-        val schedule = AlarmSchedulePlanner.upcoming(
-            listOf(prayers(date)), LocalDateTime.of(date, LocalTime.MIDNIGHT),
-        )
-        val fingerprint = AlarmSchedulePlanner.fingerprint(schedule, 30, ZoneId.of("Asia/Kolkata"))
-
+    fun sourceAndJamaatEdits_produceDistinctRefreshRequests() {
         assertNotEquals(
             refreshTriggerKey("coords|method", "API", 1L),
             refreshTriggerKey("coords|method", "LOCAL_MASJID", 1L),
@@ -131,7 +126,6 @@ class AlarmSchedulePlannerTest {
             refreshTriggerKey("coords|method", "LOCAL_MASJID", 1L),
             refreshTriggerKey("coords|method", "LOCAL_MASJID", 2L),
         )
-        assertEquals(fingerprint, AlarmSchedulePlanner.fingerprint(schedule, 30, ZoneId.of("Asia/Kolkata")))
     }
 
     @Test

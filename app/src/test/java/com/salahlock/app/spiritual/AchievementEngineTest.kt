@@ -37,7 +37,7 @@ class AchievementEngineTest {
     @Test
     fun `all achievements locked with no history`() {
         val all = AchievementEngine.evaluate(AchievementEngine.Context(emptyList()))
-        assertEquals(11, all.size)
+        assertEquals(10, all.size)
         assertTrue(all.none { it.unlocked })
     }
 
@@ -129,16 +129,19 @@ class AchievementEngineTest {
     }
 
     @Test
-    fun `no mercy month requires zero overrides and real activity`() {
-        // Two full months of history so May is "fully recorded".
-        val records = perfectDays(LocalDate.of(2026, 5, 1), 61)
-        val clean = AchievementEngine.Context(records, overridesByMonth = emptyMap())
-        assertTrue(find(clean, "no_mercy_month").unlocked)
-
-        val mercied = AchievementEngine.Context(
-            records,
-            overridesByMonth = mapOf(YearMonth.of(2026, 5) to 1, YearMonth.of(2026, 6) to 1, YearMonth.of(2026, 7) to 1),
-        )
-        assertFalse(find(mercied, "no_mercy_month").unlocked)
+    fun `legacy override rows do not unlock completion achievements`() {
+        val start = LocalDate.of(2026, 5, 1)
+        val overrides = (0 until 30).flatMap { offset ->
+            MonthlyStatsCalculator.DAILY_PRAYERS.map { prayer ->
+                PrayerRecord(
+                    date = start.plusDays(offset.toLong()).toString(),
+                    prayerName = prayer.name,
+                    verified = false,
+                    overrideUsed = true,
+                )
+            }
+        }
+        val achievements = AchievementEngine.evaluate(AchievementEngine.Context(overrides))
+        assertTrue(achievements.none { it.unlocked })
     }
 }

@@ -48,15 +48,17 @@ class PrayerTimesRepository(
 ) {
     private val cacheMutex = Mutex()
 
-    /**
-     * Returns today's prayer times.
-     *
-     * Prayer starts always come from the Aladhan cache or offline Adhan2 calculation.
-     * Local masjid values are Jamaat times and never drive prayer windows or alarms.
-     */
-    fun getTodayPrayers(): Flow<DailyPrayers?> = getCalculatedTodayPrayers()
+    /** Returns today's schedule from the source selected by the user. */
+    fun getTodayPrayers(): Flow<DailyPrayers?> = activeSchedule(
+        date = { LocalDate.now(clock) },
+        calculated = getCalculatedTodayPrayers(),
+    )
 
-    fun getTomorrowPrayers(): Flow<DailyPrayers?> = getCalculatedTomorrowPrayers()
+    /** Returns tomorrow's schedule from the source selected by the user. */
+    fun getTomorrowPrayers(): Flow<DailyPrayers?> = activeSchedule(
+        date = { LocalDate.now(clock).plusDays(1) },
+        calculated = getCalculatedTomorrowPrayers(),
+    )
 
     /** Saved congregation schedule, exposed separately from actual prayer starts. */
     fun getLocalJamaatTimes(): Flow<LocalMasjidEntity?> = localMasjidDao.observe()
@@ -68,6 +70,21 @@ class PrayerTimesRepository(
         getTodayPrayers().map { daily ->
             daily?.nextPrayer(LocalDateTime.now())
         }
+
+    private fun activeSchedule(
+        date: () -> LocalDate,
+        calculated: Flow<DailyPrayers?>,
+    ): Flow<DailyPrayers?> = combine(
+        prefs.prayerSource,
+        localMasjidDao.observe(),
+        calculated,
+    ) { source, masjid, calculatedSchedule ->
+        if (PrayerSource.fromString(source) == PrayerSource.LOCAL_MASJID && masjid != null) {
+            masjid.toDailyPrayers(date(), calculatedSchedule?.sunrise) ?: calculatedSchedule
+        } else {
+            calculatedSchedule
+        }
+    }
 
     // ── API / Offline paths ─────────────────────────────────────────────────
 
@@ -152,6 +169,35 @@ class PrayerTimesRepository(
     }
 
     // ── Local masjid parsing ────────────────────────────────────────────────
+
+    internal fun LocalMasjidEntity.toDailyPrayers(
+        date: LocalDate,
+        calculatedSunrise: LocalDateTime? = null,
+    ): DailyPrayers? {
+        fun parse(value: String): LocalDateTime? = runCatching {
+            LocalTime.parse(value.trim(), DateTimeFormatter.ofPattern("H:mm"))
+        }.getOrNull()?.let(date::atTime)
+
+        val fajrTime = parse(fajr) ?: return null
+        val dhuhrTime = parse(dhuhr) ?: return null
+        val asrTime = parse(asr) ?: return null
+        val maghribTime = parse(maghrib) ?: return null
+        val ishaTime = parse(isha) ?: return null
+        val sunriseTime = calculatedSunrise
+            ?.takeIf { it.toLocalDate() == date }
+            ?: fajrTime.plusHours(1)
+
+        return DailyPrayers(
+            date = date.toString(),
+            fajr = fajrTime,
+            sunrise = sunriseTime,
+            dhuhr = dhuhrTime,
+            asr = asrTime,
+            maghrib = maghribTime,
+            isha = ishaTime,
+            isOfflineFallback = false,
+        )
+    }
 
     // ── API cache parsing ───────────────────────────────────────────────────
 
@@ -243,6 +289,21 @@ class PrayerTimesRepository(
         madhab: String,
         today: LocalDate = LocalDate.now(clock),
     ): List<DailyPrayers> {
+        if (PrayerSource.fromString(prefs.prayerSource.first()) == PrayerSource.LOCAL_MASJID) {
+            val masjid = localMasjidDao.get()
+            if (masjid != null) {
+                val localSchedule = (0 until 30).mapNotNull { offset ->
+                    masjid.toDailyPrayers(today.plusDays(offset.toLong()))
+                }
+                if (localSchedule.size == 30) {
+                    Log.d("PrayerSync", "[TIMING] Source=LOCAL_MASJID name=${masjid.masjidName}")
+                    return localSchedule
+                }
+                Log.e("PrayerSync", "Invalid Local Masjid timetable; falling back to calculated schedule")
+            }
+        }
+        if (lat == 0.0 && lng == 0.0) return emptyList()
+
         var cachedCount = 0
         var offlineCount = 0
         val (prayerPrefs, cachedByDate) = cacheMutex.withLock {

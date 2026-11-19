@@ -101,17 +101,14 @@ fun HomeScreen(
     val inWindow = currentPrayer != null &&
         daily?.isWithinWindow(currentPrayer.name, now) == true
     val currentVerified = currentPrayer?.let {
-        state.todayRecords[it.name]?.let { r -> r.verified || r.overrideUsed }
+        state.todayRecords[it.name]?.verified
     } == true
     // The prayer the hero CTA verifies: the ongoing in-window prayer, only while
     // unverified. Never a future prayer — so a next-prayer countdown of 1h can't be
     // "verified" early.
     val verifiablePrayer = if (inWindow && !currentVerified) currentPrayer else null
-    val selectedJamaatNext = if (
+    val isLocalMasjidSchedule =
         state.prayerSource == PrayerSource.LOCAL_MASJID && state.localMasjidConfigured
-    ) {
-        nextJamaatPrayer(state.localMasjid, now)
-    } else null
 
     Column(
         modifier = Modifier
@@ -130,11 +127,9 @@ fun HomeScreen(
         ) {
             GreetingBlock(userName = state.userName)
 
-            // When Local Masjid display is selected, the hero presents the next
-            // congregation time. Calculated starts still drive current-prayer state,
-            // verification, lock windows, alarms, and the timeline below.
-            val calculatedNext = state.nextPrayer
-            val displayedNext = selectedJamaatNext ?: calculatedNext
+            // Home, prayer windows, notifications, and alarms all use the same
+            // user-selected schedule, so a saved masjid update is visible immediately.
+            val displayedNext = state.nextPrayer
             displayedNext?.let { next ->
                 // The hero focuses on whichever prayer the user must act on: the ongoing,
                 // unverified current prayer (label "CURRENT PRAYER" + Verify CTA); otherwise
@@ -144,9 +139,9 @@ fun HomeScreen(
                 // which — while a prayer is in-window — is the time left to pray it.
                 val heroFocus = verifiablePrayer ?: next
                 val countdownTarget = if (verifiablePrayer != null) {
-                    calculatedNext?.time ?: next.time
+                    state.nextPrayer?.time ?: next.time
                 } else next.time
-                val timingKind = if (verifiablePrayer == null && selectedJamaatNext != null) {
+                val timingKind = if (isLocalMasjidSchedule) {
                     HeroTimingKind.JAMAAT
                 } else {
                     HeroTimingKind.CALCULATED_START
@@ -155,7 +150,7 @@ fun HomeScreen(
                     isLight = isLight,
                     label = when {
                         verifiablePrayer != null -> "CURRENT PRAYER"
-                        selectedJamaatNext != null -> "NEXT JAMAAT"
+                        isLocalMasjidSchedule -> "NEXT JAMAAT"
                         else -> "NEXT PRAYER"
                     },
                     prayerName = heroFocus.name.displayName,
@@ -651,7 +646,7 @@ private fun PrayerTimeline(
 
         Row(Modifier.fillMaxWidth()) {
             items.forEach { p ->
-                val completed = records[p.name]?.let { it.verified || it.overrideUsed } == true
+                val completed = records[p.name]?.verified == true
                 val isCurrent = p.name == currentName
                 val pastUnverified = p.time.isBefore(now) && !completed && !isCurrent
                 val labelColor = when {
@@ -779,7 +774,7 @@ private fun PrayerStatusSheet(
     onDismiss: () -> Unit,
 ) {
     val time = daily?.toList()?.firstOrNull { it.name == prayer }?.time
-    val completed = record?.let { it.verified || it.overrideUsed } == true
+    val completed = record?.verified == true
     // Verifiable once the prayer's time has arrived — never a future prayer.
     val hasArrived = time != null && !time.isAfter(now)
     val sheetState = rememberModalBottomSheetState()

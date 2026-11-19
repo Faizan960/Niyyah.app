@@ -36,14 +36,13 @@ class StreakRepository(
     suspend fun recordVerification(
         date: String,
         prayer: PrayerName,
-        wasOverride: Boolean,
-        verificationType: VerificationType = if (wasOverride) VerificationType.SELF_REPORTED else VerificationType.LOCK_VERIFIED,
+        verificationType: VerificationType = VerificationType.LOCK_VERIFIED,
     ) {
         val record = PrayerRecord(
             date = date,
             prayerName = prayer.name,
-            verified = !wasOverride,
-            overrideUsed = wasOverride,
+            verified = true,
+            overrideUsed = false,
             verificationType = verificationType.name,
             ownerId = owner,
         )

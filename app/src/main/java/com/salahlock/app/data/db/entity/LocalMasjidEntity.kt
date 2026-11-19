@@ -24,7 +24,7 @@ data class LocalMasjidEntity(
     val asr: String = "",
     val maghrib: String = "",
     val isha: String = "",
-    /** Legacy display-selection flag. Never determines actual prayer starts. */
+    /** Legacy flag retained for database compatibility; source selection lives in DataStore. */
     val enabled: Boolean = false,
     val updatedAt: Long = System.currentTimeMillis(),
 )

@@ -149,6 +149,7 @@ class LocalMasjidViewModel(application: Application) : AndroidViewModel(applicat
             // SL-004 — Jumma persisted in DataStore alongside the Room timetable.
             app.userPreferences.setJummaTimes(s.jumma1, s.jumma2)
             repo.setPrayerSource(PrayerSource.LOCAL_MASJID)
+            app.refreshPrayerAlarms("local_masjid_saved")
             _state.update { it.copy(isSaving = false, saveSuccess = true) }
         }
     }
@@ -164,13 +165,14 @@ class LocalMasjidViewModel(application: Application) : AndroidViewModel(applicat
     fun deleteMasjid() {
         viewModelScope.launch {
             repo.clearLocalMasjid()
+            app.refreshPrayerAlarms("local_masjid_deleted")
             _state.update { it.copy(deleted = true) }
         }
     }
 
     /**
      * Pre-fills Jamaat fields from today's calculated starts as an explicit draft.
-     * The copied values remain editable congregation times and never replace starts.
+     * Once saved, these values become the active schedule while Local Masjid is selected.
      */
     fun importApiTimes() {
         viewModelScope.launch {
@@ -243,7 +245,7 @@ fun LocalMasjidScreen(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "Enter your local masjid's congregation times. These are displayed separately from calculated prayer start times.",
+                text = "Enter your local masjid's congregation times. When saved, Home, prayer notifications, and SalahLock alarms switch to this schedule immediately.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

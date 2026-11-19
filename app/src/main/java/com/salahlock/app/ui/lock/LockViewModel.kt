@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.salahlock.app.SalahLockApplication
-import com.salahlock.app.data.model.OverrideState
 import com.salahlock.app.data.model.PrayerName
 import com.salahlock.app.data.repository.OverrideReason
 import com.salahlock.app.data.repository.OverrideResult
@@ -21,7 +20,6 @@ import java.time.LocalDate
 data class LockUiState(
     val prayer: PrayerName = PrayerName.FAJR,
     val lockEndMs: Long = 0L,
-    val overrideState: OverrideState = OverrideState(),
     val showOverrideSheet: Boolean = false,
     val currentTimeMs: Long = System.currentTimeMillis(),
     // Sprint E — verification preferences (loaded from UserPreferences)
@@ -45,7 +43,6 @@ class LockViewModel(application: Application) : AndroidViewModel(application) {
 
     fun init(prayer: PrayerName, lockEndMs: Long) {
         _state.update { it.copy(prayer = prayer, lockEndMs = lockEndMs) }
-        loadOverrideState()
     }
 
     private fun observeVerificationPrefs() {
@@ -77,13 +74,6 @@ class LockViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun loadOverrideState() {
-        viewModelScope.launch {
-            val overrideState = app.overrideRepository.getOverrideState()
-            _state.update { it.copy(overrideState = overrideState) }
-        }
-    }
-
     fun showOverrideSheet() {
         _state.update { it.copy(showOverrideSheet = true) }
     }
@@ -99,16 +89,12 @@ class LockViewModel(application: Application) : AndroidViewModel(application) {
         app.streakRepository.recordVerification(
             date = LocalDate.now().toString(),
             prayer = _state.value.prayer,
-            wasOverride = false,
         )
     }
 
     /**
-     * Atomically applies an emergency override to the CURRENTLY LOCKED prayer
-     * ([LockUiState.prayer]) for today. The repository consumes exactly one allowance,
-     * marks the prayer, and recomputes the streak in one transaction — or nothing at all
-     * when the monthly limit is reached (no unlock in that case). Idempotent against
-     * repeated taps. Returns the [OverrideResult] so the overlay knows whether to dismiss.
+     * Appends a device-local emergency event for the currently locked prayer. It never
+     * writes prayer completion or streak state.
      */
     suspend fun useOverride(reason: OverrideReason): OverrideResult {
         val result = app.overrideRepository.useOverrideForPrayer(
@@ -116,8 +102,6 @@ class LockViewModel(application: Application) : AndroidViewModel(application) {
             prayer = _state.value.prayer,
             reason = reason,
         )
-        // Reflect the (possibly unchanged) remaining count in the sheet immediately.
-        _state.update { it.copy(overrideState = result.state) }
         return result
     }
 }
